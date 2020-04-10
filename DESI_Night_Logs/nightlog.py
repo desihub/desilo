@@ -70,7 +70,7 @@ class NightLog(object):
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comments+"\n")
         else:
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
-            file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := "+comment+"\n")
+            file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := last exposure "+exp_last+", "+comment+"\n")
         file.closed
 
     def supcal_add_focus_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment,trim):
@@ -82,7 +82,7 @@ class NightLog(object):
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
         else:
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
-            file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := "+comment+"\n")
+            file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := last exposure "+exp_last+", "+comment+"\n")
         file.closed
 
     def obs_new_item_os(self,time,header):
@@ -128,7 +128,7 @@ class NightLog(object):
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
         else:
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
-            file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := "+comment+"\n")
+            file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := last exposure "+exp_last+", "+comment+"\n")
         file.closed
 #    def finish_the_night(self):
     # merge together all the different files into one .txt file to copy past on the set_cosmology
