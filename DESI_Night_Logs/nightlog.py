@@ -45,34 +45,91 @@ class NightLog(object):
         self.os_illumination = illumination
         self.os_weather_conditions = weather_conditions
 
-    def supcal_add_com_os(time,remark):
+    def supcal_add_com_os(self,time,remark):
         """
             Operations Scientist comment/remark on Start Up & Calibrations procedures.
         """
         file = open(self.os_dir+'startup_calibrations','a')
-        file.write("- "+time[0;2]+":"+time[2;4]+" := "remark+"\n")
+        file.write("- "+time[0:2]+":"+time[2:4]+" := "+remark+"\n")
         file.closed
 
-    def supcal_add_seq_os(time,exp_num,exp_type,comment):
+    def supcal_add_seq_os(self,time,exp_num,exp_type,comment):
         """
-            Operations Scientist adds new sequence.
+            Operations Scientist adds new sequence in Start Up & Calibrations.
         """
         file = open(self.os_dir+'startup_calibrations','a')
-        file.write("- "+time[0;2]+":"+time[2;4]+" := exposure "exp_num+", "+exp_type+", "+comment+"\n")
+        file.write("- "+time[0:2]+":"+time[2:4]+" := exposure "+exp_num+", "+exp_type+", "+comment+"\n")
         file.closed
 
-    def supcal_add_script_os(time_start,exp_first,script,time_stop,exp_last,comment):
+    def supcal_add_spec_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment):
         """
-            Operations Scientist adds new sequence.
+            Operations Scientist adds new script (spectrograph) in Start Up & Calibrations.
         """
         file = open(self.os_dir+'startup_calibrations','a')
         if (time_stop == "") or (time_stop == " ") :
-            file.write("- "+time_start[0;2]+":"+time_start[2;4]+" := script @"+script+"@, first exposure "exp_first+", last exposure "+exp_last+"\n")
+            file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comments+"\n")
         else:
-            file.write("- "+time_start[0;2]+":"+time_start[2;4]+" := script @"+script+"@, first exposure "exp_first+"\n")
-            file.write("- "+time_stop[0;2]+":"+time_stop[2;4]+" := "comment+"\n")
+            file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
+            file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := "+comment+"\n")
         file.closed
 
+    def supcal_add_focus_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment,trim):
+        """
+            Operations Scientist adds new script (focus) in Start Up & Calibrations.
+        """
+        file = open(self.os_dir+'startup_calibrations','a')
+        if (time_stop == "") or (time_stop == " ") :
+            file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
+        else:
+            file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
+            file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := "+comment+"\n")
+        file.closed
+
+    def obs_new_item_os(self,time,header):
+        """
+            Operations Scientist adds new item on the Observing section.
+        """
+        if int(time) < 1200 :
+            self.new_obsitem_time_stamp = str(int(time) + 1200) #fix the number of charater in string (4)
+        else :
+            self.new_obsitem_time_stamp = str(int(time) - 1200) #fix the number of charater in string (4)
+
+        self.tmp_obs_dir=self.os_dir+'observing_'+self.new_obsitem_time_stamp
+        file = open(self.tmp_obs_dir,'a')
+        file.write("h5. "+header+"\n")
+        file.write("\n")
+        file.closed
+
+    def obs_add_seq_os(self,time,exp_num,exp_type,tile_number,tile_type,comment):
+        """
+            Operations Scientist adds new sequence in Observing.
+        """
+        file = open(self.tmp_obs_dir,'a')
+        if (tile_number == "") or (tile_number == " ") :
+            file.write("- "+time[0:2]+":"+time[2:4]+" := exposure "+exp_num+", "+exp_type+" sequence, "+comment+"\n")
+        else :
+            file.write("- "+time[0:2]+":"+time[2:4]+" := exposure "+exp_num+", "+exp_type+" sequence, "+tile_type+" tile "+tile_number+", "+comment+"\n")
+        file.closed
+
+    def obs_add_com_os(self,time,remark):
+        """
+            Operations Scientist comment/remark in the Observing section.
+        """
+        file = open(self.tmp_obs_dir,'a')
+        file.write("- "+time[0:2]+":"+time[2:4]+" := "+remark+"\n")
+        file.closed
+
+    def obs_add_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment):
+        """
+            Operations Scientist adds new script in the Observing section.
+        """
+        file = open(self.tmp_obs_dir,'a')
+        if (time_stop == "") or (time_stop == " ") :
+            file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
+        else:
+            file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
+            file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := "+comment+"\n")
+        file.closed
 #    def finish_the_night(self):
     # merge together all the different files into one .txt file to copy past on the set_cosmology
     # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository
