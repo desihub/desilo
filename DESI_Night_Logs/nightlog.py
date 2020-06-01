@@ -1,3 +1,9 @@
+"""
+Created on April 9, 2020
+
+@author: Satya Gontcho A Gontcho
+"""
+
 import os
 
 
@@ -45,6 +51,20 @@ class NightLog(object):
         self.os_illumination = illumination
         self.os_weather_conditions = weather_conditions
 
+    # def new_entry(self,time_start,exp_first,script,time_stop,exp_last,comment,header,trim,entry_number,entry_type):
+    #         """
+    #             time_start: time where the events described in the entry start
+    #             exp_first: exposure number of the first exposure
+    #             script: yes/no
+    #             if script, time_stop : time where the script finished
+    #             if script, exp_last : exposure number of the last exposure
+    #             comment : add comment if needed (exposure time, count, problem,..)
+    #             header : when starting a new test, add a new header (Start Up and Calibrations, ELG, LRG+QSO, BSG, other)
+    #             if focus scan, trim : value of the Trim
+    #             if replace entry, entry_number
+    #
+    #         """
+
     def supcal_add_com_os(self,time,remark):
         """
             Operations Scientist comment/remark on Start Up & Calibrations procedures.
@@ -89,13 +109,14 @@ class NightLog(object):
         """
             Operations Scientist adds new item on the Observing section.
         """
-        if int(time) < 1200 :
-            self.new_obsitem_time_stamp = str(int(time) + 1200) #fix the number of charater in string (4)
-        else :
-            self.new_obsitem_time_stamp = str(int(time) - 1200) #fix the number of charater in string (4)
+        self.tmp_obs_dir=self.os_dir+'observing_'
 
-        self.tmp_obs_dir=self.os_dir+'observing_'+self.new_obsitem_time_stamp
-        file = open(self.tmp_obs_dir,'a')
+        if int(time) < 1200 :
+            new_obsitem_time_stamp = str(int(time) + 1200) #fix the number of charater in string (4)
+        else :
+            new_obsitem_time_stamp = str(int(time) - 1200) #fix the number of charater in string (4)
+
+        file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
         file.write("h5. "+header+"\n")
         file.write("\n")
         file.closed
@@ -104,7 +125,14 @@ class NightLog(object):
         """
             Operations Scientist adds new sequence in Observing.
         """
-        file = open(self.tmp_obs_dir,'a')
+
+        if int(time) < 1200 :
+            new_obsitem_time_stamp = str(int(time) + 1200) #fix the number of charater in string (4)
+        else :
+            new_obsitem_time_stamp = str(int(time) - 1200) #fix the number of charater in string (4)
+
+        file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
+
         if (tile_number == "") or (tile_number == " ") :
             file.write("- "+time[0:2]+":"+time[2:4]+" := exposure "+exp_num+", "+exp_type+" sequence, "+comment+"\n")
         else :
@@ -115,7 +143,12 @@ class NightLog(object):
         """
             Operations Scientist comment/remark in the Observing section.
         """
-        file = open(self.tmp_obs_dir,'a')
+        if int(time) < 1200 :
+            new_obsitem_time_stamp = str(int(time) + 1200) #fix the number of charater in string (4)
+        else :
+            new_obsitem_time_stamp = str(int(time) - 1200) #fix the number of charater in string (4)
+
+        file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
         file.write("- "+time[0:2]+":"+time[2:4]+" := "+remark+"\n")
         file.closed
 
@@ -123,13 +156,27 @@ class NightLog(object):
         """
             Operations Scientist adds new script in the Observing section.
         """
-        file = open(self.tmp_obs_dir,'a')
+        if int(time) < 1200 :
+            new_obsitem_time_stamp = str(int(time_start) + 1200) #fix the number of charater in string (4)
+        else :
+            new_obsitem_time_stamp = str(int(time_start) - 1200) #fix the number of charater in string (4)
+
+        file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
         if (time_stop == "") or (time_stop == " ") :
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
         else:
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := last exposure "+exp_last+", "+comment+"\n")
         file.closed
+
+    # def replace_entry(self,entry_number,entry_type):
+    #     entry_to_replace=
+    #     if os.path.exists(entry_to_replace):
+    #         file_to_read = open(entry_to_replace,"r")
+    #         print(file_to_read.read())
+    #         os.remove(entry_to_replace)
+    #     else:
+    #         print("This entry doesn't exsists. Please check again the entry number.")
 #    def finish_the_night(self):
     # merge together all the different files into one .txt file to copy past on the set_cosmology
     # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository
