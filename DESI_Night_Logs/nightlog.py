@@ -26,6 +26,16 @@ class NightLog(object):
             os.makedirs(self.qa_dir)
         return print("Your obsday is "+self.obsday)
 
+    def check_exists(self):
+        self.os_dir="nightlogs/"+self.obsday+"/OperationsScientist/"
+        self.qa_dir="nightlogs/"+self.obsday+"/DataQualityAssessment/"
+        if not os.path.exists(self.qa_dir):
+            return 'Night Log has not yet been initialized'
+        else:
+            #Get data from get_started_os and return that
+            return 'Night Log has been initialized'
+
+
     def get_started_os(self,your_firstname,your_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         """
             Operations Scientist lists the personal present, ephemerids and weather conditions at sunset.
@@ -44,6 +54,10 @@ class NightLog(object):
         self.os_start18 = time_18_deg_twilight_starts
         self.os_illumination = illumination
         self.os_weather_conditions = weather_conditions
+
+    def add_dqs_observer(self,dqs_firstname, dqs_lastname):
+        self.dqs_firstname = dqs_firstname
+        self.dqs_lastname = dqs_lastname
 
     def supcal_add_com_os(self,time,remark):
         """
@@ -130,6 +144,29 @@ class NightLog(object):
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := last exposure "+exp_last+", "+comment+"\n")
         file.closed
+
+    def create_dqs_files(self):
+        file = open(self.dqs_exp_file,'a')
+        file.write("h3. DQA Exposures \n")
+        file.write("\n")
+        file.closed
+
+    def dqs_add_exp(self,time_start, exp_start, exp_type, quality, comment, obs_cond_comm = None, inst_perf_comm = None, exp_last = None):
+        self.dqs_exp_file = self.qa_dir+'/exposures'
+        if not os.path.exists(self.dqs_exp_file):
+            self.create_dqs_files()
+
+        file = open(self.dqs_exp_file,'a')
+        if exp_last is not None:
+            file.write("- {}:{} := Exp. # {} - {}, {}, {}, {}\n".format(time_start[0:2], time_start[2:4], exp_start, exp_last, exp_type, quality, comment))
+        else:
+            file.write("- {}:{} := Exp. # {}, {}, {}, {}\n".format(time_start[0:2], time_start[2:4], exp_start, exp_type, quality, comment))
+        if obs_cond_comm is not None:
+            file.write("*observing conditions:* {} \n".format(obs_cond_comm))
+        if inst_perf_comm is not None:
+            file.write("*instrument performance:* {} \n".format(inst_perf_comm))
+        file.closed
+
 #    def finish_the_night(self):
     # merge together all the different files into one .txt file to copy past on the set_cosmology
     # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository
