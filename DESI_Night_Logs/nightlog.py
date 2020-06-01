@@ -191,6 +191,19 @@ class NightLog(object):
             file.write("*instrument performance:* {} \n".format(inst_perf_comm))
         file.closed
 
+    # def new_entry(self,time_start,exp_first,script,time_stop,exp_last,comment,header,trim,entry_number,entry_type):
+    #         """
+    #             time_start: time where the events described in the entry start
+    #             exp_first: exposure number of the first exposure
+    #             script: yes/no
+    #             if script, time_stop : time where the script finished
+    #             if script, exp_last : exposure number of the last exposure
+    #             comment : add comment if needed (exposure time, count, problem,..)
+    #             header : when starting a new test, add a new header (Start Up and Calibrations, ELG, LRG+QSO, BSG, other)
+    #             if focus scan, trim : value of the Trim
+    #             if replace entry, entry_number
+    #
+    #         """
 
 #    def finish_the_night(self):
     # merge together all the different files into one .txt file to copy past on the set_cosmology
