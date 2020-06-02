@@ -33,7 +33,7 @@ from bokeh.client import push_session
 from bokeh.models.widgets import Panel, Tabs 
 
 
-import nightlog_paf as nl
+import nightlog as nl
 
 title = Div(text='''
 <font size="4">DESI Night Log - Data QA Scientist</font> ''',
@@ -138,7 +138,7 @@ def get_time(time):
 
 def current_nl():
     DESI_Log.finish_the_night()
-    path = "nightlogs/"+DESI_Log.obsday+"/nightlog.txt"
+    path = "nightlogs/"+DESI_Log.obsday+"/nightlog"
     nl_file = open(path,'r')
     nl_txt = ''
     for line in nl_file:
