@@ -30,7 +30,7 @@ from bokeh.models.widgets.tables import (
 from bokeh.layouts import column, layout
 from bokeh.palettes import d3
 from bokeh.client import push_session
-from bokeh.models.widgets import Panel, Tabs 
+from bokeh.models.widgets import Panel, Tabs
 
 
 import nightlog as nl
@@ -159,11 +159,11 @@ def suc_add():
     Function to add line about a Startup&Calibrations sequence in the Night Log
 
     Note, I really don't like how this is currently implemented on my end, but I also don't really l
-    ike that there are different functions for different types of inputs. I think we should have one kind of input, 
+    ike that there are different functions for different types of inputs. I think we should have one kind of input,
     and if the value is None or Nan then it's not included. So, I'll clean up my side if we can have fewer functions
     for DESI_Log
     """
-    
+
     inputs = [exp_time.value, exp_comment.value,exp_exposure_start.value, exp_exposure_finish.value,
               exp_type.value, exp_script.value, exp_time_end.value, exp_focus_trim.value]
     idx = np.where(np.array(inputs) == None)[0]
@@ -181,9 +181,9 @@ def suc_add():
 def obs_add():
     """
     Function to add line about an exposure sequence in the Night Log
-    
+
     Note, I really don't like how this is currently implemented on my end, but I also don't really l
-    ike that there are different functions for different types of inputs. I think we should have one kind of input, 
+    ike that there are different functions for different types of inputs. I think we should have one kind of input,
     and if the value is None or Nan then it's not included. So, I'll clean up my side if we can have fewer functions
     for DESI_Log
     """
@@ -229,6 +229,7 @@ def get_time(time):
                 print("need format %H%M, %H:%M, %H:%M%p")
                 return None
 
+<<<<<<< HEAD
 def current_nl():
     DESI_Log.finish_the_night()
     path = "nightlogs/"+DESI_Log.obsday+"/nightlog.txt"
@@ -239,6 +240,8 @@ def current_nl():
     nl_text.text = nl_txt
     nl_file.closed
     
+=======
+>>>>>>> f5f49cad0884629837a372d350551c950d17ffdb
 
 
 
