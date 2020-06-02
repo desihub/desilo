@@ -23,7 +23,7 @@ from bokeh.palettes import Magma256, Category10
 from bokeh.models import (
     LinearColorMapper, ColorBar, AdaptiveTicker, TextInput, ColumnDataSource,
     Title, Button, CheckboxButtonGroup, CategoricalColorMapper, Paragraph,DateFormatter,
-    TextAreaInput, Select, RadioGroup)
+    TextAreaInput, Select, RadioGroup, PreText)
 from bokeh.models.widgets.markups import Div
 from bokeh.models.widgets.tables import (
     DataTable, TableColumn, SelectEditor, IntEditor, NumberEditor, StringEditor,PercentEditor)
@@ -33,7 +33,7 @@ from bokeh.client import push_session
 from bokeh.models.widgets import Panel, Tabs 
 
 
-import nightlog as nl
+import nightlog_paf as nl
 
 title = Div(text='''
 <font size="4">DESI Night Log - Data QA Scientist</font> ''',
@@ -76,6 +76,10 @@ subtitle_3 = Div(text='''<font size="3">Problems</font> ''', width=500)
 prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
 prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, title="Problem Description:")
 prob_btn = Button(label='Add', button_type='primary')
+
+subtitle_5 = Div(text='''<font size="3">Current Night Log</font> ''', width=500)
+nl_btn = Button(label='Get Current Night Log', button_type='primary')
+nl_text = PreText(text='''Current Night Log''',width=500)
 
 
 
@@ -130,6 +134,17 @@ def get_time(time):
             except:
                 print("need format %H%M, %H:%M, %H:%M%p")
                 return None
+
+
+def current_nl():
+    DESI_Log.finish_the_night()
+    path = "nightlogs/"+DESI_Log.obsday+"/nightlog.txt"
+    nl_file = open(path,'r')
+    nl_txt = ''
+    for line in nl_file:
+        nl_txt =  nl_txt + line + '\n'
+    nl_text.text = nl_txt
+    nl_file.closed
     
 
 
@@ -139,6 +154,7 @@ def get_time(time):
 init_bt.on_click(initialize_log)
 exp_btn.on_click(exp_add)
 prob_btn.on_click(prob_add)
+nl_btn.on_click(current_nl)
 
 layout1 = layout([[title],
                  [subtitle_1],
@@ -172,7 +188,13 @@ layout3 = layout([[title],
                  ])
 tab3 = Panel(child=layout3, title="Problems")
 
-tabs = Tabs(tabs=[ tab1, tab2 , tab3])
+layout5 = layout([[title],
+                [subtitle_5],
+                [nl_btn],
+                [nl_text]])
+tab5 = Panel(child=layout5, title="Current Night Log")
+
+tabs = Tabs(tabs=[ tab1, tab2 , tab3, tab5])
 
 curdoc().title = 'DESI Night Log - Data QA Scientist'
 curdoc().add_root(tabs)
