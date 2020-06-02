@@ -1,0 +1,12 @@
+- 20:07 := this is a sentence
+- 20:10 := exposure 12345, Zero, count=5,exptime=20s
+- 20:13 := script @white_spot_calib_short.json@, first exposure 12350
+- 20:45 := last exposure 12375, no special issue
+- 20:52 := script @focus_7.json@, first exposure 12376
+- 20:56 := last exposure 12382, pretty much in focus
+- 20:07 := this is a sentence
+- 20:10 := exposure 12345, Zero, count=5,exptime=20s
+- 20:13 := script @white_spot_calib_short.json@, first exposure 12350
+- 20:45 := last exposure 12375, no special issue
+- 20:52 := script @focus_7.json@, first exposure 12376
+- 20:56 := last exposure 12382, pretty much in focus
