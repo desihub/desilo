@@ -51,6 +51,24 @@ init_bt = Button(label="Connect to Night Log", button_type='primary',width=300)
 
 nl_info = Paragraph(text="""Night Log Info""", width=500,height=200)
 
+os_firstname = TextInput(title ='OS Name')
+os_lastname = TextInput()
+
+LO_firstname = TextInput(title ='LO Name')
+LO_lastname = TextInput()
+
+OA_firstname = TextInput(title ='OA Name')
+OA_lastname = TextInput()
+
+time_sunset = TextInput(title ='Time of Sunset')
+time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends')
+time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends')
+time_sunrise = TextInput(title ='Time of Sunrise')
+time_moonrise = TextInput(title ='Time of Moonrise')
+time_moonset = TextInput(title ='Time of Moonset')
+illumination = TextInput(title ='Moon Illumination')
+sunset_weather = TextInput(title ='Weather conditions as sunset')
+
 
 
 #Inputs for Exposures (combined Startup and Observations)
@@ -98,6 +116,21 @@ def initialize_log():
     nl_info.text = DESI_Log.check_exists()
 
     DESI_Log.add_dqs_observer(your_firstname.value, your_lastname.value)
+    meta_dict = DESI_Log.get_meta_data()
+    os_firstname.value = meta_dict['os_1']
+    os_lastname.value = meta_dict['os_last']
+    LO_firstname.value = meta_dict['os_lo_1']
+    LO_lastname.value = meta_dict['os_lo_last']
+    OA_firstname.value = meta_dict['os_oa_1']
+    OA_lastname.value = meta_dict['os_oa_last']
+    time_sunset.value = meta_dict['os_sunset']
+    time_18_deg_twilight_ends.value = meta_dict['os_end18']
+    time_18_deg_twilight_starts.value = meta_dict['os_start18']
+    time_sunrise.value = meta_dict['os_sunrise']
+    time_moonrise.value = meta_dict['os_moonrise']
+    time_moonset.value = meta_dict['os_moonset']
+    illumination.value = meta_dict['os_illumination']
+    sunset_weather.value = meta_dict['os_weather_conditions']
 
 
 def exp_add():
@@ -161,7 +194,10 @@ layout1 = layout([[title],
                  [info_1],
                  [date_input, [your_firstname, your_lastname]], 
                  [init_bt],
-                 [nl_info]
+                 [nl_info],
+                 [[os_firstname, os_lastname], [LO_firstname, LO_lastname],[OA_firstname, OA_lastname]],
+                 [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
+                 [illumination,sunset_weather]]
                  ])
 tab1 = Panel(child=layout1, title="Initialization")
 
