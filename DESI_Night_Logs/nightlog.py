@@ -28,6 +28,7 @@ class NightLog(object):
         self.tmp_obs_dir=self.os_dir+'observing_'
         self.exp_file_pkl = self.qa_dir+'/exposures.pkl'
         self.dqs_exp_file = self.qa_dir+'/exposures'
+        self.meta_json = self.root_dir+'nightlog_meta.json'
 
 
     def initializing(self):
@@ -60,20 +61,21 @@ class NightLog(object):
         meta_dict = {'os_1':your_firstname, 'os_last':your_lastname,'os_lo_1':LO_firstname,'os_lo_last':LO_lastname,'os_oa_1':OA_firstname,'os_oa_last':OA_lastname,
                     'os_sunset':time_sunset,'os_end18':time_18_deg_twilight_ends,'os_start18':time_18_deg_twilight_starts,'os_sunrise':time_sunrise,
                     'os_moonrise':time_moonrise,'os_moonset':time_moonset,'os_illumination':illumination,'os_weather_conditions':weather_conditions,'dqs_1':None,'dqs_last':None}
-
-        with open('nightlog_meta.json','w') as fp:
+        print(meta_dict)
+        print(self.meta_json)
+        with open(self.meta_json,'w') as fp:
             json.dump(meta_dict, fp)
 
     def add_dqs_observer(self,dqs_firstname, dqs_lastname):
 
-        meta_dict = json.load(open('nightlog_meta.json','r'))
+        meta_dict = json.load(open(self.meta_json,'r'))
         meta_dict['dqs_1'] = dqs_firstname
         meta_dict['dqs_last'] = dqs_lastname
         json.dump(meta_dict,open('nightlog_meta.json','w'))
-        #file = open(self.root_dir+'startup_section','a')
-        #file.write("*Observers (DQS)*: {} {}\n".format(self.dqs_1,self.dqs_last))
-        #file.closed
 
+    def get_meta_data(self):
+        meta_dict = json.load(open(self.meta_json,'r'))
+        return meta_dict
 
     def supcal_add_com_os(self,time,remark):
         """
@@ -247,7 +249,7 @@ class NightLog(object):
         """
         #print("hello!")
         file_nl=open(self.root_dir+'nightlog','w')
-        meta_dict = json.load(open('nightlog_meta.json','r'))
+        meta_dict = json.load(open(self.meta_json,'r'))
         file_nl.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
         file_nl.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
         file_nl.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
