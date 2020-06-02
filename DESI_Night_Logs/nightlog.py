@@ -276,10 +276,10 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("h3. Details on the night progress from the DQS (local time)\n")
         file_nl.write("\n")
-        #dqs_entries=open(self.dqs_exp_file,'r')
-        #for x in dqs_entries:
-        #    file_nl.write(x)
-        #dqs_entries.close()
+        dqs_entries=open(self.qa_dir+'exposures','r')
+        for x in dqs_entries:
+            file_nl.write(x)
+        dqs_entries.close()
         file_nl.close()
     # merge together all the different files into one .txt file to copy past on the eLog
     # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository
