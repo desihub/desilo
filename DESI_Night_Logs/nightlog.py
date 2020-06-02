@@ -5,6 +5,7 @@ Created on April 9, 2020
 """
 
 import os
+import glob
 
 
 class NightLog(object):
@@ -24,6 +25,7 @@ class NightLog(object):
         """
             Creates the folders where all the .txt files used to create the Night Log will be containted.
         """
+        self.root_dir="nightlogs/"+self.obsday+"/"
         self.os_dir="nightlogs/"+self.obsday+"/OperationsScientist/"
         self.qa_dir="nightlogs/"+self.obsday+"/DataQualityAssessment/"
         if not os.path.exists(self.os_dir):
@@ -61,9 +63,14 @@ class NightLog(object):
         self.os_illumination = illumination
         self.os_weather_conditions = weather_conditions
 
+
     def add_dqs_observer(self,dqs_firstname, dqs_lastname):
-        self.dqs_firstname = dqs_firstname
-        self.dqs_lastname = dqs_lastname
+        self.dqs_1 = dqs_firstname
+        self.dqs_last = dqs_lastname
+        file = open(self.root_dir+'startup_section','a')
+        file.write("*Observers (DQS)*: {} {}\n".format(self.dqs_1,self.dqs_last))
+        file.closed
+
 
     def supcal_add_com_os(self,time,remark):
         """
@@ -112,9 +119,12 @@ class NightLog(object):
         self.tmp_obs_dir=self.os_dir+'observing_'
 
         if int(time) < 1200 :
-            new_obsitem_time_stamp = str(int(time) + 1200) #fix the number of charater in string (4)
+            if len(int(time) + 1200)<4:
+                new_obsitem_time_stamp = "0"+str(int(time) + 1200)
+            else:
+                new_obsitem_time_stamp = str(int(time) + 1200)
         else :
-            new_obsitem_time_stamp = str(int(time) - 1200) #fix the number of charater in string (4)
+            new_obsitem_time_stamp = str(int(time) - 1200)
 
         file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
         file.write("h5. "+header+"\n")
@@ -127,9 +137,12 @@ class NightLog(object):
         """
 
         if int(time) < 1200 :
-            new_obsitem_time_stamp = str(int(time) + 1200) #fix the number of charater in string (4)
+            if len(int(time) + 1200)<4:
+                new_obsitem_time_stamp = "0"+str(int(time) + 1200)
+            else:
+                new_obsitem_time_stamp = str(int(time) + 1200)
         else :
-            new_obsitem_time_stamp = str(int(time) - 1200) #fix the number of charater in string (4)
+            new_obsitem_time_stamp = str(int(time) - 1200)
 
         file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
 
@@ -144,9 +157,12 @@ class NightLog(object):
             Operations Scientist comment/remark in the Observing section.
         """
         if int(time) < 1200 :
-            new_obsitem_time_stamp = str(int(time) + 1200) #fix the number of charater in string (4)
+            if len(int(time) + 1200)<4:
+                new_obsitem_time_stamp = "0"+str(int(time) + 1200)
+            else:
+                new_obsitem_time_stamp = str(int(time) + 1200)
         else :
-            new_obsitem_time_stamp = str(int(time) - 1200) #fix the number of charater in string (4)
+            new_obsitem_time_stamp = str(int(time) - 1200)
 
         file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
         file.write("- "+time[0:2]+":"+time[2:4]+" := "+remark+"\n")
@@ -156,10 +172,13 @@ class NightLog(object):
         """
             Operations Scientist adds new script in the Observing section.
         """
-        if int(time) < 1200 :
-            new_obsitem_time_stamp = str(int(time_start) + 1200) #fix the number of charater in string (4)
+        if int(time_start) < 1200 :
+            if len(int(time_start) + 1200)<4:
+                new_obsitem_time_stamp = "0"+str(int(time_start) + 1200)
+            else:
+                new_obsitem_time_stamp = str(int(time_start) + 1200)
         else :
-            new_obsitem_time_stamp = str(int(time_start) - 1200) #fix the number of charater in string (4)
+            new_obsitem_time_stamp = str(int(time_start) - 1200)
 
         file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
         if (time_stop == "") or (time_stop == " ") :
@@ -205,6 +224,64 @@ class NightLog(object):
     #
     #         """
 
-#    def finish_the_night(self):
-    # merge together all the different files into one .txt file to copy past on the set_cosmology
+    def finish_the_night(self):
+        """
+            Merge together all the different files into one '.txt' file to copy past on the eLog.
+
+        """
+        file_nl = open(self.root_dir+'nightlog','a')
+        file_nl.write("*Observer (OS)*: {} {}\n".format(self.os_1,self.os_last))
+        file_nl.write("*Observers (DQS)*: {} {}\n".format(self.dqs_1,self.dqs_last))
+        file_nl.write("*Lead Observer*: {} {}\n".format(self.lo_1,self.lo_last))
+        file_nl.write("*Telescope Operator*: {} {}\n".format(self.oa_1,self.oa_last))
+        file_nl.write("*Ephemerides in local time*:\n")
+        file_nl.write("          sunset: {}\n".format(self.os_sunset))
+        file_nl.write("          18(o) twilight ends: {}\n".format(self.os_end18))
+        file_nl.write("          18(o) twilight starts: {}\n".format(self.os_start18))
+        file_nl.write("          sunrise: {}\n".format(self.os_sunrise))
+        file_nl.write("          moonrise: {}\n".format(self.os_moonrise))
+        file_nl.write("          moonset: {}\n".format(self.os_moonset))
+        file_nl.write("          % illumination: {}\n".format(self.os_illumination))
+        file_nl.write("*Weather conditions summary*:\n".format(self.os_weather_conditions))
+        file_nl.write("\n")
+        file_nl.write("\n")
+        file_nl.write("h3. Plans for the night\n")
+        file_nl.write("\n")
+        #file_nl.write()#add night plan here
+        file_nl.write("\n")
+        file_nl.write("\n")
+        file_nl.write("h3. Problems and Operations Issues\n")
+        file_nl.write("\n")
+        #file_nl.write()#add night plan here
+        file_nl.write("\n")
+        file_nl.write("\n")
+        file_nl.write("h3. Weather Summary\n")
+        file_nl.write("\n")
+        #file_nl.write()#add weather summary here
+        file_nl.write("\n")
+        file_nl.write("\n")
+        file_nl.write("h3. Details on the night progress from the OS (local time)\n")
+        file_nl.write("\n")
+        file_nl.write("\n")
+        supcal_file=open(self.os_dir+'startup_calibrations','r')
+        for x in supcal_file:
+            file_nl.write(x)
+        supcal_file.close()
+        file_nl.write("\n")
+        file_nl.write("\n")
+        os_entries=glob.glob(self.tmp_obs_dir+"*")
+        for e in os_entries:
+            tmp_obs_e=open(e,'r')
+            write(tmp_obs_e)
+            tmp_obs_e.close()
+        file_nl.write("\n")
+        file_nl.write("\n")
+        file_nl.write("h3. Details on the night progress from the DQS (local time)\n")
+        file_nl.write("\n")
+        dqs_entries=sopen(self.dqs_exp_file,'r')
+        for x in dqs_entries:
+            file_nl.write(x)
+        dqs_entries.close()
+        file_nl.closed
+    # merge together all the different files into one .txt file to copy past on the eLog
     # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository
