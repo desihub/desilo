@@ -6,6 +6,8 @@ Created on April 9, 2020
 
 import os
 import glob
+import pandas as pd
+import json
 
 
 class NightLog(object):
@@ -20,23 +22,29 @@ class NightLog(object):
             Setup the nightlog framework for a given obsday.
         """
         self.obsday=year+month+day
+        self.root_dir="nightlogs/"+self.obsday+"/"
+        self.os_dir="nightlogs/"+self.obsday+"/OperationsScientist/"
+        self.qa_dir="nightlogs/"+self.obsday+"/DataQualityAssessment/"
+        self.tmp_obs_dir=self.os_dir+'observing_'
+        self.exp_file_pkl = self.qa_dir+'/exposures.pkl'
+        self.dqs_exp_file = self.qa_dir+'/exposures'
+
 
     def initializing(self):
         """
             Creates the folders where all the .txt files used to create the Night Log will be containted.
         """
-        self.root_dir="nightlogs/"+self.obsday+"/"
-        self.os_dir="nightlogs/"+self.obsday+"/OperationsScientist/"
-        self.qa_dir="nightlogs/"+self.obsday+"/DataQualityAssessment/"
+        
         if not os.path.exists(self.os_dir):
             os.makedirs(self.os_dir)
         if not os.path.exists(self.qa_dir):
             os.makedirs(self.qa_dir)
         return print("Your obsday is "+self.obsday)
 
+
+
     def check_exists(self):
-        self.os_dir="nightlogs/"+self.obsday+"/OperationsScientist/"
-        self.qa_dir="nightlogs/"+self.obsday+"/DataQualityAssessment/"
+        
         if not os.path.exists(self.qa_dir):
             return 'Night Log has not yet been initialized'
         else:
@@ -44,29 +52,24 @@ class NightLog(object):
             return 'Night Log has been initialized'
 
 
-    def get_started_os(self,your_firstname,your_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
+    def get_started_os(self,your_firstname,your_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
+        time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         """
             Operations Scientist lists the personal present, ephemerids and weather conditions at sunset.
         """
-        self.os_1 = your_firstname
-        self.os_last = your_lastname
-        self.os_lo_1 = LO_firstname
-        self.os_lo_last = LO_lastname
-        self.os_oa_1 = OA_firstname
-        self.os_oa_last = OA_lastname
-        self.os_sunset = time_sunset
-        self.os_sunrise = time_sunrise
-        self.os_moonset = time_moonset
-        self.os_moonrise = time_moonrise
-        self.os_end18 = time_18_deg_twilight_ends
-        self.os_start18 = time_18_deg_twilight_starts
-        self.os_illumination = illumination
-        self.os_weather_conditions = weather_conditions
+        meta_dict = {'os_1':your_firstname, 'os_last':your_lastname,'os_lo_1':LO_firstname,'os_lo_last':LO_lastname,'os_oa_1':OA_firstname,'os_oa_last':OA_lastname,
+                    'os_sunset':time_sunset,'os_end18':time_18_deg_twilight_ends,'os_start18':time_18_deg_twilight_starts,'os_sunrise':time_sunrise,
+                    'os_moonrise':time_moonrise,'os_moonset':time_moonset,'os_illumination':illumination,'os_weather_conditions':weather_conditions,'dqs_1':None,'dqs_last':None}
 
+        with open('nightlog_meta.json','w') as fp:
+            json.dump(meta_dict, fp)
 
-#    def add_dqs_observer(self,dqs_firstname, dqs_lastname):
-#        self.dqs_1 = dqs_firstname
-#        self.dqs_last = dqs_lastname
+    def add_dqs_observer(self,dqs_firstname, dqs_lastname):
+
+        meta_dict = json.load(open('nightlog_meta.json','r'))
+        meta_dict['dqs_1'] = dqs_firstname
+        meta_dict['dqs_last'] = dqs_lastname
+        json.dump(meta_dict,open('nightlog_meta.json','w'))
         #file = open(self.root_dir+'startup_section','a')
         #file.write("*Observers (DQS)*: {} {}\n".format(self.dqs_1,self.dqs_last))
         #file.closed
@@ -116,7 +119,7 @@ class NightLog(object):
         """
             Operations Scientist adds new item on the Observing section.
         """
-        self.tmp_obs_dir=self.os_dir+'observing_'
+        
 
         if int(time) < 1200 :
             if len(str(int(time) + 1200))==3:
@@ -200,27 +203,42 @@ class NightLog(object):
             file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := last exposure "+exp_last+", "+comment+"\n")
         file.close()
 
-    def create_dqs_files(self):
-        file = open(self.dqs_exp_file,'a')
-        file.write("h3. DQA Exposures \n")
-        file.write("\n")
-        file.close()
+    def add_exposure(self, data):
+        self.exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
+        if not os.path.exists(self.exp_file_pkl):
+            init_df = pd.DataFrame(columns=self.exp_columns)
+            init_df.to_pickle(self.exp_file_pkl)
+
+        df = pd.read_pickle(self.exp_file_pkl)
+        data_df = pd.DataFrame([data], columns=self.exp_columns)
+        df = df.append(data_df)
+
+        df = df.drop_duplicates(['Time'],keep='last')
+        df = df.sort_values(by=['Time'])
+        df.to_pickle(self.exp_file_pkl)
+        return df
+        
 
     def dqs_add_exp(self,time_start, exp_start, exp_type, quality, comment, obs_cond_comm = None, inst_perf_comm = None, exp_last = None):
-        self.dqs_exp_file = self.qa_dir+'/exposures'
-        if not os.path.exists(self.dqs_exp_file):
-            self.create_dqs_files()
 
-        file = open(self.dqs_exp_file,'a')
-        if exp_last is not None:
-            file.write("- {}:{} := Exp. # {} - {}, {}, {}, {}\n".format(time_start[0:2], time_start[2:4], exp_start, exp_last, exp_type, quality, comment))
-        else:
-            file.write("- {}:{} := Exp. # {}, {}, {}, {}\n".format(time_start[0:2], time_start[2:4], exp_start, exp_type, quality, comment))
-        if obs_cond_comm is not None:
-            file.write("*observing conditions:* {} \n".format(obs_cond_comm))
-        if inst_perf_comm is not None:
-            file.write("*instrument performance:* {} \n".format(inst_perf_comm))
-        file.close()
+        data = [time_start, exp_start, exp_type, quality, comment, obs_cond_comm, inst_perf_comm, exp_last]
+        df = self.add_exposure(data)
+        print(df.head())
+
+        file = open(self.dqs_exp_file,'w')
+        file.write("h3. DQA Exposures \n")
+        file.write("\n")
+        for index, row in df.iterrows():
+        
+            if row['Exp_Last'] is not None:
+                file.write("- {}:{} := Exp. # {} - {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][2:4], row['Exp_Start'], row['Exp_Last'], row['Exp_Type'],row['Quality'],row['Comm']))
+            else:
+                file.write("- {}:{} := Exp. # {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][2:4], row['Exp_Start'], row['Exp_Type'],row['Quality'],row['Comm']))
+            if row['Obs_Comm'] not in [None, " ", ""]:
+                file.write("*observing conditions:* {} \n".format(row['Obs_Comm']))
+            if row['Inst_Comm'] not in [None, " ", ""]:
+                file.write("*instrument performance:* {} \n".format(row['Inst_Comm']))
+        file.closed
 
     def finish_the_night(self):
         """
@@ -228,19 +246,20 @@ class NightLog(object):
 
         """
         #print("hello!")
-        file_nl=open(self.root_dir+'nightlog','a')
-        file_nl.write("*Observer (OS)*: blah \n")#"{} {}\n").format(self.os_1,self.os_last))
-        file_nl.write("*Lead Observer*: {} {}\n".format(self.os_lo_1,self.os_lo_last))
-        file_nl.write("*Telescope Operator*: {} {}\n".format(self.os_oa_1,self.os_oa_last))
+        file_nl=open(self.root_dir+'nightlog','w')
+        meta_dict = json.load(open('nightlog_meta.json','r'))
+        file_nl.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
+        file_nl.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
+        file_nl.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
         file_nl.write("*Ephemerides in local time*:\n")
-        file_nl.write("          sunset: {}\n".format(self.os_sunset))
-        file_nl.write("          18(o) twilight ends: {}\n".format(self.os_end18))
-        file_nl.write("          18(o) twilight starts: {}\n".format(self.os_start18))
-        file_nl.write("          sunrise: {}\n".format(self.os_sunrise))
-        file_nl.write("          moonrise: {}\n".format(self.os_moonrise))
-        file_nl.write("          moonset: {}\n".format(self.os_moonset))
-        file_nl.write("          % illumination: {}\n".format(self.os_illumination))
-        file_nl.write("*Weather conditions summary*:\n".format(self.os_weather_conditions))
+        file_nl.write("          sunset: {}\n".format(meta_dict['os_sunset']))
+        file_nl.write("          18(o) twilight ends: {}\n".format(meta_dict['os_end18']))
+        file_nl.write("          18(o) twilight starts: {}\n".format(meta_dict['os_start18']))
+        file_nl.write("          sunrise: {}\n".format(meta_dict['os_sunrise']))
+        file_nl.write("          moonrise: {}\n".format(meta_dict['os_moonrise']))
+        file_nl.write("          moonset: {}\n".format(meta_dict['os_moonset']))
+        file_nl.write("           illumination: {}\n".format(meta_dict['os_illumination']))
+        file_nl.write("*Weather conditions summary*:{} \n".format(meta_dict['os_weather_conditions']))
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Plans for the night\n")
@@ -261,25 +280,29 @@ class NightLog(object):
         file_nl.write("h3. Details on the night progress from the OS (local time)\n")
         file_nl.write("\n")
         file_nl.write("\n")
-        supcal_file=open(self.os_dir+'startup_calibrations','r')
-        for x in supcal_file:
-            file_nl.write(x)
-        supcal_file.close()
-        file_nl.write("\n")
-        file_nl.write("\n")
+        if os.path.exists(self.os_dir+'startup_calibrations'):
+            supcal_file=open(self.os_dir+'startup_calibrations','r')
+            for x in supcal_file:
+                file_nl.write(x)
+            supcal_file.close()
+            file_nl.write("\n")
+            file_nl.write("\n")
+
         os_entries=glob.glob(self.tmp_obs_dir+"*")
-        for e in os_entries:
-            tmp_obs_e=open(e,'r')
-            file_nl.write(tmp_obs_e.read())
-            tmp_obs_e.close()
-        file_nl.write("\n")
-        file_nl.write("\n")
-        file_nl.write("h3. Details on the night progress from the DQS (local time)\n")
-        file_nl.write("\n")
-        dqs_entries=open(self.qa_dir+'exposures','r')
-        for x in dqs_entries:
-            file_nl.write(x)
-        dqs_entries.close()
+        if len(os_entries) > 0:
+            for e in os_entries:
+                tmp_obs_e=open(e,'r')
+                file_nl.write(tmp_obs_e.read())
+                tmp_obs_e.close()
+            file_nl.write("\n")
+            file_nl.write("\n")
+            file_nl.write("h3. Details on the night progress from the DQS (local time)\n")
+            file_nl.write("\n")
+        if os.path.exists(self.qa_dir+'exposures'):
+            dqs_entries=open(self.qa_dir+'exposures','r')
+            for x in dqs_entries:
+                file_nl.write(x)
+            dqs_entries.close()
         file_nl.close()
     # merge together all the different files into one .txt file to copy past on the eLog
     # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository
