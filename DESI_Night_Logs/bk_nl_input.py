@@ -63,6 +63,8 @@ illumination = TextInput(title ='Moon Illumination', placeholder = '50')
 sunset_weather = TextInput(title ='Weather conditions as sunset', placeholder = 'clear skies')
 
 init_bt = Button(label="Initialize Night Log", button_type='primary',width=300)
+connect_bt = Button(label="Connect to Existing Night Log (enter date)", button_type='primary',width=300)
+info_connect = Div(text='''Not connected to Night Log''')
 
 #Inputs for Exposures (combined Startup and Observations)
 subtitle_2 = Div(text='''<font size="3">Exposures</font> ''',width=500)
@@ -146,6 +148,17 @@ def initialize_log():
         get_time(time_sunrise.value),time_moonrise.value,time_moonset.value,illumination.value,sunset_weather.value)
 
     update_weather_source_data()
+    info_connect.text = 'Night Log is Initialized'
+
+def connect_log():
+    try:
+        date = datetime.strptime(date_input.value, '%Y%m%d')
+    except:
+        date = datetime.now()
+    global DESI_Log
+    DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
+    DESI_Log.check_exists()
+    info_connect.text = 'Connected to Existing Night Log'
 
 
 def exp_add():
@@ -229,10 +242,10 @@ def get_time(time):
                 print("need format %H%M, %H:%M, %H:%M%p")
                 return None
 
-<<<<<<< HEAD
+
 def current_nl():
     DESI_Log.finish_the_night()
-    path = "nightlogs/"+DESI_Log.obsday+"/nightlog.txt"
+    path = "nightlogs/"+DESI_Log.obsday+"/nightlog"
     nl_file = open(path,'r')
     nl_txt = ''
     for line in nl_file:
@@ -240,14 +253,13 @@ def current_nl():
     nl_text.text = nl_txt
     nl_file.closed
     
-=======
->>>>>>> f5f49cad0884629837a372d350551c950d17ffdb
 
 
 
 # Layouts and Actions on Bokeh Page
 
 init_bt.on_click(initialize_log)
+connect_bt.on_click(connect_log)
 exp_btn.on_click(exp_add)
 weather_btn.on_click(weather_add)
 prob_btn.on_click(prob_add)
@@ -260,6 +272,8 @@ layout1 = layout([[title],
                  [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
                  [illumination,sunset_weather]],
                  [init_bt],
+                 [connect_bt],
+                 [info_connect]
                  ])
 tab1 = Panel(child=layout1, title="Initialization")
 
