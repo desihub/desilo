@@ -1,0 +1,6 @@
+h5. ELG+QSO tiles
+
+- 21:05 := exposure 12383, DESI sequence, QSO+LRG tile 68001, count=5,exptime=900s
+- 21:37 := closing the lover
+- 21:48 := script @dithering.json@, first exposure 12388
+- 22:17 := last exposure 12408, adding a comment here
