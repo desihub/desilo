@@ -12,7 +12,7 @@ class NightLog(object):
     """
         During a night of observing with the Dark Energy Spectroscopic Instrument (DESI),
         observers are required to provide a detailed account of the events of the night.
-        This tool provides observers with an interface to write the nightlog in the proper formatting.
+        This tool provides observers with an interface to write the nightlog in the proper formatting (textile for the eLog).
     """
 
     def __init__(self,year,month,day):
@@ -64,12 +64,12 @@ class NightLog(object):
         self.os_weather_conditions = weather_conditions
 
 
-    def add_dqs_observer(self,dqs_firstname, dqs_lastname):
-        self.dqs_1 = dqs_firstname
-        self.dqs_last = dqs_lastname
-        file = open(self.root_dir+'startup_section','a')
-        file.write("*Observers (DQS)*: {} {}\n".format(self.dqs_1,self.dqs_last))
-        file.closed
+#    def add_dqs_observer(self,dqs_firstname, dqs_lastname):
+#        self.dqs_1 = dqs_firstname
+#        self.dqs_last = dqs_lastname
+        #file = open(self.root_dir+'startup_section','a')
+        #file.write("*Observers (DQS)*: {} {}\n".format(self.dqs_1,self.dqs_last))
+        #file.closed
 
 
     def supcal_add_com_os(self,time,remark):
@@ -78,7 +78,7 @@ class NightLog(object):
         """
         file = open(self.os_dir+'startup_calibrations','a')
         file.write("- "+time[0:2]+":"+time[2:4]+" := "+remark+"\n")
-        file.closed
+        file.close()
 
     def supcal_add_seq_os(self,time,exp_num,exp_type,comment):
         """
@@ -86,7 +86,7 @@ class NightLog(object):
         """
         file = open(self.os_dir+'startup_calibrations','a')
         file.write("- "+time[0:2]+":"+time[2:4]+" := exposure "+exp_num+", "+exp_type+", "+comment+"\n")
-        file.closed
+        file.close()
 
     def supcal_add_spec_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment):
         """
@@ -98,7 +98,7 @@ class NightLog(object):
         else:
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := last exposure "+exp_last+", "+comment+"\n")
-        file.closed
+        file.close()
 
     def supcal_add_focus_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment,trim):
         """
@@ -110,7 +110,7 @@ class NightLog(object):
         else:
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := last exposure "+exp_last+", "+comment+"\n")
-        file.closed
+        file.close()
 
     def obs_new_item_os(self,time,header):
         """
@@ -119,17 +119,20 @@ class NightLog(object):
         self.tmp_obs_dir=self.os_dir+'observing_'
 
         if int(time) < 1200 :
-            if len(int(time) + 1200)<4:
+            if len(str(int(time) + 1200))==3:
                 new_obsitem_time_stamp = "0"+str(int(time) + 1200)
             else:
                 new_obsitem_time_stamp = str(int(time) + 1200)
         else :
-            new_obsitem_time_stamp = str(int(time) - 1200)
+            if len(str(int(time) - 1200))==3:
+                new_obsitem_time_stamp = "0"+str(int(time) - 1200)
+            else:
+                new_obsitem_time_stamp = str(int(time) - 1200)
 
         file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
         file.write("h5. "+header+"\n")
         file.write("\n")
-        file.closed
+        file.close()
 
     def obs_add_seq_os(self,time,exp_num,exp_type,tile_number,tile_type,comment):
         """
@@ -137,12 +140,15 @@ class NightLog(object):
         """
 
         if int(time) < 1200 :
-            if len(int(time) + 1200)<4:
+            if len(str(int(time) + 1200))==3:
                 new_obsitem_time_stamp = "0"+str(int(time) + 1200)
             else:
                 new_obsitem_time_stamp = str(int(time) + 1200)
         else :
-            new_obsitem_time_stamp = str(int(time) - 1200)
+            if len(str(int(time) - 1200))==3:
+                new_obsitem_time_stamp = "0"+str(int(time) - 1200)
+            else:
+                new_obsitem_time_stamp = str(int(time) - 1200)
 
         file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
 
@@ -150,35 +156,41 @@ class NightLog(object):
             file.write("- "+time[0:2]+":"+time[2:4]+" := exposure "+exp_num+", "+exp_type+" sequence, "+comment+"\n")
         else :
             file.write("- "+time[0:2]+":"+time[2:4]+" := exposure "+exp_num+", "+exp_type+" sequence, "+tile_type+" tile "+tile_number+", "+comment+"\n")
-        file.closed
+        file.close()
 
     def obs_add_com_os(self,time,remark):
         """
             Operations Scientist comment/remark in the Observing section.
         """
         if int(time) < 1200 :
-            if len(int(time) + 1200)<4:
+            if len(str(int(time) + 1200))==3:
                 new_obsitem_time_stamp = "0"+str(int(time) + 1200)
             else:
                 new_obsitem_time_stamp = str(int(time) + 1200)
         else :
-            new_obsitem_time_stamp = str(int(time) - 1200)
+            if len(str(int(time) - 1200))==3:
+                new_obsitem_time_stamp = "0"+str(int(time) - 1200)
+            else:
+                new_obsitem_time_stamp = str(int(time) - 1200)
 
         file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
         file.write("- "+time[0:2]+":"+time[2:4]+" := "+remark+"\n")
-        file.closed
+        file.close()
 
     def obs_add_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment):
         """
             Operations Scientist adds new script in the Observing section.
         """
         if int(time_start) < 1200 :
-            if len(int(time_start) + 1200)<4:
+            if len(str(int(time_start) + 1200))==3:
                 new_obsitem_time_stamp = "0"+str(int(time_start) + 1200)
             else:
                 new_obsitem_time_stamp = str(int(time_start) + 1200)
         else :
-            new_obsitem_time_stamp = str(int(time_start) - 1200)
+            if len(str(int(time_start) - 1200))==3:
+                new_obsitem_time_stamp = "0"+str(int(time_start) - 1200)
+            else:
+                new_obsitem_time_stamp = str(int(time_start) - 1200)
 
         file = open(self.tmp_obs_dir+new_obsitem_time_stamp,'a')
         if (time_stop == "") or (time_stop == " ") :
@@ -186,13 +198,13 @@ class NightLog(object):
         else:
             file.write("- "+time_start[0:2]+":"+time_start[2:4]+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+time_stop[0:2]+":"+time_stop[2:4]+" := last exposure "+exp_last+", "+comment+"\n")
-        file.closed
+        file.close()
 
     def create_dqs_files(self):
         file = open(self.dqs_exp_file,'a')
         file.write("h3. DQA Exposures \n")
         file.write("\n")
-        file.closed
+        file.close()
 
     def dqs_add_exp(self,time_start, exp_start, exp_type, quality, comment, obs_cond_comm = None, inst_perf_comm = None, exp_last = None):
         self.dqs_exp_file = self.qa_dir+'/exposures'
@@ -208,32 +220,18 @@ class NightLog(object):
             file.write("*observing conditions:* {} \n".format(obs_cond_comm))
         if inst_perf_comm is not None:
             file.write("*instrument performance:* {} \n".format(inst_perf_comm))
-        file.closed
-
-    # def new_entry(self,time_start,exp_first,script,time_stop,exp_last,comment,header,trim,entry_number,entry_type):
-    #         """
-    #             time_start: time where the events described in the entry start
-    #             exp_first: exposure number of the first exposure
-    #             script: yes/no
-    #             if script, time_stop : time where the script finished
-    #             if script, exp_last : exposure number of the last exposure
-    #             comment : add comment if needed (exposure time, count, problem,..)
-    #             header : when starting a new test, add a new header (Start Up and Calibrations, ELG, LRG+QSO, BSG, other)
-    #             if focus scan, trim : value of the Trim
-    #             if replace entry, entry_number
-    #
-    #         """
+        file.close()
 
     def finish_the_night(self):
         """
             Merge together all the different files into one '.txt' file to copy past on the eLog.
 
         """
-        file_nl = open(self.root_dir+'nightlog','a')
-        file_nl.write("*Observer (OS)*: {} {}\n".format(self.os_1,self.os_last))
-        file_nl.write("*Observers (DQS)*: {} {}\n".format(self.dqs_1,self.dqs_last))
-        file_nl.write("*Lead Observer*: {} {}\n".format(self.lo_1,self.lo_last))
-        file_nl.write("*Telescope Operator*: {} {}\n".format(self.oa_1,self.oa_last))
+        #print("hello!")
+        file_nl=open(self.root_dir+'nightlog','a')
+        file_nl.write("*Observer (OS)*: blah \n")#"{} {}\n").format(self.os_1,self.os_last))
+        file_nl.write("*Lead Observer*: {} {}\n".format(self.os_lo_1,self.os_lo_last))
+        file_nl.write("*Telescope Operator*: {} {}\n".format(self.os_oa_1,self.os_oa_last))
         file_nl.write("*Ephemerides in local time*:\n")
         file_nl.write("          sunset: {}\n".format(self.os_sunset))
         file_nl.write("          18(o) twilight ends: {}\n".format(self.os_end18))
@@ -272,16 +270,16 @@ class NightLog(object):
         os_entries=glob.glob(self.tmp_obs_dir+"*")
         for e in os_entries:
             tmp_obs_e=open(e,'r')
-            write(tmp_obs_e)
+            file_nl.write(tmp_obs_e.read())
             tmp_obs_e.close()
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Details on the night progress from the DQS (local time)\n")
         file_nl.write("\n")
-        dqs_entries=open(self.dqs_exp_file,'r')
-        for x in dqs_entries:
-            file_nl.write(x)
-        dqs_entries.close()
-        file_nl.closed
+        #dqs_entries=open(self.dqs_exp_file,'r')
+        #for x in dqs_entries:
+        #    file_nl.write(x)
+        #dqs_entries.close()
+        file_nl.close()
     # merge together all the different files into one .txt file to copy past on the eLog
     # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository
