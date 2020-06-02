@@ -160,6 +160,23 @@ def connect_log():
     DESI_Log.check_exists()
     info_connect.text = 'Connected to Existing Night Log'
 
+    meta_dict = DESI_Log.get_meta_data()
+    print(meta_dict)
+    your_firstname.value = meta_dict['os_1']
+    your_lastname.value = meta_dict['os_last']
+    LO_firstname.value = meta_dict['os_lo_1']
+    LO_lastname.value = meta_dict['os_lo_last']
+    OA_firstname.value = meta_dict['os_oa_1']
+    OA_lastname.value = meta_dict['os_oa_last']
+    time_sunset.value = meta_dict['os_sunset']
+    time_18_deg_twilight_ends.value = meta_dict['os_end18']
+    time_18_deg_twilight_starts.value = meta_dict['os_start18']
+    time_sunrise.value = meta_dict['os_sunrise']
+    time_moonrise.value = meta_dict['os_moonrise']
+    time_moonset.value = meta_dict['os_moonset']
+    illumination.value = meta_dict['os_illumination']
+    sunset_weather.value = meta_dict['os_weather_conditions']
+
 
 def exp_add():
     if exp_type == 'Startup&Calibrations':
