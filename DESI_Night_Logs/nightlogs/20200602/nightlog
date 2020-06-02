@@ -1,6 +1,6 @@
-*Observer (OS)*: blah 
-*Lead Observer*: Molly Jackson
-*Telescope Operator*: Paul Lawson
+*Observer (OS)*: Parke Fagrelius
+*Lead Observer*: Satya Gontcho
+*Telescope Operator*: Bill Jackson
 *Ephemerides in local time*:
           sunset: 1838
           18(o) twilight ends: 1956
@@ -8,8 +8,8 @@
           sunrise: 0631
           moonrise: 0127
           moonset: daytime
-          % illumination: 50
-*Weather conditions summary*:
+           illumination: 50
+*Weather conditions summary*:clear skies 
 
 
 h3. Plans for the night
