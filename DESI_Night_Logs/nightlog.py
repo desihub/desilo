@@ -61,8 +61,7 @@ class NightLog(object):
         meta_dict = {'os_1':your_firstname, 'os_last':your_lastname,'os_lo_1':LO_firstname,'os_lo_last':LO_lastname,'os_oa_1':OA_firstname,'os_oa_last':OA_lastname,
                     'os_sunset':time_sunset,'os_end18':time_18_deg_twilight_ends,'os_start18':time_18_deg_twilight_starts,'os_sunrise':time_sunrise,
                     'os_moonrise':time_moonrise,'os_moonset':time_moonset,'os_illumination':illumination,'os_weather_conditions':weather_conditions,'dqs_1':None,'dqs_last':None}
-        print(meta_dict)
-        print(self.meta_json)
+        
         with open(self.meta_json,'w') as fp:
             json.dump(meta_dict, fp)
 
@@ -306,5 +305,6 @@ class NightLog(object):
                 file_nl.write(x)
             dqs_entries.close()
         file_nl.close()
+        os.system("pandoc -s {} -f textile -t html -o {}".format(self.root_dir+'nightlog',self.root_dir+'nightlog.html'))
     # merge together all the different files into one .txt file to copy past on the eLog
     # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository
