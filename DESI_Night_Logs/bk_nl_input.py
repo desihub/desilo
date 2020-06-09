@@ -23,7 +23,7 @@ from bokeh.palettes import Magma256, Category10
 from bokeh.models import (
     LinearColorMapper, ColorBar, AdaptiveTicker, TextInput, ColumnDataSource,
     Title, Button, CheckboxButtonGroup, CategoricalColorMapper, Paragraph,DateFormatter,
-    TextAreaInput, Select, PreText)
+    TextAreaInput, Select, PreText, Span)
 from bokeh.models.widgets.markups import Div
 from bokeh.models.widgets.tables import (
     DataTable, TableColumn, SelectEditor, IntEditor, NumberEditor, StringEditor,PercentEditor)
@@ -67,11 +67,18 @@ connect_bt = Button(label="Connect to Existing Night Log (enter date)", button_t
 info_connect = Div(text='''Not connected to Night Log''')
 
 #Inputs for Exposures (combined Startup and Observations)
-subtitle_2 = Div(text='''<font size="3">Exposures</font> ''',width=500)
+global header_options
+header_options = ['Startup','Calibrations','Focus','Observation']
+subtitle_2 = Div(text='''<font size="3">Nightly Progress</font> ''',width=500)
 info_2 = Div(text='''<font size="2">Fill In Only Information Relevant</font> ''',width=500)
-seq_type = Select(title="Sequence Type", value = None, options=['Startup&Calibrations','Observations'])
+seq_type = Select(title="Description Header - Use one already created", value = 'Observation', options=header_options)
+header_new = TextInput(value=None)
+hdr_btn = Button(label='OR Create new Header', button_type='primary')
 exp_time = TextInput(title ='Time', placeholder = '2007',value=None)
-exp_comment = TextInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None)
+exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=6)
+add_image = TextInput(title="Add Image",placeholder = 'Pictures/image.png',value=None)
+
+info_3 = Div(text='''<font size="2">Other Meta Data to Save with Comments</font> ''',width=500)
 exp_exposure_start = TextInput(title ='Exposure Number: First', placeholder = '12345',value = None)
 exp_exposure_finish = TextInput(title ='Exposure Number: Last', placeholder = '12345',value = None)
 
@@ -116,7 +123,7 @@ prob_btn = Button(label='Add', button_type='primary')
 
 subtitle_5 = Div(text='''<font size="3">Current Night Log</font> ''', width=500)
 nl_btn = Button(label='Get Current Night Log', button_type='primary')
-nl_text = PreText(text='''Current Night Log''')
+nl_text = Div(text='''Current Night Log''')
 
 
 def update_weather_source_data():
@@ -184,6 +191,21 @@ def exp_add():
     elif exp_type == 'Observations':
         obs_add()
 
+    # Reset everything
+    exp_time.value = None 
+    exp_comment.value = None 
+    add_image.value = None 
+
+    exp_exposure_start.value = None 
+    exp_exposure_finish.value = None 
+
+    exp_type.value = None 
+    exp_script.value = None 
+    exp_time_end.value = None 
+    exp_focus_trim.value = None 
+    exp_tile.value = None 
+    exp_tile_type.value = None 
+
 def suc_add():
     """
     Function to add line about a Startup&Calibrations sequence in the Night Log
@@ -238,6 +260,11 @@ def weather_add():
         print(row)
         #DESI_Log.obs_add_weather(row['time'], row['desc'], row['temp'], row['wind'],row['humidity'])
 
+def add_header():
+    header_options.append(header_new.value)
+    print(header_options)
+    seq_type.options = header_options
+
 
 def prob_add():
     # Currently no code in jupyter notebook
@@ -262,7 +289,7 @@ def get_time(time):
 
 def current_nl():
     DESI_Log.finish_the_night()
-    path = "nightlogs/"+DESI_Log.obsday+"/nightlog"
+    path = "nightlogs/"+DESI_Log.obsday+"/nightlog.html"
     nl_file = open(path,'r')
     nl_txt = ''
     for line in nl_file:
@@ -278,6 +305,7 @@ def current_nl():
 init_bt.on_click(initialize_log)
 connect_bt.on_click(connect_log)
 exp_btn.on_click(exp_add)
+hdr_btn.on_click(add_header)
 weather_btn.on_click(weather_add)
 prob_btn.on_click(prob_add)
 nl_btn.on_click(current_nl)
@@ -298,7 +326,10 @@ layout2 = layout([[title],
                  [subtitle_2],
                  [info_2],
                  [seq_type],
+                 [header_new,hdr_btn],
                  [exp_time, exp_comment],
+                 [info_3],
+                 [add_image],
                  [exp_exposure_start, exp_exposure_finish],
                  [exp_type],
                  [exp_script],
@@ -307,7 +338,7 @@ layout2 = layout([[title],
                  [exp_tile, exp_tile_type],
                  [exp_btn]
                  ])
-tab2 = Panel(child=layout2, title="Exposures")
+tab2 = Panel(child=layout2, title="Nightly Progress")
 
 
 layout3 = layout([[title],
