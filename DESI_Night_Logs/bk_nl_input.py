@@ -123,7 +123,7 @@ prob_btn = Button(label='Add', button_type='primary')
 
 subtitle_5 = Div(text='''<font size="3">Current Night Log</font> ''', width=500)
 nl_btn = Button(label='Get Current Night Log', button_type='primary')
-nl_text = Div(text='''Current Night Log''')
+nl_text = Div(text='''Current Night Log''',width=1000)
 
 
 def update_weather_source_data():
@@ -168,7 +168,6 @@ def connect_log():
     info_connect.text = 'Connected to Existing Night Log'
 
     meta_dict = DESI_Log.get_meta_data()
-    print(meta_dict)
     your_firstname.value = meta_dict['os_1']
     your_lastname.value = meta_dict['os_last']
     LO_firstname.value = meta_dict['os_lo_1']
@@ -183,6 +182,13 @@ def connect_log():
     time_moonset.value = meta_dict['os_moonset']
     illumination.value = meta_dict['os_illumination']
     sunset_weather.value = meta_dict['os_weather_conditions']
+
+    try:
+      new_data = pd.read_csv(DESI_Log.weather_file)
+      new_data = new_data[['time','desc','temp','wind','humidity']]
+      weather_source.data = new_data
+    except:
+      pass
 
 
 def exp_add():
@@ -256,9 +262,7 @@ def weather_add():
     We need to create a function in DESI_Log for adding a row of weather information
     """
     data = pd.DataFrame(weather_source.data)
-    for index, row in data.iterrows():
-        print(row)
-        #DESI_Log.obs_add_weather(row['time'], row['desc'], row['temp'], row['wind'],row['humidity'])
+    DESI_Log.obs_add_weather(data)
 
 def add_header():
     header_options.append(header_new.value)
