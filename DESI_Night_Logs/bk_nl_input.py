@@ -23,7 +23,7 @@ from bokeh.palettes import Magma256, Category10
 from bokeh.models import (
     LinearColorMapper, ColorBar, AdaptiveTicker, TextInput, ColumnDataSource,
     Title, Button, CheckboxButtonGroup, CategoricalColorMapper, Paragraph,DateFormatter,
-    TextAreaInput, Select, PreText, Span)
+    TextAreaInput, Select, PreText, Span, CheckboxGroup)
 from bokeh.models.widgets.markups import Div
 from bokeh.models.widgets.tables import (
     DataTable, TableColumn, SelectEditor, IntEditor, NumberEditor, StringEditor,PercentEditor)
@@ -125,6 +125,11 @@ subtitle_5 = Div(text='''<font size="3">Current Night Log</font> ''', width=500)
 nl_btn = Button(label='Get Current Night Log', button_type='primary')
 nl_text = Div(text='''Current Night Log''',width=1000)
 
+subtitle_6 = Div(text='''<font size="3">OS Checklist</font> ''', width=500)
+os_checklist = CheckboxGroup(
+        labels=["Did you check the weather?", "Did you check the guiding?", "Did you check the focal plane?","Did you check the spectrographs?"])
+check_time = TextInput(title ='Time', placeholder = '2007', value=None)
+check_btn = Button(label='Submit', button_type='primary')
 
 def update_weather_source_data():
     """
@@ -269,6 +274,11 @@ def add_header():
     print(header_options)
     seq_type.options = header_options
 
+def check_add():
+    """add checklist
+    """
+    os_checklist.active = []
+
 
 def prob_add():
     # Currently no code in jupyter notebook
@@ -313,6 +323,7 @@ hdr_btn.on_click(add_header)
 weather_btn.on_click(weather_add)
 prob_btn.on_click(prob_add)
 nl_btn.on_click(current_nl)
+check_btn.on_click(check_add)
 
 layout1 = layout([[title],
                  [subtitle_1],
@@ -365,7 +376,13 @@ layout5 = layout([[title],
                 [nl_text]])
 tab5 = Panel(child=layout5, title="Current Night Log")
 
-tabs = Tabs(tabs=[ tab1, tab2 , tab3, tab4, tab5])
+layout6 = layout([[title],
+                [subtitle_6],
+                [os_checklist],
+                [check_time, check_btn]])
+tab6 = Panel(child=layout6, title="OS Checklist")
+
+tabs = Tabs(tabs=[ tab1, tab2 , tab3, tab4, tab5, tab6])
 
 curdoc().title = 'DESI Night Log - Operations Scientist'
 curdoc().add_root(tabs)
