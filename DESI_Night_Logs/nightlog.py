@@ -6,6 +6,7 @@ Created on April 9, 2020
 
 import os
 import glob
+import numpy as np
 import pandas as pd
 import json
 
@@ -28,6 +29,7 @@ class NightLog(object):
         self.tmp_obs_dir=self.os_dir+'observing_'
         self.exp_file_pkl = self.qa_dir+'/exposures.pkl'
         self.dqs_exp_file = self.qa_dir+'/exposures'
+        self.weather_file = self.os_dir+'/weather.csv'
         self.meta_json = self.root_dir+'nightlog_meta.json'
 
 
@@ -75,6 +77,9 @@ class NightLog(object):
     def get_meta_data(self):
         meta_dict = json.load(open(self.meta_json,'r'))
         return meta_dict
+
+    def obs_add_weather(self, data):
+        data.to_csv(self.weather_file)
 
     def supcal_add_com_os(self,time,remark):
         """
@@ -259,8 +264,8 @@ class NightLog(object):
         file_nl.write("          sunrise: {}\n".format(meta_dict['os_sunrise']))
         file_nl.write("          moonrise: {}\n".format(meta_dict['os_moonrise']))
         file_nl.write("          moonset: {}\n".format(meta_dict['os_moonset']))
-        file_nl.write("           illumination: {}\n".format(meta_dict['os_illumination']))
-        file_nl.write("*Weather conditions summary*:{} \n".format(meta_dict['os_weather_conditions']))
+        file_nl.write("          illumination: {}\n".format(meta_dict['os_illumination']))
+        file_nl.write("          sunset weather:{} \n".format(meta_dict['os_weather_conditions']))
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Plans for the night\n")
@@ -275,7 +280,11 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("h3. Weather Summary\n")
         file_nl.write("\n")
-        #file_nl.write()#add weather summary here
+        if os.path.exists(self.weather_file):
+            data = pd.read_csv(self.weather_file)
+            for index, row in data.iterrows():
+                if isinstance(row['desc'], str):
+                    file_nl.write("- {}:{} := {}; Temp: {}, Wind: {}, Humidity: {}\n".format(row['time'][0:2],row['time'][3:],row['desc'],str(row['temp']),str(row['wind']),row['humidity']))
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Details on the night progress from the OS (local time)\n")
@@ -288,6 +297,7 @@ class NightLog(object):
             supcal_file.close()
             file_nl.write("\n")
             file_nl.write("\n")
+
 
         os_entries=glob.glob(self.tmp_obs_dir+"*")
         if len(os_entries) > 0:
