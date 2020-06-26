@@ -253,11 +253,11 @@ class NightLog(object):
             (we'll want to add UTC times as well)
 
         """
-        
+
         file_nl=open(self.root_dir+'nightlog','w')
         meta_dict = json.load(open(self.meta_json,'r'))
         file_nl.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
-        #file_nl.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last'])) # DQS
+        file_nl.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last'])) # DQS
         file_nl.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
         file_nl.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
         file_nl.write("*Ephemerides in local time*:\n")
