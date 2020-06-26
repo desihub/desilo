@@ -352,7 +352,7 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         file_nl.write("          moonrise: {}\n".format(meta_dict['os_moonrise']))
         file_nl.write("          moonset: {}\n".format(meta_dict['os_moonset']))
         file_nl.write("          illumination: {}\n".format(meta_dict['os_illumination']))
-        file_nl.write("          sunset weather:{} \n".format(meta_dict['os_weather_conditions']))
+        file_nl.write("          sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Plans for the night\n")
