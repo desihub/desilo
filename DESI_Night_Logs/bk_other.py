@@ -123,9 +123,9 @@ def initialize_log():
 def exp_add():
     """
     Function to add line about an exposure sequence in the Night Log
-    
+
     Note, I really don't like how this is currently implemented on my end, but I also don't really l
-    ike that there are different functions for different types of inputs. I think we should have one kind of input, 
+    ike that there are different functions for different types of inputs. I think we should have one kind of input,
     and if the value is None or Nan then it's not included. So, I'll clean up my side if we can have fewer functions
     for DESI_Log
     """
@@ -161,7 +161,7 @@ def current_nl():
         nl_txt =  nl_txt + line + '\n'
     nl_text.text = nl_txt
     nl_file.closed
-    
+
 
 # Layouts and Actions on Bokeh Page
 init_bt.on_click(initialize_log)
@@ -172,7 +172,7 @@ nl_btn.on_click(current_nl)
 layout1 = layout([[title],
                  [subtitle_1],
                  [info_1],
-                 [date_input, [your_firstname, your_lastname]], 
+                 [date_input, [your_firstname, your_lastname]],
                  [init_bt],
                  [nl_info],
                  [[os_firstname, os_lastname], [LO_firstname, LO_lastname],[OA_firstname, OA_lastname]],

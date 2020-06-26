@@ -129,6 +129,11 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         return meta_dict
 
 
+    def add_plan_os(self):
+        """
+            Operations Scientist lists the objectives for the night.
+        """
+
     def add_weather_os(self, data):
         """
             Operations Scientist adds information regarding the weather.

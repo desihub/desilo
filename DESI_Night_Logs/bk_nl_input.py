@@ -106,9 +106,9 @@ def init_weather_source_data():
 weather_source = init_weather_source_data()
 columns = [TableColumn(field='time', title='Time UTC', width=100),
            TableColumn(field='desc', title='Description', width=200, editor=StringEditor()),
-           TableColumn(field='temp', title='Temperature', width=100, editor=NumberEditor()),
-           TableColumn(field='wind', title='Wind Speed', width=100, editor=NumberEditor()),
-           TableColumn(field='humidity', title='Humidity', width=100, editor=PercentEditor())]
+           TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
+           TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
+           TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
 
 weather_table = DataTable(source=weather_source, columns=columns, editable=True,
               sortable=False, reorderable=False, fit_columns=False,
@@ -203,19 +203,19 @@ def exp_add():
         obs_add()
 
     # Reset everything
-    exp_time.value = None 
-    exp_comment.value = None 
-    add_image.value = None 
+    exp_time.value = None
+    exp_comment.value = None
+    add_image.value = None
 
-    exp_exposure_start.value = None 
-    exp_exposure_finish.value = None 
+    exp_exposure_start.value = None
+    exp_exposure_finish.value = None
 
-    exp_type.value = None 
-    exp_script.value = None 
-    exp_time_end.value = None 
-    exp_focus_trim.value = None 
-    exp_tile.value = None 
-    exp_tile_type.value = None 
+    exp_type.value = None
+    exp_script.value = None
+    exp_time_end.value = None
+    exp_focus_trim.value = None
+    exp_tile.value = None
+    exp_tile_type.value = None
 
 def suc_add():
     """
@@ -267,7 +267,7 @@ def weather_add():
     We need to create a function in DESI_Log for adding a row of weather information
     """
     data = pd.DataFrame(weather_source.data)
-    DESI_Log.obs_add_weather(data)
+    DESI_Log.add_weather_os(data)
 
 def add_header():
     header_options.append(header_new.value)
@@ -310,7 +310,7 @@ def current_nl():
         nl_txt =  nl_txt + line + '\n'
     nl_text.text = nl_txt
     nl_file.closed
-    
+
 
 
 
