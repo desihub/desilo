@@ -120,6 +120,8 @@ def initialize_log():
     sunset_weather.value = meta_dict['os_weather_conditions']
 
 
+
+
 def exp_add():
     """
     Function to add line about an exposure sequence in the Night Log
