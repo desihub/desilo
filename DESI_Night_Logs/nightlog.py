@@ -66,9 +66,9 @@ class NightLog(object):
                 return str(int(time) + 1200)
         else :
             if len(str(int(time) - 1200))==3:
-                return = "0"+str(int(time) - 1200)
+                return  "0"+str(int(time) - 1200)
             else:
-                return = str(int(time) - 1200)
+                return  str(int(time) - 1200)
 
     def new_entry_or_replace(self,the_path):
         """
