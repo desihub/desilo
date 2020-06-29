@@ -93,7 +93,7 @@ def short_time(str_time):
 # TAB1: Initialize Night Log 
 title = Div(text='''<font size="6">DESI Night Log - Operating Scientist</font> ''', width=800)
 page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
-instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Do so below or connect to an existing Night Log using the date. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist once an hour. ",width=300)
+instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Do so below or connect to an existing Night Log using the date. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour. ",width=500)
 
 subtitle_1 = Div(text='''<font size="4">Initialize Night Log</font> ''',width=500)
 info_1 = Div(text='''<font size="2">Time Formats: 6:18pm = 18:18 = 1818. Use any format in either Local or UTC (select below). </font> ''',width=600)
@@ -174,7 +174,7 @@ def connect_log():
 
 # TAB2: Nightly Progress 
 global header_options
-header_options = ['Startup','Calibrations','Focus','Observation']
+header_options = ['Startup','Spectrographs Calibration','Focus','Observation']
 subtitle_2 = Div(text='''<font size="3">Nightly Progress</font> ''',width=500)
 info_2 = Div(text='''<font size="2">Fill In Only Information Relevant</font> ''',width=500)
 hdr_type = Select(title="Description Header - Use one already created", value = 'Observation', options=header_options)
@@ -211,7 +211,7 @@ def choose_exposure():
                  [exp_time],
                  [exp_comment],
                  [exp_btn]])
-    elif hdr_type.value == 'Calibrations':
+    elif hdr_type.value == 'Calibration':
         input_layout = layout([
                  [exp_time],
                  [exp_exposure_start, exp_exposure_finish],
@@ -233,7 +233,7 @@ def choose_exposure():
 def progress_add():
     data = [hdr_type.value, get_time(exp_time.value), exp_comment.value, exp_exposure_start.value, exp_exposure_finish.value, 
             exp_type.value, exp_script.value, get_time(exp_time_end.value), exp_focus_trim.value, exp_tile.value, exp_tile_type.value]
-    DESI_Log.add_exposure(data)
+    DESI_Log.obs_add_seq_os(data)
 
 
     clear_input([exp_time, exp_comment, add_image, exp_exposure_start, exp_exposure_finish, exp_type, exp_script,

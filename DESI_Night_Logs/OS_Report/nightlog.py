@@ -97,7 +97,7 @@ class NightLog(object):
                 time_string = "{}{}".format(kp_time.hour, kp_time.minute)
                 return time_string
             else:
-                time_string = " - {}:{} ({}:{})".format(kp_time.hour, kp_time.minute, utc_time.hour, utc_time.minute)
+                time_string = "{}:{}[{}:{}]".format(kp_time.hour, kp_time.minute, utc_time.hour, utc_time.minute)
                 return time_string
         except:
             return utc_string
@@ -287,7 +287,7 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
             the_path=self.dqs_pb_dir+self.get_timestamp(time)
 
         file=self.new_entry_or_replace(the_path)
-        file.write(self.write_time(time)+" := "+problem+"\n")
+        file.write("- "+self.write_time(time)+" := "+problem+"\n")
         file.close()
 
     def add_exp_dqs(self,time,remark):
@@ -404,12 +404,12 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
                     file_nl.write("- {}:{} := {}; Temp: {}, Wind: {}, Humidity: {}\n".format(row['time'][0:2],row['time'][3:],row['desc'],str(row['temp']),str(row['wind']),row['humidity']))
         file_nl.write("\n")
         file_nl.write("\n")
-        file_nl.write("h3. Details on the night progress from the OS (local time)\n")
+        file_nl.write("h3. Details on the night progress from the OS (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("\n")
         self.compile_entries(self.os_startcal_dir,file_nl)
         self.compile_entries(self.os_obs_dir,file_nl)
-        file_nl.write("h3. Details on the night progress from the DQS (local time)\n")
+        file_nl.write("h3. Details on the night progress from the DQS (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("\n")
         self.compile_entries(self.dqs_exp_dir,file_nl)
