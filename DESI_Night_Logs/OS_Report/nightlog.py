@@ -153,10 +153,14 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         return meta_dict
 
 
-    def add_plan_os(self):
+    def add_plan_os(self,order,plan):
         """
             Operations Scientist lists the objectives for the night.
         """
+        
+        file=open(self.root_dir+"nightplan_"+order,'a')
+        file.write("* "+plan+"\n")
+        file.close()
 
     def add_weather_os(self, data):
         """Operations Scientist adds information regarding the weather.
@@ -367,9 +371,7 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         file_nl.write("\n")
         file_nl.write("h3. Plans for the night\n")
         file_nl.write("\n")
-        #file_nl.write()#add night plan here
-        file_nl.write("\n")
-        file_nl.write("\n")
+        self.compile_entries(self.root_dir+"nightplan_",file_nl)
         file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("h5. Encountered by the OS\n")

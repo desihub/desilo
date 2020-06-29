@@ -171,6 +171,17 @@ def connect_log():
     except:
       pass
 
+# TAB1b: Night Plan
+subtitle_1b = Div(text='''<font size="3">Plan for the night</font> ''', width=500)
+plan_order = TextInput(title ='Expected Order:', placeholder = '1', value=None)
+plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
+plan_btn = Button(label='Add', button_type='primary')
+
+def add_plan():
+    """Adds item to the nightplan
+    """
+    DESI_Log.add_plan_os(get_time(plan_order.value),plan_input.value,'OS')
+    clear_input([plan_order, plan_input])
 
 # TAB2: Nightly Progress 
 global header_options
@@ -360,6 +371,13 @@ layout1 = layout([[title],
                  [info_connect]
                  ])
 tab1 = Panel(child=layout1, title="Initialization")
+
+layout1b = layout([[title],
+                  [subtitle_1b],
+                  [plan_order, plan_input],
+                  [plan_btn]
+                  ])
+tab1b = Panel(child=layout1b, title="Plan for the night")
 
 layout2 = layout(children = [[title],
                  [subtitle_2],
