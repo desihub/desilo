@@ -58,7 +58,7 @@ def get_time(time):
     """Returns strptime with utc. Takes time zone selection
     """  
     date = date_input.value
-    zone = zones[time_select.active]
+#    zone = zones[time_select.active]
     try:
         t = datetime.strptime(date+":"+time,'%Y%m%d:%H%M')
     except:
@@ -80,7 +80,7 @@ def short_time(str_time):
     """
     try:
       t = datetime.strptime(str_time, "%Y%m%dT%H:%M")
-      zone = zones[time_select.active]
+#      zone = zones[time_select.active]
       utc_time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = utc)
       time = utc_time.astimezone(zone)
       return "{}:{}".format(time.hour, time.minute)
@@ -96,8 +96,8 @@ page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=
 instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Do so below or connect to an existing Night Log using the date. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour. ",width=500)
 
 subtitle_1 = Div(text='''<font size="4">Initialize Night Log</font> ''',width=500)
-info_1 = Div(text='''<font size="2">Time Formats: 6:18pm = 18:18 = 1818. Use any format in either Local or UTC (select below). </font> ''',width=600)
-time_select = RadioButtonGroup(labels=["Local", "UTC"], active=0)
+info_1 = Div(text='''<font size="2">Time Formats: 6:18pm = 18:18 = 1818. Please input in Local Kitt Peak time. </font> ''',width=600)
+#time_select = RadioButtonGroup(labels=["Local", "UTC"], active=0)
 date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
 
 your_firstname = TextInput(title ='Your Name', placeholder = 'John')
@@ -351,7 +351,7 @@ layout1 = layout([[title],
                  [page_logo, instructions],
                  [subtitle_1],
                  [info_1],
-                 [time_select],
+#                 [time_select],
                  [date_input,connect_bt],
                  [[your_firstname, your_lastname], [LO_firstname, LO_lastname],[OA_firstname, OA_lastname]],
                  [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],

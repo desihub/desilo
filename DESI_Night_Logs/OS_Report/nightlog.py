@@ -94,10 +94,10 @@ class NightLog(object):
             utc_time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = self.utc)
             kp_time = utc_time.astimezone(self.kp_zone)
             if kp_only:
-                time_string = "{}{}".format(kp_time.hour, kp_time.minute)
+                time_string = "{}:{}".format(kp_time.hour, kp_time.minute)
                 return time_string
             else:
-                time_string = "{}:{}[{}:{}]".format(kp_time.hour, kp_time.minute, utc_time.hour, utc_time.minute)
+                time_string = "{}:{} [{}:{}]".format(kp_time.hour, kp_time.minute, utc_time.hour, utc_time.minute)
                 return time_string
         except:
             return utc_string
@@ -354,7 +354,7 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         file_nl.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last'])) # DQS
         file_nl.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
         file_nl.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
-        file_nl.write("*Ephemerides in local time*:\n")
+        file_nl.write("*Ephemerides in local time [UTC]*:\n")
         file_nl.write("* sunset: {}\n".format(self.write_time(meta_dict['os_sunset'])))
         file_nl.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['os_end18'])))
         file_nl.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['os_start18'])))
@@ -370,7 +370,7 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         #file_nl.write()#add night plan here
         file_nl.write("\n")
         file_nl.write("\n")
-        file_nl.write("h3. Problems and Operations Issues\n")
+        file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("h5. Encountered by the OS\n")
         file_nl.write("\n")
