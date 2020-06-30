@@ -12,7 +12,7 @@ view at: http://localhost:5006/OS_Report
 
 
 #Imports
-import os, glob
+import os, glob, sys
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -34,6 +34,8 @@ from bokeh.models.widgets import Panel, Tabs
 from bokeh.models import Span
 from astropy.time import Time, TimezoneInfo
 import astropy.units.si as u 
+
+sys.path.append(os.getcwd())
 
 import nightlog as nl                                                                  
 
@@ -58,7 +60,7 @@ def get_time(time):
     """Returns strptime with utc. Takes time zone selection
     """  
     date = date_input.value
-#    zone = zones[time_select.active]
+    zone = kp_zone #zones[time_select.active]
     try:
         t = datetime.strptime(date+":"+time,'%Y%m%d:%H%M')
     except:
@@ -80,14 +82,11 @@ def short_time(str_time):
     """
     try:
       t = datetime.strptime(str_time, "%Y%m%dT%H:%M")
-#      zone = zones[time_select.active]
-      utc_time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = utc)
-      time = utc_time.astimezone(zone)
-      return "{}:{}".format(time.hour, time.minute)
+      zone = kp_zone #zones[time_select.active]
+      time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
+      return "{}:{}".format(str(time.hour).zfill(2), str(time.minute).zfill(2))
     except:
       return str_time
-
-
 
 
 # TAB1: Initialize Night Log 
@@ -137,6 +136,7 @@ def initialize_log():
 
     update_weather_source_data()
     info_connect.text = 'Night Log is Initialized'
+    plan_txt.text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
 
 def connect_log():
     try:
@@ -147,6 +147,7 @@ def connect_log():
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
     DESI_Log.check_exists()
     info_connect.text = 'Connected to Existing Night Log'
+    plan_txt.text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
 
     meta_dict = DESI_Log.get_meta_data()
     your_firstname.value = short_time(meta_dict['os_1'])
@@ -172,7 +173,8 @@ def connect_log():
       pass
 
 # TAB1b: Night Plan
-subtitle_1b = Div(text='''<font size="3">Plan for the night</font> ''', width=500)
+subtitle_1b = Div(text='''<font size="3">Night Plan</font> ''', width=500)
+plan_txt = Div(text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/")
 plan_order = TextInput(title ='Expected Order:', placeholder = '1', value=None)
 plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
 plan_btn = Button(label='Add', button_type='primary')
@@ -183,9 +185,21 @@ def add_plan():
     DESI_Log.add_plan_os(get_time(plan_order.value),plan_input.value,'OS')
     clear_input([plan_order, plan_input])
 
+# TAB1c: Milestones
+subtitle_1c = Div(text='''<font size="3">Milestones & Major Accomplishments</font> ''', width=500)
+milestone_input = TextAreaInput(placeholder="Description", rows=6)
+milestone_exp_start = TextInput(title ='Exposure Start', placeholder = '12345', value=None)
+milestone_exp_end = TextInput(title ='Exposure End', placeholder = '12345', value=None)
+milestone_btn = Button(label='Add', button_type='primary')
+
+def milestone_add():
+    DESI_Log.add_milestone_os([milestone_input.value, milestone_exp_start.value, milestone_exp_end.value])
+    clear_input([milestone_input, milestone_exp_start, milestone_exp_end])
+
+
 # TAB2: Nightly Progress 
 global header_options
-header_options = ['Startup','Spectrographs Calibration','Focus','Observation']
+header_options = ['Startup','Calibration','Focus','Observation']
 subtitle_2 = Div(text='''<font size="3">Nightly Progress</font> ''',width=500)
 info_2 = Div(text='''<font size="2">Fill In Only Information Relevant</font> ''',width=500)
 hdr_type = Select(title="Description Header - Use one already created", value = 'Observation', options=header_options)
@@ -244,7 +258,7 @@ def choose_exposure():
 def progress_add():
     data = [hdr_type.value, get_time(exp_time.value), exp_comment.value, exp_exposure_start.value, exp_exposure_finish.value, 
             exp_type.value, exp_script.value, get_time(exp_time_end.value), exp_focus_trim.value, exp_tile.value, exp_tile_type.value]
-    DESI_Log.obs_add_seq_os(data)
+    DESI_Log.add_progress(data)
 
 
     clear_input([exp_time, exp_comment, add_image, exp_exposure_start, exp_exposure_finish, exp_type, exp_script,
@@ -357,12 +371,12 @@ weather_btn.on_click(weather_add)
 prob_btn.on_click(prob_add)
 nl_btn.on_click(current_nl)
 check_btn.on_click(check_add)
+milestone_btn.on_click(milestone_add)
 
 layout1 = layout([[title],
                  [page_logo, instructions],
                  [subtitle_1],
                  [info_1],
-#                 [time_select],
                  [date_input,connect_bt],
                  [[your_firstname, your_lastname], [LO_firstname, LO_lastname],[OA_firstname, OA_lastname]],
                  [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
@@ -374,10 +388,18 @@ tab1 = Panel(child=layout1, title="Initialization")
 
 layout1b = layout([[title],
                   [subtitle_1b],
+                  [plan_txt],
                   [plan_order, plan_input],
                   [plan_btn]
                   ])
-tab1b = Panel(child=layout1b, title="Plan for the night")
+tab1b = Panel(child=layout1b, title="Night Plan")
+
+layout1c = layout([[title],
+                    [subtitle_1c],
+                    [milestone_input],
+                    [milestone_exp_start,milestone_exp_end],
+                    [milestone_btn]])
+tab1c = Panel(child=layout1c, title='Milestones')
 
 layout2 = layout(children = [[title],
                  [subtitle_2],
@@ -415,7 +437,7 @@ layout6 = layout([[title],
                 [check_txt]])
 tab6 = Panel(child=layout6, title="OS Checklist")
 
-tabs = Tabs(tabs=[ tab1, tab2 , tab3, tab4, tab6, tab5])
+tabs = Tabs(tabs=[ tab1, tab1b, tab1c, tab2 , tab3, tab4, tab6, tab5])
 
 curdoc().title = 'DESI Night Log - Operations Scientist'
 curdoc().add_root(tabs)

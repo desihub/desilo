@@ -37,12 +37,13 @@ class NightLog(object):
         self.dqs_exp_dir=self.dqs_dir+'exposure_'
         self.os_pb_dir=self.os_dir+'problem_'
         self.dqs_pb_dir=self.dqs_dir+'problem_'
+        self.milestone_file = self.os_dir + '/milestones.pkl'
         self.os_cl=self.os_dir+'checklist'
         self.dqs_cl=self.dqs_dir+'checklist'
         #self.exp_file_pkl = self.dqa_dir+'/exposures.pkl'
         #self.dqs_exp_file = self.dqa_dir+'/exposures'
         self.weather_file = self.os_dir+'/weather.csv'
-        self.meta_json = self.root_dir+'nightlog_meta.json'
+        self.meta_json = self.root_dir+'/nightlog_meta.json'
 
         # Set this if you want to allow for replacing lines or not
         self.replace = True
@@ -77,6 +78,7 @@ class NightLog(object):
             Generates time stamp for the entry.
         """
         time = self.write_time(strtime, kp_only=True)
+        time = '{}{}'.format(time[0:2],time[3:])
         if int(time) < 1200 :
             if len(str(int(time) + 1200))==3:
                 return "0"+str(int(time) + 1200)
@@ -88,19 +90,18 @@ class NightLog(object):
             else:
                 return  str(int(time) - 1200)
 
-    def write_time(self, utc_string, kp_only=False):
+    def write_time(self, time_string, kp_only=False):
         try:
-            t = datetime.strptime(utc_string, "%Y%m%dT%H:%M")
-            utc_time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = self.utc)
-            kp_time = utc_time.astimezone(self.kp_zone)
+            t = datetime.strptime(time_string, "%Y%m%dT%H:%M")
+            kp_time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = self.kp_zone)
+            utc_time = kp_time.astimezone(self.utc)
             if kp_only:
-                time_string = "{}:{}".format(kp_time.hour, kp_time.minute)
-                return time_string
+                tt = "{}:{}".format(str(kp_time.hour).zfill(2), str(kp_time.minute).zfill(2))
             else:
-                time_string = "{}:{} [{}:{}]".format(kp_time.hour, kp_time.minute, utc_time.hour, utc_time.minute)
-                return time_string
+                tt = "{}:{} [{}:{}]".format(str(kp_time.hour).zfill(2), str(kp_time.minute).zfill(2), str(utc_time.hour).zfill(2), str(utc_time.minute).zfill(2))
+            return tt
         except:
-            return utc_string
+            return time_string
 
 
     def new_entry_or_replace(self,the_path):
@@ -141,11 +142,13 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
 
 
     def add_dqs_observer(self,dqs_firstname, dqs_lastname):
-
+        print(self.meta_json)
         meta_dict = json.load(open(self.meta_json,'r'))
+        print(meta_dict)
         meta_dict['dqs_1'] = dqs_firstname
         meta_dict['dqs_last'] = dqs_lastname
-        json.dump(meta_dict,open('nightlog_meta.json','w'))
+        print(meta_dict)
+        json.dump(meta_dict,open(self.meta_json,'w'))
 
 
     def get_meta_data(self):
@@ -162,6 +165,18 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         file.write("* "+plan+"\n")
         file.close()
 
+    def add_milestone_os(self, data_list):
+        milestones = ['Desc','Exp_Start','Exp_Stop']
+        if not os.path.exists(self.milestone_file):
+            df = pd.DataFrame(columns=milestones)
+            df.to_pickle(self.milestone_file)
+        df = pd.read_pickle(self.milestone_file)
+        data_df = pd.DataFrame([data_list], columns=milestones)
+
+        df = df.append(data_df)
+        df.to_pickle(self.milestone_file)
+
+
     def add_weather_os(self, data):
         """Operations Scientist adds information regarding the weather.
         """
@@ -174,9 +189,10 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
             Operations Scientist comment/remark on Start Up & Calibrations procedures.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time_start)
+        the_path=self.os_startcal_dir+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
-        file.write(self.write_time(time)+" := "+remark+"\n")
+        print(self.write_time(time))
+        file.write("- "+self.write_time(time)+" := "+remark+"\n")
         file.close()
 
     def supcal_add_seq_os(self,time,exp_num,exp_type,comment):
@@ -184,9 +200,9 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
             Operations Scientist adds new sequence in Start Up & Calibrations.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time_start)
+        the_path=self.os_startcal_dir+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
-        file.write(self.write_time(time)+" := exposure "+exp_num+", "+exp_type+", "+comment+"\n")
+        file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+", "+comment+"\n")
         file.close()
 
     def supcal_add_spec_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment):
@@ -197,10 +213,10 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         the_path=self.os_startcal_dir+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if (time_stop == "") or (time_stop == " ") :
-            file.write(self.write_time(time)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comments+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comments+"\n")
         else:
-            file.write(self.write_time(time)+" := script @"+script+"@, first exposure "+exp_first+"\n")
-            file.write(self.write_time(time)+" := last exposure "+exp_last+", "+comment+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
+            file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
         file.close()
 
     def supcal_add_focus_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment,trim):
@@ -211,10 +227,10 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         the_path=self.os_startcal_dir+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if (time_stop == "") or (time_stop == " ") :
-            file.write(self.write_time(time)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
         else:
-            file.write(self.write_time(time)+" := script @"+script+"@, first exposure "+exp_first+"\n")
-            file.write(self.write_time(time)+" := last exposure "+exp_last+", "+comment+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
+            file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
         file.close()
 
     def obs_new_item_os(self,time,header):
@@ -228,18 +244,39 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         file.write("\n")
         file.close()
 
-    def obs_add_seq_os(self,time,exp_num,exp_type,tile_number,tile_type,comment):
-        """
-            Operations Scientist adds new sequence in Observing.
-        """
+    def add_progress(self, data_list):
+        hdr_type, exp_time, exp_comment, exp_exposure_start, exp_exposure_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type = data_list
+        if hdr_type == 'Focus':
+            self.supcal_add_focus_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment,exp_focus_trim)
+        elif hdr_type == 'Startup':
+            self.supcal_add_com_os(exp_time,exp_comment)
+        elif hdr_type == 'Calibration':
+            if exp_script not in [None, " ", ""]:
+                self.supcal_add_spec_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
+            else:
+                self.supcal_add_seq_os(exp_time,exp_exposure_start,exp_type,exp_comment)
+        elif hdr_type == 'Observation':
+            if exp_script not in [None, " ", ""]:
+                self.obs_add_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
+            else:
+                if exp_exposure_start not in [None, " ", ""]:
+                    self.obs_add_seq_os(exp_time, exp_tile, exp_type, exp_exposure_start, exp_type, exp_comment)
+                else:
+                    self.obs_add_com_os(exp_time,exp_comment)
 
+
+    def obs_add_seq_os(self,time, tile_number, tile_type, exp_num, exp_type, comment):
+        """
+            NEED TO UPDATE THIS
+        """
+        
         the_path=self.os_obs_dir+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
 
         if (tile_number == "") or (tile_number == " ") :
-            file.write(self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+comment+"\n")
+            file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+comment+"\n")
         else :
-            file.write(self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+tile_type+" tile "+tile_number+", "+comment+"\n")
+            file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+tile_type+" tile "+tile_number+", "+comment+"\n")
         file.close()
 
     def obs_add_com_os(self,time,remark):
@@ -249,7 +286,7 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
 
         the_path=self.os_obs_dir+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
-        file.write(self.write_time(time)+" := "+remark+"\n")
+        file.write("- "+self.write_time(time)+" := "+remark+"\n")
         file.close()
 
     def obs_add_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment):
@@ -260,10 +297,10 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         the_path=self.os_obs_dir+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if (time_stop == "") or (time_stop == " ") :
-            file.write(self.write_time(time)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
         else:
-            file.write(self.write_time(time)+" := script @"+script+"@, first exposure "+exp_first+"\n")
-            file.write(self.write_time(time)+" := last exposure "+exp_last+", "+comment+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
+            file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
         file.close()
 
     def add_to_checklist(self,time,user):
@@ -376,6 +413,13 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         file_nl.write("Main items are listed below:\n")
         file_nl.write("\n")
         self.compile_entries(self.root_dir+"nightplan_",file_nl)
+        file_nl.write("h3. Milestones and Major Progress")
+        file_nl.write("\n")
+        m_entries = pd.read_pickle(self.milestone_file)
+        for idx, row in m_entries.iterrows():
+            file_nl.write("* {}; Exposures: [{} - {}]\n".format(row['Desc'],row['Exp_Start'],row['Exp_Stop']))
+        file_nl.write("\n")
+        file_nl.write("\n")
         file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("h5. Encountered by the OS\n")
