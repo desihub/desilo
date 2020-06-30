@@ -1,6 +1,5 @@
 """
 Created on April 9, 2020
-
 @author: Satya Gontcho A Gontcho
 """
 
@@ -380,7 +379,6 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         """
             Merge together all the different files into one '.txt' file to copy past on the eLog.
             (we'll want to add UTC times as well)
-
         """
 
         file_nl=open(self.root_dir+'nightlog','w')
