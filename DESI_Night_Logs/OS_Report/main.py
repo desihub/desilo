@@ -12,27 +12,17 @@ view at: http://localhost:5006/OS_Report
 
 
 #Imports
-import os, glob, sys
-import numpy as np
+import os, sys
 import pandas as pd
 from datetime import datetime
 
-from bokeh.io import curdoc  # , output_file, save
-from bokeh.plotting import figure, show, output_file
-from bokeh.palettes import Magma256, Category10
-from bokeh.models import (
-    LinearColorMapper, ColorBar, AdaptiveTicker, TextInput, ColumnDataSource, Range1d,
-    Title, Button, CheckboxButtonGroup, CategoricalColorMapper, Paragraph,DateFormatter,
-    TextAreaInput, Select, PreText, Span, CheckboxGroup, RadioButtonGroup)
+from bokeh.io import curdoc
+from bokeh.models import (TextInput, ColumnDataSource, Button, TextAreaInput, Select, PreText, CheckboxGroup)
 from bokeh.models.widgets.markups import Div
-from bokeh.models.widgets.tables import (
-    DataTable, TableColumn, SelectEditor, IntEditor, NumberEditor, StringEditor,PercentEditor)
-from bokeh.layouts import column, layout
-from bokeh.palettes import d3
-from bokeh.client import push_session
+from bokeh.models.widgets.tables import (DataTable, TableColumn, NumberEditor, StringEditor,PercentEditor)
+from bokeh.layouts import layout
 from bokeh.models.widgets import Panel, Tabs
-from bokeh.models import Span
-from astropy.time import Time, TimezoneInfo
+from astropy.time import TimezoneInfo
 import astropy.units.si as u 
 
 sys.path.append(os.getcwd())
@@ -88,36 +78,38 @@ def short_time(str_time):
     except:
       return str_time
 
+inst_style = {'font-family':'serif','font-size':'150%'}
+subt_style = {'font-family':'serif','font-size':'200%'}
 
 # TAB1: Initialize Night Log 
-title = Div(text='''<font size="6">DESI Night Log - Operating Scientist</font> ''', width=800)
+title = Div(text="DESI Night Log - Operating Scientist", width=800,style = {'font-family':'serif','font-size':'250%'})
 page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
-instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Do so below or connect to an existing Night Log using the date. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour. ",width=500)
+instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Do so below or connect to an existing Night Log using the date. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour. ",width=500, style=inst_style)
 
-subtitle_1 = Div(text='''<font size="4">Initialize Night Log</font> ''',width=500)
-info_1 = Div(text='''<font size="2">Time Formats: 6:18pm = 18:18 = 1818. Please input in Local Kitt Peak time. </font> ''',width=600)
+subtitle_1 = Div(text="Initialize Night Log",width=500,style = subt_style)
+info_1 = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these formats. <b>Input all times in Local Kitt Peak time.</b>\n To continue an existing Night Log, enter the date and press the blue button. If a log has not yet been started for the day, you need to initialize it with ephemirides and press the green button",width=800,style=inst_style)
 #time_select = RadioButtonGroup(labels=["Local", "UTC"], active=0)
 date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
 
 your_firstname = TextInput(title ='Your Name', placeholder = 'John')
-your_lastname = TextInput(value = 'Smith')
-LO_firstname = TextInput(title ='Lead Observer Name', value = 'Molly')
-LO_lastname = TextInput(value = 'Jackson')
-OA_firstname = TextInput(title ='Observing Assistant Name', value = 'Paul')
-OA_lastname = TextInput(value = 'Lawson')
+your_lastname = TextInput(placeholder = 'Smith')
+LO_firstname = TextInput(title ='Lead Observer Name', placeholder = 'Molly')
+LO_lastname = TextInput(placeholder = 'Jackson')
+OA_firstname = TextInput(title ='Observing Assistant Name', placeholder = 'Paul')
+OA_lastname = TextInput(placeholder = 'Lawson')
 
-time_sunset = TextInput(title ='Time of Sunset', value = '1838')
-time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends', value = '1956')
-time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends', value = '0513')
-time_sunrise = TextInput(title ='Time of Sunrise', value = '0631')
-time_moonrise = TextInput(title ='Time of Moonrise', value = '0127')
-time_moonset = TextInput(title ='Time of Moonset', value = 'daytime')
-illumination = TextInput(title ='Moon Illumination', value = '50')
-sunset_weather = TextInput(title ='Weather conditions as sunset', value = 'clear skies')
+time_sunset = TextInput(title ='Time of Sunset', placeholder = '1838')
+time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends', placeholder = '1956')
+time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends', placeholder = '0513')
+time_sunrise = TextInput(title ='Time of Sunrise', placeholder = '0631')
+time_moonrise = TextInput(title ='Time of Moonrise', placeholder = '0127')
+time_moonset = TextInput(title ='Time of Moonset', placeholder = 'daytime')
+illumination = TextInput(title ='Moon Illumination', placeholder = '50')
+sunset_weather = TextInput(title ='Weather conditions as sunset', placeholder = 'clear skies')
 
-init_bt = Button(label="Initialize Night Log", button_type='primary',width=300)
-connect_bt = Button(label="Connect to Existing Night Log (enter date)", button_type='primary',width=300)
-info_connect = Div(text='''Not connected to Night Log''')
+init_bt = Button(label="Initialize Night Log", button_type='success',width=300)
+connect_bt = Button(label="Connect to Existing Night Log", button_type='primary',width=300)
+info_connect = Div(text="Not connected to Night Log",style={'font-family':'serif','font-size':'150%','color':'red'})
 
 def initialize_log():
     """
@@ -145,8 +137,11 @@ def connect_log():
         date = datetime.now()
     global DESI_Log
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
-    DESI_Log.check_exists()
-    info_connect.text = 'Connected to Existing Night Log'
+    exists = DESI_Log.check_exists()
+    if exists:
+      info_connect.text = 'Connected to Existing Night Log for {}'.format(date_input.value)
+    else:
+      info_connect.text = 'The Night Log for {} has not yet been initialized'.format(date_input.value)
     plan_txt.text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
 
     meta_dict = DESI_Log.get_meta_data()
@@ -173,8 +168,9 @@ def connect_log():
       pass
 
 # TAB1b: Night Plan
-subtitle_1b = Div(text='''<font size="3">Night Plan</font> ''', width=500)
-plan_txt = Div(text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/")
+subtitle_1b = Div(text="Night Plan", width=500,style=subt_style)
+plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion",width=800,style=inst_style)
+plan_txt = Div(text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/",style=inst_style)
 plan_order = TextInput(title ='Expected Order:', placeholder = '1', value=None)
 plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
 plan_btn = Button(label='Add', button_type='primary')
@@ -186,7 +182,8 @@ def add_plan():
     clear_input([plan_order, plan_input])
 
 # TAB1c: Milestones
-subtitle_1c = Div(text='''<font size="3">Milestones & Major Accomplishments</font> ''', width=500)
+subtitle_1c = Div(text="Milestones & Major Accomplishments", width=500, style=subt_style)
+milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it",width=800, style=inst_style)
 milestone_input = TextAreaInput(placeholder="Description", rows=6)
 milestone_exp_start = TextInput(title ='Exposure Start', placeholder = '12345', value=None)
 milestone_exp_end = TextInput(title ='Exposure End', placeholder = '12345', value=None)
@@ -200,10 +197,11 @@ def milestone_add():
 # TAB2: Nightly Progress 
 global header_options
 header_options = ['Startup','Calibration','Focus','Observation']
-subtitle_2 = Div(text='''<font size="3">Nightly Progress</font> ''',width=500)
-info_2 = Div(text='''<font size="2">Fill In Only Information Relevant</font> ''',width=500)
-hdr_type = Select(title="Description Header - Use one already created", value = 'Observation', options=header_options)
-hdr_btn = Button(label='Select Header', button_type='primary')
+subtitle_2 = Div(text="Nightly Progress",width=500, style=subt_style)
+progress_inst = Div(text="Throughout the night record the progress, including comments on Calibrations and Exposures. All exposures are recorded in the eLog, so only enter information that can provide additional information.", width=800, style=inst_style)
+info_2 = Div(text="Fill In Only Relevant Details",width=500, style=inst_style)
+hdr_type = Select(title="Observation Type", value = 'Observation', options=header_options)
+hdr_btn = Button(label='Select', button_type='primary')
 
 exp_time = TextInput(title ='Time', placeholder = '2007',value=None)
 exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=6)
@@ -261,12 +259,12 @@ def progress_add():
     DESI_Log.add_progress(data)
 
 
-    clear_input([exp_time, exp_comment, add_image, exp_exposure_start, exp_exposure_finish, exp_type, exp_script,
+    clear_input([exp_time, exp_comment, exp_exposure_start, exp_exposure_finish, exp_type, exp_script,
                 exp_time_end, exp_focus_trim, exp_tile, exp_tile_type])
 
 
 # TAB3: Weather
-subtitle_3 = Div(text='''<font size="3">Weather</font> ''', width=500)
+subtitle_3 = Div(text="Weather", width=500,style=subt_style)
 
 def init_weather_source_data():
     """Creates a table with pre-identified Times for weather input
@@ -282,7 +280,7 @@ columns = [TableColumn(field='time', title='Time UTC', width=100),
            TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
            TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
            TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
-
+weather_inst = Div(text="Every hour include a description of the weather and othe relevant information. Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=800, style=inst_style)
 weather_table = DataTable(source=weather_source, columns=columns, editable=True,
               sortable=False, reorderable=False, fit_columns=False,
               min_width=1300, sizing_mode='stretch_width')
@@ -307,7 +305,8 @@ def weather_add():
     DESI_Log.add_weather_os(data)
 
 # TAB4: Problems
-subtitle_4 = Div(text='''<font size="3">Problems</font> ''', width=500)
+subtitle_4 = Div(text="Problems", width=500, style=subt_style)
+prob_inst = Div(text="Describe problems as they come up and at what time they occur. If possible, include a description of the remedy.", width=800, style=inst_style)
 prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
 prob_input = TextAreaInput(placeholder="description", rows=6, title="Problem Description:")
 prob_btn = Button(label='Add', button_type='primary')
@@ -320,11 +319,12 @@ def prob_add():
 
 
 # TAB5: Checklists
-subtitle_6 = Div(text='''<font size="3">OS Checklist</font> ''', width=500)
+subtitle_6 = Div(text="OS Checklist", width=500, style=subt_style)
+checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", width=800, style=inst_style )
 os_checklist = CheckboxGroup(
         labels=["Did you check the weather?", "Did you check the guiding?", "Did you check the focal plane?","Did you check the spectrographs?"])
 check_time = TextInput(title ='Time', placeholder = '2007', value=None)
-check_txt = Div(text=" ")
+check_txt = Div(text=" ",style=inst_style)
 check_btn = Button(label='Submit', button_type='primary')
 
 def check_add():
@@ -343,9 +343,9 @@ def check_add():
     os_checklist.active = []
 
 # TAB6: Current Night Log
-subtitle_5 = Div(text='''<font size="3">Current Night Log</font> ''', width=500)
+subtitle_5 = Div(text="Current Night Log", width=500,style=subt_style)
 nl_btn = Button(label='Get Current Night Log', button_type='primary')
-nl_text = Div(text='''Current Night Log''',width=1000)
+nl_text = Div(text="Current Night Log",width=1000,style=inst_style)
 
 def current_nl():
     """Return the current Night Log
@@ -388,6 +388,7 @@ tab1 = Panel(child=layout1, title="Initialization")
 
 layout1b = layout([[title],
                   [subtitle_1b],
+                  [plan_inst],
                   [plan_txt],
                   [plan_order, plan_input],
                   [plan_btn]
@@ -396,6 +397,7 @@ tab1b = Panel(child=layout1b, title="Night Plan")
 
 layout1c = layout([[title],
                     [subtitle_1c],
+                    [milestone_inst],
                     [milestone_input],
                     [milestone_exp_start,milestone_exp_end],
                     [milestone_btn]])
@@ -403,6 +405,7 @@ tab1c = Panel(child=layout1c, title='Milestones')
 
 layout2 = layout(children = [[title],
                  [subtitle_2],
+                 [progress_inst],
                  [info_2],
                  [hdr_type, hdr_btn],
                  [input_layout]
@@ -412,6 +415,7 @@ tab2 = Panel(child=layout2, title="Nightly Progress")
 
 layout3 = layout([[title],
                  [subtitle_3],
+                 [weather_inst],
                  [weather_table],
                  [weather_btn]
                  ])
@@ -419,6 +423,7 @@ tab3 = Panel(child=layout3, title="Weather")
 
 layout4 = layout([[title],
                  [subtitle_4],
+                 [prob_inst],
                  [prob_time, prob_input],
                  [prob_btn]
                  ])
@@ -432,12 +437,13 @@ tab5 = Panel(child=layout5, title="Current Night Log")
 
 layout6 = layout([[title],
                 [subtitle_6],
+                [checklist_inst],
                 [os_checklist],
                 [check_time, check_btn],
                 [check_txt]])
 tab6 = Panel(child=layout6, title="OS Checklist")
 
-tabs = Tabs(tabs=[ tab1, tab1b, tab1c, tab2 , tab3, tab4, tab6, tab5])
+tabs = Tabs(tabs=[tab1, tab1b, tab1c, tab2, tab3, tab4, tab6, tab5])
 
 curdoc().title = 'DESI Night Log - Operations Scientist'
 curdoc().add_root(tabs)

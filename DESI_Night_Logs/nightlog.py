@@ -5,12 +5,11 @@ Created on April 9, 2020
 
 import os
 import glob
-import numpy as np
-import pandas as pd
 import json
+import pandas as pd
 from datetime import datetime
 
-from astropy.time import Time, TimezoneInfo
+from astropy.time import TimezoneInfo
 import astropy.units.si as u 
 
 
@@ -66,10 +65,10 @@ class NightLog(object):
     def check_exists(self):
 
         if not os.path.exists(self.dqs_dir):
-            return 'Night Log has not yet been initialized'
+            return False
         else:
             #Get data from get_started_os and return that
-            return 'Night Log has been initialized'
+            return True
 
 
     def get_timestamp(self,strtime):
@@ -127,7 +126,7 @@ class NightLog(object):
 
 
     def get_started_os(self,your_firstname,your_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
-time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
+                        time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         """
             Operations Scientist lists the personal present, ephemerids and weather conditions at sunset.
         """
@@ -190,7 +189,6 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
 
         the_path=self.os_startcal_dir+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
-        print(self.write_time(time))
         file.write("- "+self.write_time(time)+" := "+remark+"\n")
         file.close()
 
@@ -211,7 +209,7 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
 
         the_path=self.os_startcal_dir+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
-        if (time_stop == "") or (time_stop == " ") :
+        if time_stop in [None, "", " "]: 
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comments+"\n")
         else:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
@@ -225,7 +223,7 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
 
         the_path=self.os_startcal_dir+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
-        if (time_stop == "") or (time_stop == " ") :
+        if time_stop in [None, "", " "]:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
         else:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
@@ -244,6 +242,9 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         file.close()
 
     def add_progress(self, data_list):
+        """
+        This function calls the correct functions in nightlog.py and provides an interface with the App
+        """
         hdr_type, exp_time, exp_comment, exp_exposure_start, exp_exposure_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type = data_list
         if hdr_type == 'Focus':
             self.supcal_add_focus_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment,exp_focus_trim)
@@ -272,7 +273,7 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         the_path=self.os_obs_dir+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
 
-        if (tile_number == "") or (tile_number == " ") :
+        if tile_numer in [None, "", " "]:
             file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+comment+"\n")
         else :
             file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+tile_type+" tile "+tile_number+", "+comment+"\n")
@@ -303,6 +304,9 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         file.close()
 
     def add_to_checklist(self,time,user):
+        """
+        Adds time that a checklist was completed. This cannot be edited.
+        """
         if user == 'OS':
             the_path = self.os_cl
         elif user == 'DQS':
@@ -321,14 +325,18 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
         """
             Adds details on a problem encountered.
         """
-        if user == 'OS':
-            the_path=self.os_pb_dir+self.get_timestamp(time)
-        elif user == 'DQS':
-            the_path=self.dqs_pb_dir+self.get_timestamp(time)
-
-        file=self.new_entry_or_replace(the_path)
-        file.write("- "+self.write_time(time)+" := "+problem+"\n")
-        file.close()
+        if user == 'Other':
+            pass
+        else:
+            if user == 'OS':
+                the_path=self.os_pb_dir+self.get_timestamp(time)
+            elif user == 'DQS':
+                the_path=self.dqs_pb_dir+self.get_timestamp(time)
+            print(time)
+            print(self.write_time(time))
+            file=self.new_entry_or_replace(the_path)
+            file.write("- "+self.write_time(time)+" := "+problem+"\n")
+            file.close()
 
     # def add_exp_dqs(self,data_list):
     #     """
@@ -339,6 +347,10 @@ time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
     #     file=self.new_entry_or_replace(the_path)
     #     file.write(self.write_time(time)+" := "+remark+"\n")
     #     file.close()
+
+    def add_comment_other(self, time, comment, name):
+        ## Not sure how we want to implement this currently
+        pass
 
     def add_dqs_exposure(self, data):
     

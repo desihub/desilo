@@ -3,36 +3,24 @@ Created on May 21, 2020
 
 @author: Parker Fagrelius
 
-start server with the following command:
+start server with the following command from folder above this.
 
-bokeh serve --show bk_nl_dqs_input.py
+bokeh serve --show DQS_Report
 
-view at: http://localhost:5006/bk_nl_dqs_input
+view at: http://localhost:5006/DQS_Report
 """
 
 
 #Imports
-import os, glob, sys
-import numpy as np
-import pandas as pd
+import os, sys
 from datetime import datetime
 
 from bokeh.io import curdoc  # , output_file, save
-from bokeh.plotting import figure, show, output_file
-from bokeh.palettes import Magma256, Category10
-from bokeh.models import (
-    LinearColorMapper, ColorBar, AdaptiveTicker, TextInput, ColumnDataSource, Range1d,
-    Title, Button, CheckboxButtonGroup, CategoricalColorMapper, Paragraph,DateFormatter,
-    TextAreaInput, Select, PreText, Span, CheckboxGroup, RadioButtonGroup, RadioGroup)
+from bokeh.models import (TextInput, ColumnDataSource, Button, RadioGroup, TextAreaInput, Select,  Span, CheckboxGroup, RadioButtonGroup)
 from bokeh.models.widgets.markups import Div
-from bokeh.models.widgets.tables import (
-    DataTable, TableColumn, SelectEditor, IntEditor, NumberEditor, StringEditor,PercentEditor)
-from bokeh.layouts import column, layout
-from bokeh.palettes import d3
-from bokeh.client import push_session
+from bokeh.layouts import layout
 from bokeh.models.widgets import Panel, Tabs
-from bokeh.models import Span
-from astropy.time import Time, TimezoneInfo
+from astropy.time import TimezoneInfo
 import astropy.units.si as u 
 
 sys.path.append(os.getcwd())
@@ -89,22 +77,26 @@ def short_time(str_time):
     except:
       return str_time
 
+inst_style = {'font-family':'serif','font-size':'150%'}
+subt_style = {'font-family':'serif','font-size':'200%'}
+
 # INITIALIZE NIGHT LOG
-title = Div(text='''<font size="6">DESI Night Log - Data QA Scientist</font> ''',width=800)
+title = Div(text="DESI Night Log - Data QA Scientist", width=600,style = {'font-family':'serif','font-size':'250%'})
 page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
-instructions = Div(text="The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality. You can connect to an existing Night Log that was created by the Observing Scientist. ",width=500)
+instructions = Div(text="The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality. You can connect to an existing Night Log that was created by the Observing Scientist. ",width=500,style=inst_style)
 
 
-subtitle_1 = Div(text='''<font size="3">Connect to Night Log</font> ''',width=500)
-info_1 = Div(text='''<font size="2">Time Formats: 6:18pm = 18:18 = 1818. All times in Local Kitt Peak Time </font> ''',width=500)
+subtitle_1 = Div(text="Connect to Night Log",width=500,style=subt_style)
+info_1 = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these formats. <b>Input all times in Local Kitt Peak time.</b> When you input the date and your name, press the blue button. All relevant Night Log meta data will be displayed below.",width=800,style=inst_style)
 date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
 
 your_firstname = TextInput(title ='Your Name', placeholder = 'John')
 your_lastname = TextInput(placeholder = 'Smith')
 
 init_bt = Button(label="Connect to Night Log", button_type='primary',width=300)
+connect_txt = Div(text=' ', width=600, style={'font-family':'serif','font-size':'125%','color':'red'})
 
-nl_info = Div(text="""Night Log Info""", width=300)
+nl_info = Div(text="Night Log Info", width=500,style=inst_style)
 os_firstname = TextInput(title ='OS Name')
 os_lastname = TextInput()
 LO_firstname = TextInput(title ='LO Name')
@@ -128,36 +120,41 @@ def initialize_log():
         date = datetime.strptime(date_input.value, '%Y%m%d')
     except:
         date = datetime.now()
-
     global DESI_Log
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
+    exists = DESI_Log.check_exists()
+    if exists:
+      connect_txt.text = 'Connected to Night Log for {}'.format(date_input.value)
+      DESI_Log.add_dqs_observer(your_firstname.value, your_lastname.value)
+      meta_dict = DESI_Log.get_meta_data()
 
-    DESI_Log.add_dqs_observer(your_firstname.value, your_lastname.value)
+      your_firstname.value = meta_dict['dqs_1']
+      your_lastname.value = meta_dict['dqs_last']
+      os_firstname.value = meta_dict['os_1']
+      os_lastname.value = meta_dict['os_last']
+      LO_firstname.value = short_time(meta_dict['os_lo_1'])
+      LO_lastname.value = short_time(meta_dict['os_lo_last'])
+      OA_firstname.value = short_time(meta_dict['os_oa_1'])
+      OA_lastname.value = short_time(meta_dict['os_oa_last'])
+      time_sunset.value = short_time(meta_dict['os_sunset'])
+      time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
+      time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
+      time_sunrise.value = short_time(meta_dict['os_sunrise'])
+      time_moonrise.value = short_time(meta_dict['os_moonrise'])
+      time_moonset.value = short_time(meta_dict['os_moonset'])
+      illumination.value = meta_dict['os_illumination']
+      sunset_weather.value = meta_dict['os_weather_conditions']
+    else:
+      connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(date_input.value)
+
     
-    meta_dict = DESI_Log.get_meta_data()
-
-    your_firstname.value = meta_dict['dqs_1']
-    your_lastname.value = meta_dict['dqs_last']
-    os_firstname.value = meta_dict['os_1']
-    os_lastname.value = meta_dict['os_last']
-    LO_firstname.value = short_time(meta_dict['os_lo_1'])
-    LO_lastname.value = short_time(meta_dict['os_lo_last'])
-    OA_firstname.value = short_time(meta_dict['os_oa_1'])
-    OA_lastname.value = short_time(meta_dict['os_oa_last'])
-    time_sunset.value = short_time(meta_dict['os_sunset'])
-    time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
-    time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
-    time_sunrise.value = short_time(meta_dict['os_sunrise'])
-    time_moonrise.value = short_time(meta_dict['os_moonrise'])
-    time_moonset.value = short_time(meta_dict['os_moonset'])
-    illumination.value = meta_dict['os_illumination']
-    sunset_weather.value = meta_dict['os_weather_conditions']
 
 
 
 #EXPOSURES
-subtitle_2 = Div(text='''<font size="4">Exposures</font> ''',width=500)
-info_2 = Div(text='''<font size="2">Fill In Only Information Relevant</font> ''',width=500)
+subtitle_2 = Div(text="Exposures",width=500, style=subt_style)
+exp_inst = Div(text="For each exposure, collect information about what you observe on Night Watch (quality) and observing conditions using other tools", width=800, style=inst_style)
+info_2 = Div(text="Fill In Only Relevant Data",width=500, style=inst_style)
 
 exp_time = TextInput(title ='Time', placeholder = '2007',value=None)
 
@@ -165,7 +162,7 @@ exp_exposure_start = TextInput(title ='Exposure Number: First', placeholder = '1
 exp_exposure_finish = TextInput(title ='Exposure Number: Last', placeholder = '12345',value = None)
 
 exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
-quality_title = Div(text='Data Quality: ')
+quality_title = Div(text='Data Quality: ', style=inst_style)
 quality_btns = RadioGroup(labels=['Bad','OK','Good','Great'],active=2)
 exp_comment = TextInput(title ='Data Quality Comment/Remark', placeholder = 'Data Quality good',value=None)
 obs_cond_comment = TextInput(title ='Observing Conditions Comment/Remark', placeholder = 'Seeing stable at 0.8arcsec',value=None)
@@ -189,7 +186,8 @@ def exp_add():
 
 
 #Problems
-subtitle_3 = Div(text='''<font size="3">Problems</font> ''', width=500)
+subtitle_3 = Div(text="Problems", width=500, style=subt_style)
+prob_inst = Div(text="Describe problems as they come up and at what time they occur. If possible, include a description of the remedy.", width=800, style=inst_style)
 prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
 prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, title="Problem Description:")
 prob_btn = Button(label='Add', button_type='primary')
@@ -200,35 +198,22 @@ def prob_add():
     DESI_Log.add_problem(get_time(prob_time.value),prob_input.value,'DQS')
     clear_input([prob_time, prob_input])
 
-def get_time(time):
-    try:
-        t = datetime.strptime(time,'%H%M')
-        return t.strftime('%H%M')
-    except:
-        try:
-            t = datetime.strptime(time,'%I:%M%p')
-            return t.strftime('%H%M')
-        except:
-            try:
-                t = datetime.strptime(time,'%H:%M')
-                return t.strftime('%H%M')
-            except:
-                print("need format %H%M, %H:%M, %H:%M%p")
-                return None
 
 # CHECKLISTS
-subtitle_6 = Div(text='''<font size="3">DQS Checklist</font> ''', width=500)
+subtitle_6 = Div(text="DQS Checklist", width=500, style=subt_style)
+checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", width=800, style=inst_style )
 os_checklist = CheckboxGroup(
-        labels=["Did you check the weather?", "Did you check the guiding?", "Did you check the focal plane?","Did you check the spectrographs?"])
+        labels=["Are all images being transferred to Night Watch?","Did you check the observing conditions?", "Did you check the guiding?"])
 check_time = TextInput(title ='Time', placeholder = '2007', value=None)
-check_txt = Div(text=" ")
+check_txt = Div(text=" ", width=800, style=inst_style)
 check_btn = Button(label='Submit', button_type='primary')
 
 def check_add():
     """add checklist time to Night Log
     """
+    print(get_time(check_time.value))
     complete = os_checklist.active 
-    if len(complete) == 4:
+    if len(complete) == 3:
       if check_time.value is not None:
         DESI_Log.add_to_checklist(get_time(check_time.value), 'DQS')
         check_txt.text = "Checklist last submitted at {}".format(check_time.value)
@@ -240,9 +225,9 @@ def check_add():
     os_checklist.active = []
 
 # CURRENT NIGHT LOG
-subtitle_5 = Div(text='''<font size="3">Current Night Log</font> ''', width=500)
+subtitle_5 = Div(text="Current Night Log", width=500, style=subt_style)
 nl_btn = Button(label='Get Current Night Log', button_type='primary')
-nl_text = Div(text='''Current Night Log''',width=500)
+nl_text = Div(text="Current Night Log",width=500, style=inst_style)
 
 def current_nl():
     DESI_Log.finish_the_night()
@@ -271,6 +256,7 @@ layout1 = layout([[title],
                  [info_1],
                  [date_input, [your_firstname, your_lastname]],
                  [init_bt],
+                 [connect_txt],
                  [nl_info],
                  [[os_firstname, os_lastname], [LO_firstname, LO_lastname],[OA_firstname, OA_lastname]],
                  [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
@@ -280,6 +266,7 @@ tab1 = Panel(child=layout1, title="Initialization")
 
 layout2 = layout([[title],
                  [subtitle_2],
+                 [exp_inst],
                  [info_2],
                  [exp_time],
                  [exp_exposure_start, exp_exposure_finish],
@@ -296,6 +283,7 @@ tab2 = Panel(child=layout2, title="Exposures")
 
 layout3 = layout([[title],
                  [subtitle_3],
+                 [prob_inst],
                  [prob_time, prob_input],
                  [prob_btn]
                  ])
@@ -303,6 +291,7 @@ tab3 = Panel(child=layout3, title="Problems")
 
 layout6 = layout([[title],
                 [subtitle_6],
+                [checklist_inst],
                 [os_checklist],
                 [check_time, check_btn],
                 [check_txt]])
@@ -314,7 +303,7 @@ layout5 = layout([[title],
                 [nl_text]])
 tab5 = Panel(child=layout5, title="Current Night Log")
 
-tabs = Tabs(tabs=[ tab1, tab2 , tab3, tab6, tab5])
+tabs = Tabs(tabs=[tab1, tab2, tab3, tab6, tab5])
 
 curdoc().title = 'DESI Night Log - Data QA Scientist'
 curdoc().add_root(tabs)
