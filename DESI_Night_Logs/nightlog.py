@@ -421,11 +421,14 @@ class NightLog(object):
         self.compile_entries(self.os_dir+"nightplan_",file_nl)
         file_nl.write("h3. Milestones and Major Progress")
         file_nl.write("\n")
-        m_entries = pd.read_pickle(self.milestone_file)
-        for idx, row in m_entries.iterrows():
-            file_nl.write("* {}; Exposures: [{} - {}], excluding {}.\n".format(row['Desc'],row['Exp_Start'],row['Exp_Stop'],row['Exp_Excl']))
-        file_nl.write("\n")
-        file_nl.write("\n")
+        if os.path.exists(self.milestone_file):
+            m_entries = pd.read_pickle(self.milestone_file)
+            for idx, row in m_entries.iterrows():
+                file_nl.write("* {}; Exposures: [{} - {}], excluding {}.\n".format(row['Desc'],row['Exp_Start'],row['Exp_Stop'],row['Exp_Excl']))
+                file_nl.write("\n")
+                file_nl.write("\n")
+        else:
+            file_nl.write("\n")
         file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("h5. Encountered by the OS\n")
