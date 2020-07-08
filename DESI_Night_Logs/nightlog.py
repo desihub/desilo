@@ -11,7 +11,7 @@ import numpy as np
 from datetime import datetime
 
 from astropy.time import TimezoneInfo
-import astropy.units.si as u 
+import astropy.units.si as u
 
 
 class NightLog(object):
@@ -29,25 +29,26 @@ class NightLog(object):
         """
         self.obsday=year+month+day
         self.root_dir="nightlogs/"+self.obsday+"/"
-        self.os_dir="nightlogs/"+self.obsday+"/OperationsScientist/"
-        self.dqs_dir="nightlogs/"+self.obsday+"/DataQualityAssessment/"
-        self.os_startcal_dir=self.os_dir+'startup_calibrations_'
-        self.os_obs_dir=self.os_dir+'observing_'
-        self.dqs_exp_dir=self.dqs_dir+'exposure_'
-        self.os_pb_dir=self.os_dir+'problem_'
-        self.dqs_pb_dir=self.dqs_dir+'problem_'
-        self.milestone_file = self.os_dir + '/milestones.pkl'
+        self.os_dir=self.root_dir+"OperationsScientist/"
+        self.dqs_dir=self.root_dir+"DataQualityAssessment/"
+        self.os_startcal_dir=self.os_dir+'StartCal/'
+        self.os_obs_dir=self.os_dir+'Observations/'
+        #self.dqs_exp_dir=self.dqs_dir+'Exposures/'
+        self.os_pb_dir=self.os_dir+'Problem/'
+        self.dqs_pb_dir=self.dqs_dir+'Problem/'
+        self.nightplan_file = self.os_dir + 'objectives.pkl'
+        self.milestone_file = self.os_dir + 'milestones.pkl'
         self.os_cl=self.os_dir+'checklist'
         self.dqs_cl=self.dqs_dir+'checklist'
-        self.exp_file_pkl = self.dqs_dir+'/exposures.pkl'
-        self.dqs_exp_file = self.dqs_dir+'/exposures'
-        self.weather_file = self.os_dir+'/weather.csv'
-        self.meta_json = self.root_dir+'/nightlog_meta.json'
+        self.exp_file_pkl = self.dqs_dir+'exposures.pkl'
+        self.dqs_exp_file = self.dqs_dir+'exposures'
+        self.weather_file = self.os_dir+'weather.csv'
+        self.meta_json = self.root_dir+'nightlog_meta.json'
 
         # Set this if you want to allow for replacing lines or not
         self.replace = True
 
-        self.utc = TimezoneInfo() 
+        self.utc = TimezoneInfo()
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
 
 
@@ -60,6 +61,16 @@ class NightLog(object):
             os.makedirs(self.os_dir)
         if not os.path.exists(self.dqs_dir):
             os.makedirs(self.dqs_dir)
+        if not os.path.exists(self.os_pb_dir):
+            os.makedirs(self.os_pb_dir)
+        if not os.path.exists(self.dqs_pb_dir):
+            os.makedirs(self.dqs_pb_dir)
+        if not os.path.exists(self.os_startcal_dir):
+            os.makedirs(self.os_startcal_dir)
+        if not os.path.exists(self.os_obs_dir):
+            os.makedirs(self.os_obs_dir)
+        #if not os.path.exists(self.dqs_exp_dir):
+        #    os.makedirs(self.dqs_exp_dir)
         return print("Your obsday is "+self.obsday)
 
 
@@ -116,14 +127,17 @@ class NightLog(object):
 
 
     def compile_entries(self,the_path,file_nl):
-        entries=glob.glob(the_path+"*")
-        if len(entries) > 0:
-            for e in entries:
-                tmp_obs_e=open(e,'r')
-                file_nl.write(tmp_obs_e.read())
-                tmp_obs_e.close()
+        if not os.path.exists(the_path):
             file_nl.write("\n")
-            file_nl.write("\n")
+        else :
+            entries=sorted(glob.glob(the_path+"*"))
+            if len(entries) > 0:
+                for e in entries:
+                    tmp_obs_e=open(e,'r')
+                    file_nl.write(tmp_obs_e.read())
+                    tmp_obs_e.close()
+                    file_nl.write("\n")
+                    file_nl.write("\n")
 
 
     def get_started_os(self,your_firstname,your_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
@@ -155,17 +169,22 @@ class NightLog(object):
         return meta_dict
 
 
-    def add_plan_os(self,order,plan):
+    def add_plan_os(self, data_list):
         """
             Operations Scientist lists the objectives for the night.
         """
-        
-        file=open(self.root_dir+"nightplan_"+order,'a')
-        file.write("* "+plan+"\n")
-        file.close()
+        objectives = ['Order','Objective']
+        if not os.path.exists(self.nightplan_file):
+            df = pd.DataFrame(columns=objectives)
+            df.to_pickle(self.nightplan_file)
+        df = pd.read_pickle(self.nightplan_file)
+        data_df = pd.DataFrame([data_list], columns=objectives)
+
+        df = df.append(data_df)
+        df.to_pickle(self.nightplan_file)
 
     def add_milestone_os(self, data_list):
-        milestones = ['Desc','Exp_Start','Exp_Stop']
+        milestones = ['Desc','Exp_Start','Exp_Stop','Exp_Excl']
         if not os.path.exists(self.milestone_file):
             df = pd.DataFrame(columns=milestones)
             df.to_pickle(self.milestone_file)
@@ -188,7 +207,7 @@ class NightLog(object):
             Operations Scientist comment/remark on Start Up & Calibrations procedures.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time)
+        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
         file.write("- "+self.write_time(time)+" := "+remark+"\n")
         file.close()
@@ -198,7 +217,7 @@ class NightLog(object):
             Operations Scientist adds new sequence in Start Up & Calibrations.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time)
+        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
         file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+", "+comment+"\n")
         file.close()
@@ -208,10 +227,10 @@ class NightLog(object):
             Operations Scientist adds new script (spectrograph cals) in Start Up & Calibrations.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time_start)
+        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
-        if time_stop in [None, "", " "]: 
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comments+"\n")
+        if time_stop in [None, "", " "]:
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comment+"\n")
         else:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
@@ -222,10 +241,10 @@ class NightLog(object):
             Operations Scientist adds new script (focus) in Start Up & Calibrations.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time_start)
+        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if time_stop in [None, "", " "]:
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comment+"\n")
         else:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
@@ -236,7 +255,7 @@ class NightLog(object):
             Operations Scientist adds new item on the Observing section.
         """
 
-        the_path=self.os_obs_dir+self.get_timestamp(time)
+        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
         file.write("h5. "+header+"\n")
         file.write("\n")
@@ -272,8 +291,8 @@ class NightLog(object):
         """
             NEED TO UPDATE THIS
         """
-        
-        the_path=self.os_obs_dir+self.get_timestamp(time)
+
+        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
 
         if tile_number in [None, "", " "]:
@@ -287,7 +306,7 @@ class NightLog(object):
             Operations Scientist comment/remark in the Observing section.
         """
 
-        the_path=self.os_obs_dir+self.get_timestamp(time)
+        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
         file.write("- "+self.write_time(time)+" := "+remark+"\n")
         file.close()
@@ -297,10 +316,10 @@ class NightLog(object):
             Operations Scientist adds new script in the Observing section.
         """
 
-        the_path=self.os_obs_dir+self.get_timestamp(time_start)
+        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if (time_stop == "") or (time_stop == " ") :
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comment+"\n")
         else:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
@@ -332,9 +351,9 @@ class NightLog(object):
             pass
         else:
             if user == 'OS':
-                the_path=self.os_pb_dir+self.get_timestamp(time)
+                the_path=self.os_pb_dir+"problem_"+self.get_timestamp(time)
             elif user == 'DQS':
-                the_path=self.dqs_pb_dir+self.get_timestamp(time)
+                the_path=self.dqs_pb_dir+"problem_"+self.get_timestamp(time)
             file=self.new_entry_or_replace(the_path)
             file.write("- "+self.write_time(time)+" := "+problem+"\n")
             file.close()
@@ -354,12 +373,12 @@ class NightLog(object):
         pass
 
     def add_dqs_exposure(self, data):
-    
+
         self.exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
         if not os.path.exists(self.exp_file_pkl):
             init_df = pd.DataFrame(columns=self.exp_columns)
             init_df.to_pickle(self.exp_file_pkl)
-    
+
         df = pd.read_pickle(self.exp_file_pkl)
         data_df = pd.DataFrame([data], columns=self.exp_columns)
         df = df.append(data_df)
@@ -368,15 +387,15 @@ class NightLog(object):
         df = df.sort_values(by=['Time'])
         df.to_pickle(self.exp_file_pkl)
         return df
-    
-    
+
+
     def dqs_add_exp(self,data):
-    
+
         df = self.add_dqs_exposure(data)
-    
+
         file = open(self.dqs_exp_file,'w')
         for index, row in df.iterrows():
-    
+
             if row['Exp_Last'] is not None:
                 file.write("- {}:{} := Exp. # {} - {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][2:4], row['Exp_Start'], row['Exp_Last'], row['Exp_Type'],row['Quality'],row['Comm']))
             else:
@@ -391,13 +410,12 @@ class NightLog(object):
     def finish_the_night(self):
         """
             Merge together all the different files into one '.txt' file to copy past on the eLog.
-            (we'll want to add UTC times as well)
         """
 
         file_nl=open(self.root_dir+'nightlog','w')
         meta_dict = json.load(open(self.meta_json,'r'))
         file_nl.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
-        file_nl.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last'])) # DQS
+        file_nl.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
         file_nl.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
         file_nl.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
         file_nl.write("*Ephemerides in local time [UTC]*:\n")
@@ -417,14 +435,25 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("Main items are listed below:\n")
         file_nl.write("\n")
-        self.compile_entries(self.root_dir+"nightplan_",file_nl)
+        #self.compile_entries(self.os_dir+"nightplan_",file_nl)
+        if os.path.exists(self.nightplan_file):
+            m_entries = pd.read_pickle(self.nightplan_file)
+            for idx, row in m_entries.iterrows():
+                file_nl.write("* {}.\n".format(row['Objective']))
+                file_nl.write("\n")
+                file_nl.write("\n")
+        else:
+            file_nl.write("\n")
         file_nl.write("h3. Milestones and Major Progress")
         file_nl.write("\n")
-        m_entries = pd.read_pickle(self.milestone_file)
-        for idx, row in m_entries.iterrows():
-            file_nl.write("* {}; Exposures: [{} - {}]\n".format(row['Desc'],row['Exp_Start'],row['Exp_Stop']))
-        file_nl.write("\n")
-        file_nl.write("\n")
+        if os.path.exists(self.milestone_file):
+            m_entries = pd.read_pickle(self.milestone_file)
+            for idx, row in m_entries.iterrows():
+                file_nl.write("* {}; Exposures: [{} - {}], excluding {}.\n".format(row['Desc'],row['Exp_Start'],row['Exp_Stop'],row['Exp_Excl']))
+                file_nl.write("\n")
+                file_nl.write("\n")
+        else:
+            file_nl.write("\n")
         file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("h5. Encountered by the OS\n")
@@ -435,7 +464,7 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("\n")
         self.compile_entries(self.dqs_pb_dir,file_nl)
-        file_nl.write("h5. Checklists\n")
+        file_nl.write("h3. Checklists\n")
         file_nl.write("\n")
         if os.path.exists(self.os_cl):
             os_cl_entries=open(self.os_cl,'r')
@@ -462,7 +491,13 @@ class NightLog(object):
         file_nl.write("h3. Details on the night progress from the OS (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("\n")
+        file_nl.write("h5. Startup and Calibrations\n")
+        file_nl.write("\n")
+        file_nl.write("\n")
         self.compile_entries(self.os_startcal_dir,file_nl)
+        file_nl.write("h5. Observations\n")
+        file_nl.write("\n")
+        file_nl.write("\n")
         self.compile_entries(self.os_obs_dir,file_nl)
         file_nl.write("h3. Details on the night progress from the DQS (local time [UTC])\n")
         file_nl.write("\n")

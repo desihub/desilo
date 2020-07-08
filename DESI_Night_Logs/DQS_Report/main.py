@@ -21,16 +21,16 @@ from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout
 from bokeh.models.widgets import Panel, Tabs
 from astropy.time import TimezoneInfo
-import astropy.units.si as u 
+import astropy.units.si as u
 
 sys.path.append(os.getcwd())
 
-import nightlog as nl    
+import nightlog as nl
 
 ############################################
 
-utc = TimezoneInfo() 
-kp_zone = TimezoneInfo(utc_offset=-7*u.hour) 
+utc = TimezoneInfo()
+kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
 zones = [utc, kp_zone]
 
 # EXTRA FUNCTIONS
@@ -47,7 +47,7 @@ def clear_input(items):
 
 def get_time(time):
     """Returns strptime with utc. Takes time zone selection
-    """  
+    """
     date = date_input.value
     zone = kp_zone #zones[time_select.active]
     try:
@@ -62,9 +62,9 @@ def get_time(time):
                 print("need format %H%M, %H:%M, %H:%M%p")
     try:
       tt = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
-      return tt.strftime("%Y%m%dT%H:%M")   
+      return tt.strftime("%Y%m%dT%H:%M")
     except:
-      return time 
+      return time
 
 def short_time(str_time):
     """Returns %H%M in whichever time zone selected
@@ -81,7 +81,7 @@ inst_style = {'font-family':'serif','font-size':'150%'}
 subt_style = {'font-family':'serif','font-size':'200%'}
 
 # INITIALIZE NIGHT LOG
-title = Div(text="DESI Night Log - Data QA Scientist", width=600,style = {'font-family':'serif','font-size':'250%'})
+title = Div(text="DESI Night Intake - Data QA Scientist", width=600,style = {'font-family':'serif','font-size':'250%'})
 page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
 instructions = Div(text="The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality. You can connect to an existing Night Log that was created by the Observing Scientist. ",width=500,style=inst_style)
 
@@ -147,7 +147,7 @@ def initialize_log():
     else:
       connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(date_input.value)
 
-    
+
 
 
 
@@ -212,7 +212,7 @@ def check_add():
     """add checklist time to Night Log
     """
     print(get_time(check_time.value))
-    complete = os_checklist.active 
+    complete = os_checklist.active
     if len(complete) == 3:
       if check_time.value is not None:
         DESI_Log.add_to_checklist(get_time(check_time.value), 'DQS')
@@ -225,9 +225,9 @@ def check_add():
     os_checklist.active = []
 
 # CURRENT NIGHT LOG
-subtitle_5 = Div(text="Current Night Log", width=500, style=subt_style)
-nl_btn = Button(label='Get Current Night Log', button_type='primary')
-nl_text = Div(text="Current Night Log",width=500, style=inst_style)
+subtitle_5 = Div(text="Current DESI Night Log", width=500, style=subt_style)
+nl_btn = Button(label='Get Current DESI Night Log', button_type='primary')
+nl_text = Div(text="Current DESI Night Log",width=500, style=inst_style)
 
 def current_nl():
     DESI_Log.finish_the_night()
@@ -251,8 +251,8 @@ check_btn.on_click(check_add)
 nl_btn.on_click(current_nl)
 
 layout1 = layout([[title],
-                 [subtitle_1],
                  [page_logo, instructions],
+                 [subtitle_1],
                  [info_1],
                  [date_input, [your_firstname, your_lastname]],
                  [init_bt],
@@ -301,7 +301,7 @@ layout5 = layout([[title],
                 [subtitle_5],
                 [nl_btn],
                 [nl_text]])
-tab5 = Panel(child=layout5, title="Current Night Log")
+tab5 = Panel(child=layout5, title="Current DESI Night Log")
 
 tabs = Tabs(tabs=[tab1, tab2, tab3, tab6, tab5])
 
