@@ -332,7 +332,7 @@ class NightLog(object):
 
         if not os.path.exists(the_path):
             file = open(the_path,'a')
-            file.write("*{} checklist completed at (Local time):* {}".format(user, self.write_time(time, kp_only=True)))
+            file.write("{} checklist completed at (Local time): {}".format(user, self.write_time(time, kp_only=True)))
             file.close()
         else:
             file = open(the_path,'a')
@@ -462,7 +462,7 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("\n")
         self.compile_entries(self.dqs_pb_dir,file_nl)
-        file_nl.write("h5. Checklists\n")
+        file_nl.write("h3. Checklists\n")
         file_nl.write("\n")
         if os.path.exists(self.os_cl):
             os_cl_entries=open(self.os_cl,'r')

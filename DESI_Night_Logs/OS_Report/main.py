@@ -175,9 +175,7 @@ plan_order = TextInput(title ='Expected Order:', placeholder = '1', value=None)
 plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
 plan_btn = Button(label='Add', button_type='primary')
 
-def add_plan():
-    """Adds item to the nightplan
-    """
+def plan_add():
     DESI_Log.add_plan_os(plan_order.value,plan_input.value,'OS')
     clear_input([plan_order, plan_input])
 
@@ -373,6 +371,7 @@ prob_btn.on_click(prob_add)
 nl_btn.on_click(current_nl)
 check_btn.on_click(check_add)
 milestone_btn.on_click(milestone_add)
+plan_btn.on_click(plan_add)
 
 layout1 = layout([[title],
                  [page_logo, instructions],
