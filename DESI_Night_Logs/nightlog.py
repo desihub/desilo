@@ -28,20 +28,20 @@ class NightLog(object):
         """
         self.obsday=year+month+day
         self.root_dir="nightlogs/"+self.obsday+"/"
-        self.os_dir="nightlogs/"+self.obsday+"/OperationsScientist/"
-        self.dqs_dir="nightlogs/"+self.obsday+"/DataQualityAssessment/"
+        self.os_dir=self.root_dir+"OperationsScientist/"
+        self.dqs_dir=self.root_dir+"DataQualityAssessment/"
         self.os_startcal_dir=self.os_dir+'startup_calibrations_'
         self.os_obs_dir=self.os_dir+'observing_'
         self.dqs_exp_dir=self.dqs_dir+'exposure_'
         self.os_pb_dir=self.os_dir+'problem_'
         self.dqs_pb_dir=self.dqs_dir+'problem_'
-        self.milestone_file = self.os_dir + '/milestones.pkl'
+        self.milestone_file = self.os_dir + 'milestones.pkl'
         self.os_cl=self.os_dir+'checklist'
         self.dqs_cl=self.dqs_dir+'checklist'
-        self.exp_file_pkl = self.dqs_dir+'/exposures.pkl'
-        self.dqs_exp_file = self.dqs_dir+'/exposures'
-        self.weather_file = self.os_dir+'/weather.csv'
-        self.meta_json = self.root_dir+'/nightlog_meta.json'
+        self.exp_file_pkl = self.dqs_dir+'exposures.pkl'
+        self.dqs_exp_file = self.dqs_dir+'exposures'
+        self.weather_file = self.os_dir+'weather.csv'
+        self.meta_json = self.root_dir+'nightlog_meta.json'
 
         # Set this if you want to allow for replacing lines or not
         self.replace = True
@@ -115,14 +115,17 @@ class NightLog(object):
 
 
     def compile_entries(self,the_path,file_nl):
-        entries=glob.glob(the_path+"*")
-        if len(entries) > 0:
-            for e in entries:
-                tmp_obs_e=open(e,'r')
-                file_nl.write(tmp_obs_e.read())
-                tmp_obs_e.close()
+        if not os.path.exists(the_path):
             file_nl.write("\n")
-            file_nl.write("\n")
+        else :
+            entries=glob.glob(the_path+"*")
+            if len(entries) > 0:
+                for e in entries:
+                    tmp_obs_e=open(e,'r')
+                    file_nl.write(tmp_obs_e.read())
+                    tmp_obs_e.close()
+                    file_nl.write("\n")
+                    file_nl.write("\n")
 
 
     def get_started_os(self,your_firstname,your_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
