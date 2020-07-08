@@ -198,7 +198,7 @@ global header_options
 header_options = ['Startup','Spectrograph Calibration','Focus','Observation']
 subtitle_2 = Div(text="Nightly Progress",width=500, style=subt_style)
 progress_inst = Div(text="Throughout the night record the progress, including comments on Calibrations and Exposures. All exposures are recorded in the eLog, so only enter information that can provide additional information.", width=800, style=inst_style)
-info_2 = Div(text="Fill In Only Relevant Details",width=500, style=inst_style)
+info_2 = Div(text="Fill In Only Relevant Details.",width=500, style=inst_style)
 hdr_type = Select(title="Observation Type", value = 'Observation', options=header_options)
 hdr_btn = Button(label='Select', button_type='primary')
 
@@ -274,7 +274,7 @@ def init_weather_source_data():
     return ColumnDataSource(data)
 
 weather_source = init_weather_source_data()
-columns = [TableColumn(field='time', title='Time UTC', width=100),
+columns = [TableColumn(field='time', title='Time (local)', width=100),
            TableColumn(field='desc', title='Description', width=200, editor=StringEditor()),
            TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
            TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
