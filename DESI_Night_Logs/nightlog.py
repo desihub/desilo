@@ -238,7 +238,7 @@ class NightLog(object):
         the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if time_stop in [None, "", " "]:
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comments+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comment+"\n")
         else:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
@@ -252,7 +252,7 @@ class NightLog(object):
         the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if time_stop in [None, "", " "]:
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comment+"\n")
         else:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
@@ -288,7 +288,7 @@ class NightLog(object):
                 self.obs_add_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
             else:
                 if exp_exposure_start not in [None, " ", ""]:
-                    self.obs_add_seq_os(exp_time, exp_tile, exp_type, exp_exposure_start, exp_type, exp_comment)
+                    self.obs_add_seq_os(exp_time, exp_tile, exp_tile_type, exp_exposure_start, exp_type, exp_comment)
                 else:
                     self.obs_add_com_os(exp_time,exp_comment)
 
@@ -325,7 +325,7 @@ class NightLog(object):
         the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if (time_stop == "") or (time_stop == " ") :
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
+            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comment+"\n")
         else:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
             file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
