@@ -178,7 +178,7 @@ plan_btn = Button(label='Add', button_type='primary')
 def add_plan():
     """Adds item to the nightplan
     """
-    DESI_Log.add_plan_os(get_time(plan_order.value),plan_input.value,'OS')
+    DESI_Log.add_plan_os(plan_order.value,plan_input.value,'OS')
     clear_input([plan_order, plan_input])
 
 # TAB1c: Milestones
