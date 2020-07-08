@@ -278,7 +278,7 @@ class NightLog(object):
             self.supcal_add_focus_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment,exp_focus_trim)
         elif hdr_type == 'Startup':
             self.supcal_add_com_os(exp_time,exp_comment)
-        elif hdr_type == 'Calibration':
+        elif hdr_type == 'Spectrograph Calibration':
             if exp_script not in [None, " ", ""]:
                 self.supcal_add_spec_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
             else:
