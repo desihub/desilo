@@ -129,7 +129,7 @@ class NightLog(object):
         if not os.path.exists(the_path):
             file_nl.write("\n")
         else :
-            entries=glob.glob(the_path+"*")
+            entries=sorted(glob.glob(the_path+"*"))
             if len(entries) > 0:
                 for e in entries:
                     tmp_obs_e=open(e,'r')

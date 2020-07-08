@@ -209,7 +209,7 @@ add_image = TextInput(title="Add Image",placeholder = 'Pictures/image.png',value
 exp_exposure_start = TextInput(title ='Exposure Number: First', placeholder = '12345',value = None)
 exp_exposure_finish = TextInput(title ='Exposure Number: Last', placeholder = '12345',value = None)
 
-exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
+exp_type = Select(title="Exposure Type", value = None, options=['script','Zero','Dark','Arc','FVC','DESI'])
 exp_script = TextInput(title ='Script Name', placeholder = 'dithering.json', value=None)
 exp_time_end = TextInput(title ='Time End', placeholder = '2007',value=None)
 exp_focus_trim = TextInput(title ='Trim from Focus', placeholder = '54',value=None)
