@@ -251,8 +251,8 @@ check_btn.on_click(check_add)
 nl_btn.on_click(current_nl)
 
 layout1 = layout([[title],
-                 [subtitle_1],
                  [page_logo, instructions],
+                 [subtitle_1],
                  [info_1],
                  [date_input, [your_firstname, your_lastname]],
                  [init_bt],

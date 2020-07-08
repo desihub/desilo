@@ -169,7 +169,7 @@ def connect_log():
 
 # TAB1b: Night Plan
 subtitle_1b = Div(text="Night Plan", width=500,style=subt_style)
-plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion",width=800,style=inst_style)
+plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.",width=800,style=inst_style)
 plan_txt = Div(text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/",style=inst_style)
 plan_order = TextInput(title ='Expected Order:', placeholder = '1', value=None)
 plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
