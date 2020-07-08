@@ -403,7 +403,8 @@ layout1c = layout([[title],
                     [milestone_btn]])
 tab1c = Panel(child=layout1c, title='Milestones')
 
-layout2 = layout(children = [[title],
+#layout2 = layout(children = [[title],
+layout2 = layout([[title],
                  [subtitle_2],
                  [progress_inst],
                  [info_2],
