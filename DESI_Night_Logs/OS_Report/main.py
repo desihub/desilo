@@ -215,7 +215,7 @@ exp_script = TextInput(title ='Script Name', placeholder = 'dithering.json', val
 exp_time_end = TextInput(title ='Time End', placeholder = '2007',value=None)
 exp_focus_trim = TextInput(title ='Trim from Focus', placeholder = '54',value=None)
 exp_tile = TextInput(title ='Tile Number', placeholder = '68001',value=None)
-exp_tile_type = Select(title="Tile Type", value = None, options=['QSO','LRG','ELG','BGS','MW'])
+exp_tile_type = Select(title="Tile Type", value = 'QSO', options=['QSO','LRG','ELG','BGS','MW'])
 exp_btn = Button(label='Add', button_type='primary')
 global input_layout
 input_layout = layout([])
@@ -249,9 +249,10 @@ def choose_exposure():
                  [exp_comment],
                  [exp_tile_type],
                  [exp_tile],
+                 [exp_script],
                  [exp_btn]])       
 
-    layout2.children[4] = input_layout
+    layout2.children[5] = input_layout
 
 def progress_add():
     data = [hdr_type.value, get_time(exp_time.value), exp_comment.value, exp_exposure_start.value, exp_exposure_finish.value, 

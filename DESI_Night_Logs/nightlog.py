@@ -7,6 +7,7 @@ import os
 import glob
 import json
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 from astropy.time import TimezoneInfo
@@ -245,21 +246,23 @@ class NightLog(object):
         """
         This function calls the correct functions in nightlog.py and provides an interface with the App
         """
+        data_list = np.array(data_list)
+        data_list[np.where(data_list == None)] = 'None'
         hdr_type, exp_time, exp_comment, exp_exposure_start, exp_exposure_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type = data_list
         if hdr_type == 'Focus':
             self.supcal_add_focus_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment,exp_focus_trim)
         elif hdr_type == 'Startup':
             self.supcal_add_com_os(exp_time,exp_comment)
         elif hdr_type == 'Calibration':
-            if exp_script not in [None, " ", ""]:
+            if exp_script not in [None, 'None'," ", ""]:
                 self.supcal_add_spec_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
             else:
                 self.supcal_add_seq_os(exp_time,exp_exposure_start,exp_type,exp_comment)
         elif hdr_type == 'Observation':
-            if exp_script not in [None, " ", ""]:
+            if exp_script not in [None,'None', " ", ""]:
                 self.obs_add_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
             else:
-                if exp_exposure_start not in [None, " ", ""]:
+                if exp_exposure_start not in [None,'None', " ", ""]:
                     self.obs_add_seq_os(exp_time, exp_tile, exp_type, exp_exposure_start, exp_type, exp_comment)
                 else:
                     self.obs_add_com_os(exp_time,exp_comment)
@@ -273,7 +276,7 @@ class NightLog(object):
         the_path=self.os_obs_dir+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
 
-        if tile_numer in [None, "", " "]:
+        if tile_number in [None, "", " "]:
             file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+comment+"\n")
         else :
             file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+tile_type+" tile "+tile_number+", "+comment+"\n")
@@ -332,8 +335,6 @@ class NightLog(object):
                 the_path=self.os_pb_dir+self.get_timestamp(time)
             elif user == 'DQS':
                 the_path=self.dqs_pb_dir+self.get_timestamp(time)
-            print(time)
-            print(self.write_time(time))
             file=self.new_entry_or_replace(the_path)
             file.write("- "+self.write_time(time)+" := "+problem+"\n")
             file.close()
@@ -384,7 +385,7 @@ class NightLog(object):
                 file.write("*observing conditions:* {} \n".format(row['Obs_Comm']))
             if row['Inst_Comm'] not in [None, " ", ""]:
                 file.write("*instrument performance:* {} \n".format(row['Inst_Comm']))
-        file.closed
+        file.close()
 
 
     def finish_the_night(self):
