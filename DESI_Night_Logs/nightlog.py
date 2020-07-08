@@ -164,7 +164,7 @@ class NightLog(object):
         file.close()
 
     def add_milestone_os(self, data_list):
-        milestones = ['Desc','Exp_Start','Exp_Stop']
+        milestones = ['Desc','Exp_Start','Exp_Stop','Exp_Excl']
         if not os.path.exists(self.milestone_file):
             df = pd.DataFrame(columns=milestones)
             df.to_pickle(self.milestone_file)
