@@ -195,7 +195,7 @@ def milestone_add():
 
 # TAB2: Nightly Progress
 global header_options
-header_options = ['Startup','Calibration','Focus','Observation']
+header_options = ['Startup','Spectrograph Calibration','Focus','Observation']
 subtitle_2 = Div(text="Nightly Progress",width=500, style=subt_style)
 progress_inst = Div(text="Throughout the night record the progress, including comments on Calibrations and Exposures. All exposures are recorded in the eLog, so only enter information that can provide additional information.", width=800, style=inst_style)
 info_2 = Div(text="Fill In Only Relevant Details",width=500, style=inst_style)
@@ -233,7 +233,7 @@ def choose_exposure():
                  [exp_time],
                  [exp_comment],
                  [exp_btn]])
-    elif hdr_type.value == 'Calibration':
+    elif hdr_type.value == 'Spectrograph Calibration':
         input_layout = layout([
                  [exp_time],
                  [exp_exposure_start, exp_exposure_finish],
