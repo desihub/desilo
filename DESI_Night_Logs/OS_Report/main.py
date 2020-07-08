@@ -176,7 +176,7 @@ plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe it
 plan_btn = Button(label='Add', button_type='primary')
 
 def plan_add():
-    DESI_Log.add_plan_os(plan_order.value,plan_input.value,'OS')
+    DESI_Log.add_plan_os([plan_order.value,plan_input.value])
     clear_input([plan_order, plan_input])
 
 # TAB1c: Milestones
