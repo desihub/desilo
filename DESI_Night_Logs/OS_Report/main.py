@@ -183,7 +183,7 @@ def add_plan():
 
 # TAB1c: Milestones
 subtitle_1c = Div(text="Milestones & Major Accomplishments", width=500, style=subt_style)
-milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it",width=800, style=inst_style)
+milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.",width=800, style=inst_style)
 milestone_input = TextAreaInput(placeholder="Description", rows=6)
 milestone_exp_start = TextInput(title ='Exposure Start', placeholder = '12345', value=None)
 milestone_exp_end = TextInput(title ='Exposure End', placeholder = '12345', value=None)
@@ -344,12 +344,12 @@ def check_add():
     os_checklist.active = []
 
 # TAB6: Current Night Log
-subtitle_5 = Div(text="Current Night Log", width=500,style=subt_style)
-nl_btn = Button(label='Get Current Night Log', button_type='primary')
-nl_text = Div(text="Current Night Log",width=1000,style=inst_style)
+subtitle_5 = Div(text="Current DESI Night Log", width=500,style=subt_style)
+nl_btn = Button(label='Get Current DESI Night Log', button_type='primary')
+nl_text = Div(text="Current DESI Night Log",width=1000,style=inst_style)
 
 def current_nl():
-    """Return the current Night Log
+    """Return the current DESI Night Log
     """
     DESI_Log.finish_the_night()
     path = "nightlogs/"+DESI_Log.obsday+"/nightlog.html"
@@ -434,7 +434,7 @@ layout5 = layout([[title],
                 [subtitle_5],
                 [nl_btn],
                 [nl_text]])
-tab5 = Panel(child=layout5, title="Current Night Log")
+tab5 = Panel(child=layout5, title="Current DESI Night Log")
 
 layout6 = layout([[title],
                 [subtitle_6],

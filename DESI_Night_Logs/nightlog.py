@@ -159,7 +159,7 @@ class NightLog(object):
             Operations Scientist lists the objectives for the night.
         """
 
-        file=open(self.root_dir+"nightplan_"+order,'a')
+        file=open(self.os_dir+"nightplan_"+str(order),'a')
         file.write("* "+plan+"\n")
         file.close()
 
@@ -314,7 +314,7 @@ class NightLog(object):
 
         if not os.path.exists(the_path):
             file = open(the_path,'a')
-            file.write("{} checklist completed at (Local time): {}".format(user, self.write_time(time, kp_only=True)))
+            file.write("*{} checklist completed at (Local time):* {}".format(user, self.write_time(time, kp_only=True)))
             file.close()
         else:
             file = open(the_path,'a')
@@ -416,7 +416,7 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("Main items are listed below:\n")
         file_nl.write("\n")
-        self.compile_entries(self.root_dir+"nightplan_",file_nl)
+        self.compile_entries(self.os_dir+"nightplan_",file_nl)
         file_nl.write("h3. Milestones and Major Progress")
         file_nl.write("\n")
         m_entries = pd.read_pickle(self.milestone_file)

@@ -225,9 +225,9 @@ def check_add():
     os_checklist.active = []
 
 # CURRENT NIGHT LOG
-subtitle_5 = Div(text="Current Night Log", width=500, style=subt_style)
-nl_btn = Button(label='Get Current Night Log', button_type='primary')
-nl_text = Div(text="Current Night Log",width=500, style=inst_style)
+subtitle_5 = Div(text="Current DESI Night Log", width=500, style=subt_style)
+nl_btn = Button(label='Get Current DESI Night Log', button_type='primary')
+nl_text = Div(text="Current DESI Night Log",width=500, style=inst_style)
 
 def current_nl():
     DESI_Log.finish_the_night()
@@ -301,7 +301,7 @@ layout5 = layout([[title],
                 [subtitle_5],
                 [nl_btn],
                 [nl_text]])
-tab5 = Panel(child=layout5, title="Current Night Log")
+tab5 = Panel(child=layout5, title="Current DESI Night Log")
 
 tabs = Tabs(tabs=[tab1, tab2, tab3, tab6, tab5])
 
