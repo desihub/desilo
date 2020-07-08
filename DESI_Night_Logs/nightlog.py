@@ -35,6 +35,7 @@ class NightLog(object):
         self.dqs_exp_dir=self.dqs_dir+'exposure_'
         self.os_pb_dir=self.os_dir+'problem_'
         self.dqs_pb_dir=self.dqs_dir+'problem_'
+        self.nightplan_file = self.os_dir + 'objectives.pkl'
         self.milestone_file = self.os_dir + 'milestones.pkl'
         self.os_cl=self.os_dir+'checklist'
         self.dqs_cl=self.dqs_dir+'checklist'
@@ -157,14 +158,28 @@ class NightLog(object):
         return meta_dict
 
 
-    def add_plan_os(self,order,plan):
+    # def add_plan_os(self,order,plan):
+    #     """
+    #         Operations Scientist lists the objectives for the night.
+    #     """
+    #
+    #     file=open(self.os_dir+"nightplan_"+str(order),'a')
+    #     file.write("* "+plan+"\n")
+    #     file.close()
+
+    def add_plan_os(self, data_list):
         """
             Operations Scientist lists the objectives for the night.
         """
+        objectives = ['Order','Objective']
+        if not os.path.exists(self.nightplan_file):
+            df = pd.DataFrame(columns=objectives)
+            df.to_pickle(self.nightplan_file)
+        df = pd.read_pickle(self.nightplan_file)
+        data_df = pd.DataFrame([data_list], columns=objectives)
 
-        file=open(self.os_dir+"nightplan_"+str(order),'a')
-        file.write("* "+plan+"\n")
-        file.close()
+        df = df.append(data_df)
+        df.to_pickle(self.nightplan_file)
 
     def add_milestone_os(self, data_list):
         milestones = ['Desc','Exp_Start','Exp_Stop','Exp_Excl']
@@ -418,7 +433,15 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("Main items are listed below:\n")
         file_nl.write("\n")
-        self.compile_entries(self.os_dir+"nightplan_",file_nl)
+        #self.compile_entries(self.os_dir+"nightplan_",file_nl)
+        if os.path.exists(self.nightplan_file):
+            m_entries = pd.read_pickle(self.nightplan_file)
+            for idx, row in m_entries.iterrows():
+                file_nl.write("* {}.\n".format(row['Objective']))
+                file_nl.write("\n")
+                file_nl.write("\n")
+        else:
+            file_nl.write("\n")
         file_nl.write("h3. Milestones and Major Progress")
         file_nl.write("\n")
         if os.path.exists(self.milestone_file):
