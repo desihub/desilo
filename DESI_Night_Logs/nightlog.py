@@ -33,10 +33,11 @@ class NightLog(object):
         self.os_startcal_dir=self.os_dir+'startup_calibrations_'
         self.os_obs_dir=self.os_dir+'observing_'
         self.dqs_exp_dir=self.dqs_dir+'exposure_'
-        self.os_pb_dir=self.os_dir+'problem_'
-        self.dqs_pb_dir=self.dqs_dir+'problem_'
+        self.os_pb_dir=self.os_dir+'Problem/'
+        self.dqs_pb_dir=self.dqs_dir+'Problem/'
         self.nightplan_file = self.os_dir + 'objectives.pkl'
-        self.milestone_file = self.os_dir + 'milestones.pkl'
+        self.milestone_file = self.os_dir + '
+        '
         self.os_cl=self.os_dir+'checklist'
         self.dqs_cl=self.dqs_dir+'checklist'
         self.exp_file_pkl = self.dqs_dir+'exposures.pkl'
@@ -347,9 +348,9 @@ class NightLog(object):
             pass
         else:
             if user == 'OS':
-                the_path=self.os_pb_dir+self.get_timestamp(time)
+                the_path=self.os_pb_dir+"problem_"+self.get_timestamp(time)
             elif user == 'DQS':
-                the_path=self.dqs_pb_dir+self.get_timestamp(time)
+                the_path=self.dqs_pb_dir+"problem_"+self.get_timestamp(time)
             print(time)
             print(self.write_time(time))
             file=self.new_entry_or_replace(the_path)
