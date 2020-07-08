@@ -292,7 +292,7 @@ class NightLog(object):
         the_path=self.os_obs_dir+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
 
-        if tile_nubmer in [None, "", " "]:
+        if tile_number in [None, "", " "]:
             file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+comment+"\n")
         else :
             file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+tile_type+" tile "+tile_number+", "+comment+"\n")
