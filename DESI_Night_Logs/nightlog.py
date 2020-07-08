@@ -347,9 +347,9 @@ class NightLog(object):
             pass
         else:
             if user == 'OS':
-                the_path=self.os_pb_dir+"problem_"+self.get_timestamp(time)
+                the_path=self.os_pb_dir+"Problem/problem_"+self.get_timestamp(time)
             elif user == 'DQS':
-                the_path=self.dqs_pb_dir+"problem_"+self.get_timestamp(time)
+                the_path=self.dqs_pb_dir+"Problem/problem_"+self.get_timestamp(time)
             print(time)
             print(self.write_time(time))
             file=self.new_entry_or_replace(the_path)
