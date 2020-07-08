@@ -30,7 +30,7 @@ class NightLog(object):
         self.root_dir="nightlogs/"+self.obsday+"/"
         self.os_dir=self.root_dir+"OperationsScientist/"
         self.dqs_dir=self.root_dir+"DataQualityAssessment/"
-        self.os_startcal_dir=self.os_dir+'startup_calibrations_'
+        self.os_startcal_dir=self.os_dir+'StartCal/'
         self.os_obs_dir=self.os_dir+'observing_'
         self.dqs_exp_dir=self.dqs_dir+'exposure_'
         self.os_pb_dir=self.os_dir+'Problem/'
@@ -205,7 +205,7 @@ class NightLog(object):
             Operations Scientist comment/remark on Start Up & Calibrations procedures.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time)
+        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
         file.write("- "+self.write_time(time)+" := "+remark+"\n")
         file.close()
@@ -215,7 +215,7 @@ class NightLog(object):
             Operations Scientist adds new sequence in Start Up & Calibrations.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time)
+        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
         file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+", "+comment+"\n")
         file.close()
@@ -225,7 +225,7 @@ class NightLog(object):
             Operations Scientist adds new script (spectrograph cals) in Start Up & Calibrations.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time_start)
+        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if time_stop in [None, "", " "]:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comments+"\n")
@@ -239,7 +239,7 @@ class NightLog(object):
             Operations Scientist adds new script (focus) in Start Up & Calibrations.
         """
 
-        the_path=self.os_startcal_dir+self.get_timestamp(time_start)
+        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if time_stop in [None, "", " "]:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
@@ -347,9 +347,9 @@ class NightLog(object):
             pass
         else:
             if user == 'OS':
-                the_path=self.os_pb_dir+"Problem/problem_"+self.get_timestamp(time)
+                the_path=self.os_pb_dir+"problem_"+self.get_timestamp(time)
             elif user == 'DQS':
-                the_path=self.dqs_pb_dir+"Problem/problem_"+self.get_timestamp(time)
+                the_path=self.dqs_pb_dir+"problem_"+self.get_timestamp(time)
             print(time)
             print(self.write_time(time))
             file=self.new_entry_or_replace(the_path)
