@@ -278,7 +278,7 @@ class NightLog(object):
             if exp_script not in [None, " ", ""]:
                 self.obs_add_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
             else:
-                if exp_exposure_finish not in [None, " ", ""]:
+                if exp_exposure_start not in [None, " ", ""]:
                     self.obs_add_seq_os(exp_time, exp_tile, exp_tile_type, exp_exposure_start, exp_type, exp_comment)
                 else:
                     self.obs_add_com_os(exp_time,exp_comment)
