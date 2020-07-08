@@ -31,8 +31,8 @@ class NightLog(object):
         self.os_dir=self.root_dir+"OperationsScientist/"
         self.dqs_dir=self.root_dir+"DataQualityAssessment/"
         self.os_startcal_dir=self.os_dir+'StartCal/'
-        self.os_obs_dir=self.os_dir+'observing_'
-        self.dqs_exp_dir=self.dqs_dir+'exposure_'
+        self.os_obs_dir=self.os_dir+'Observations/'
+        #self.dqs_exp_dir=self.dqs_dir+'Exposures/'
         self.os_pb_dir=self.os_dir+'Problem/'
         self.dqs_pb_dir=self.dqs_dir+'Problem/'
         self.nightplan_file = self.os_dir + 'objectives.pkl'
@@ -60,6 +60,16 @@ class NightLog(object):
             os.makedirs(self.os_dir)
         if not os.path.exists(self.dqs_dir):
             os.makedirs(self.dqs_dir)
+        if not os.path.exists(self.os_pb_dir):
+            os.makedirs(self.os_pb_dir)
+        if not os.path.exists(self.dqs_pb_dir):
+            os.makedirs(self.dqs_pb_dir)
+        if not os.path.exists(self.os_startcal_dir):
+            os.makedirs(self.os_startcal_dir)
+        if not os.path.exists(self.os_obs_dir):
+            os.makedirs(self.os_obs_dir)
+        #if not os.path.exists(self.dqs_exp_dir):
+        #    os.makedirs(self.dqs_exp_dir)
         return print("Your obsday is "+self.obsday)
 
 
@@ -253,7 +263,7 @@ class NightLog(object):
             Operations Scientist adds new item on the Observing section.
         """
 
-        the_path=self.os_obs_dir+self.get_timestamp(time)
+        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
         file.write("h5. "+header+"\n")
         file.write("\n")
@@ -288,7 +298,7 @@ class NightLog(object):
             NEED TO UPDATE THIS
         """
 
-        the_path=self.os_obs_dir+self.get_timestamp(time)
+        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
 
         if tile_number in [None, "", " "]:
@@ -302,7 +312,7 @@ class NightLog(object):
             Operations Scientist comment/remark in the Observing section.
         """
 
-        the_path=self.os_obs_dir+self.get_timestamp(time)
+        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
         file.write("- "+self.write_time(time)+" := "+remark+"\n")
         file.close()
@@ -312,7 +322,7 @@ class NightLog(object):
             Operations Scientist adds new script in the Observing section.
         """
 
-        the_path=self.os_obs_dir+self.get_timestamp(time_start)
+        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
         if (time_stop == "") or (time_stop == " ") :
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comments+"\n")
