@@ -10,7 +10,7 @@ import pandas as pd
 from datetime import datetime
 
 from astropy.time import TimezoneInfo
-import astropy.units.si as u 
+import astropy.units.si as u
 
 
 class NightLog(object):
@@ -46,7 +46,7 @@ class NightLog(object):
         # Set this if you want to allow for replacing lines or not
         self.replace = True
 
-        self.utc = TimezoneInfo() 
+        self.utc = TimezoneInfo()
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
 
 
@@ -158,7 +158,7 @@ class NightLog(object):
         """
             Operations Scientist lists the objectives for the night.
         """
-        
+
         file=open(self.root_dir+"nightplan_"+order,'a')
         file.write("* "+plan+"\n")
         file.close()
@@ -209,7 +209,7 @@ class NightLog(object):
 
         the_path=self.os_startcal_dir+self.get_timestamp(time_start)
         file=self.new_entry_or_replace(the_path)
-        if time_stop in [None, "", " "]: 
+        if time_stop in [None, "", " "]:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comments+"\n")
         else:
             file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
@@ -269,7 +269,7 @@ class NightLog(object):
         """
             NEED TO UPDATE THIS
         """
-        
+
         the_path=self.os_obs_dir+self.get_timestamp(time)
         file=self.new_entry_or_replace(the_path)
 
@@ -353,12 +353,12 @@ class NightLog(object):
         pass
 
     def add_dqs_exposure(self, data):
-    
+
         self.exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
         if not os.path.exists(self.exp_file_pkl):
             init_df = pd.DataFrame(columns=self.exp_columns)
             init_df.to_pickle(self.exp_file_pkl)
-    
+
         df = pd.read_pickle(self.exp_file_pkl)
         data_df = pd.DataFrame([data], columns=self.exp_columns)
         df = df.append(data_df)
@@ -367,15 +367,15 @@ class NightLog(object):
         df = df.sort_values(by=['Time'])
         df.to_pickle(self.exp_file_pkl)
         return df
-    
-    
+
+
     def dqs_add_exp(self,data):
-    
+
         df = self.add_dqs_exposure(data)
-    
+
         file = open(self.dqs_exp_file,'w')
         for index, row in df.iterrows():
-    
+
             if row['Exp_Last'] is not None:
                 file.write("- {}:{} := Exp. # {} - {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][2:4], row['Exp_Start'], row['Exp_Last'], row['Exp_Type'],row['Quality'],row['Comm']))
             else:
@@ -421,7 +421,7 @@ class NightLog(object):
         file_nl.write("\n")
         m_entries = pd.read_pickle(self.milestone_file)
         for idx, row in m_entries.iterrows():
-            file_nl.write("* {}; Exposures: [{} - {}]\n".format(row['Desc'],row['Exp_Start'],row['Exp_Stop']))
+            file_nl.write("* {}; Exposures: [{} - {}], excluding {}.\n".format(row['Desc'],row['Exp_Start'],row['Exp_Stop'],row['Exp_Excl']))
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")

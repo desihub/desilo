@@ -23,16 +23,16 @@ from bokeh.models.widgets.tables import (DataTable, TableColumn, NumberEditor, S
 from bokeh.layouts import layout
 from bokeh.models.widgets import Panel, Tabs
 from astropy.time import TimezoneInfo
-import astropy.units.si as u 
+import astropy.units.si as u
 
 sys.path.append(os.getcwd())
 
-import nightlog as nl                                                                  
+import nightlog as nl
 
 ############################################
 
-utc = TimezoneInfo() 
-kp_zone = TimezoneInfo(utc_offset=-7*u.hour) 
+utc = TimezoneInfo()
+kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
 zones = [utc, kp_zone]
 
 # EXTRA FUNCTIONS
@@ -48,7 +48,7 @@ def clear_input(items):
 
 def get_time(time):
     """Returns strptime with utc. Takes time zone selection
-    """  
+    """
     date = date_input.value
     zone = kp_zone #zones[time_select.active]
     try:
@@ -63,9 +63,9 @@ def get_time(time):
                 print("need format %H%M, %H:%M, %H:%M%p")
     try:
       tt = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
-      return tt.strftime("%Y%m%dT%H:%M")   
+      return tt.strftime("%Y%m%dT%H:%M")
     except:
-      return time 
+      return time
 
 def short_time(str_time):
     """Returns %H%M in whichever time zone selected
@@ -81,8 +81,8 @@ def short_time(str_time):
 inst_style = {'font-family':'serif','font-size':'150%'}
 subt_style = {'font-family':'serif','font-size':'200%'}
 
-# TAB1: Initialize Night Log 
-title = Div(text="DESI Night Log - Operating Scientist", width=800,style = {'font-family':'serif','font-size':'250%'})
+# TAB1: Initialize Night Log
+title = Div(text="DESI Night Intake - Operating Scientist", width=800,style = {'font-family':'serif','font-size':'250%'})
 page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
 instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Do so below or connect to an existing Night Log using the date. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour. ",width=500, style=inst_style)
 
@@ -187,14 +187,15 @@ milestone_inst = Div(text="Record any major milestones or accomplishments that o
 milestone_input = TextAreaInput(placeholder="Description", rows=6)
 milestone_exp_start = TextInput(title ='Exposure Start', placeholder = '12345', value=None)
 milestone_exp_end = TextInput(title ='Exposure End', placeholder = '12345', value=None)
+milestone_exp_excl = TextInput(title ='Excluded Exposures', placeholder = '12345', value=None)
 milestone_btn = Button(label='Add', button_type='primary')
 
 def milestone_add():
-    DESI_Log.add_milestone_os([milestone_input.value, milestone_exp_start.value, milestone_exp_end.value])
-    clear_input([milestone_input, milestone_exp_start, milestone_exp_end])
+    DESI_Log.add_milestone_os([milestone_input.value, milestone_exp_start.value, milestone_exp_end.value, milestone_exp_excl.value])
+    clear_input([milestone_input, milestone_exp_start, milestone_exp_end, milestone_exp_excl])
 
 
-# TAB2: Nightly Progress 
+# TAB2: Nightly Progress
 global header_options
 header_options = ['Startup','Calibration','Focus','Observation']
 subtitle_2 = Div(text="Nightly Progress",width=500, style=subt_style)
@@ -249,12 +250,12 @@ def choose_exposure():
                  [exp_comment],
                  [exp_tile_type],
                  [exp_tile],
-                 [exp_btn]])       
+                 [exp_btn]])
 
     layout2.children[4] = input_layout
 
 def progress_add():
-    data = [hdr_type.value, get_time(exp_time.value), exp_comment.value, exp_exposure_start.value, exp_exposure_finish.value, 
+    data = [hdr_type.value, get_time(exp_time.value), exp_comment.value, exp_exposure_start.value, exp_exposure_finish.value,
             exp_type.value, exp_script.value, get_time(exp_time_end.value), exp_focus_trim.value, exp_tile.value, exp_tile_type.value]
     DESI_Log.add_progress(data)
 
@@ -290,8 +291,8 @@ def update_weather_source_data():
     """Adds initial input to weather table
     """
     new_data = pd.DataFrame(weather_source.data.copy())
-    sunset_time = datetime.strptime(get_time(time_sunset.value),"%Y%m%dT%H:%M")   
-    sunset_hour = sunset_time.hour 
+    sunset_time = datetime.strptime(get_time(time_sunset.value),"%Y%m%dT%H:%M")
+    sunset_hour = sunset_time.hour
     idx = new_data[new_data.time == "%s:00"%(str(sunset_hour).zfill(2))].index[0]
     new_data.at[idx,'desc'] = sunset_weather.value
     del new_data['index']
@@ -330,7 +331,7 @@ check_btn = Button(label='Submit', button_type='primary')
 def check_add():
     """add checklist time to Night Log
     """
-    complete = os_checklist.active 
+    complete = os_checklist.active
     if len(complete) == 4:
       if check_time.value is not None:
         DESI_Log.add_to_checklist(get_time(check_time.value), 'OS')
@@ -399,7 +400,7 @@ layout1c = layout([[title],
                     [subtitle_1c],
                     [milestone_inst],
                     [milestone_input],
-                    [milestone_exp_start,milestone_exp_end],
+                    [milestone_exp_start,milestone_exp_end, milestone_exp_excl],
                     [milestone_btn]])
 tab1c = Panel(child=layout1c, title='Milestones')
 
