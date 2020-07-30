@@ -277,7 +277,7 @@ class NightLog(object):
                 self.supcal_add_spec_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
             else:
                 self.supcal_add_seq_os(exp_time,exp_exposure_start,exp_type,exp_comment)
-        elif hdr_type == 'Observation':
+        elif (hdr_type == 'Observation') | (hdr_type == 'Other'):
             if exp_script not in [None,'None', " ", ""]:
                 self.obs_add_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
             else:
@@ -343,7 +343,7 @@ class NightLog(object):
             file.write(", "+self.write_time(time, kp_only=True))
             file.close()
 
-    def add_problem(self,time,problem,user):
+    def add_problem(self,time,problem,alarm_id,action,user):
         """
             Adds details on a problem encountered.
         """
@@ -355,7 +355,7 @@ class NightLog(object):
             elif user == 'DQS':
                 the_path=self.dqs_pb_dir+"problem_"+self.get_timestamp(time)
             file=self.new_entry_or_replace(the_path)
-            file.write("- "+self.write_time(time)+" := "+problem+"\n")
+            file.write("- "+self.write_time(time)+" := "+problem+";  AlarmID: "+alarm_id+";  Action: "+action+"\n")
             file.close()
 
     # def add_exp_dqs(self,data_list):

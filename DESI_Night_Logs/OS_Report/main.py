@@ -110,7 +110,7 @@ sunset_weather = TextInput(title ='Weather conditions as sunset', placeholder = 
 
 init_bt = Button(label="Initialize Night Log", button_type='success',width=300)
 connect_bt = Button(label="Connect to Existing Night Log", button_type='primary',width=300)
-info_connect = Div(text="Not connected to Night Log",style={'font-family':'serif','font-size':'150%','color':'red'})
+info_connect = Div(text="Not connected to Night Log", width=600, style={'font-family':'serif','font-size':'150%','color':'red'})
 
 def initialize_log():
     """
@@ -177,9 +177,11 @@ plan_txt = Div(text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOpe
 plan_order = TextInput(title ='Expected Order:', placeholder = '1', value=None)
 plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
 plan_btn = Button(label='Add', button_type='primary')
+plan_alert = Div(text=' ',width=600, style=inst_style)
 
 def plan_add():
     DESI_Log.add_plan_os([plan_order.value,plan_input.value])
+    plan_alert.text = 'Last item input: {}'.format(plan_input.value)
     clear_input([plan_order, plan_input])
 
 # TAB1c: Milestones
@@ -190,15 +192,18 @@ milestone_exp_start = TextInput(title ='Exposure Start', placeholder = '12345', 
 milestone_exp_end = TextInput(title ='Exposure End', placeholder = '12345', value=None)
 milestone_exp_excl = TextInput(title ='Excluded Exposures', placeholder = '12345', value=None)
 milestone_btn = Button(label='Add', button_type='primary')
+milestone_alert = Div(text=' ', width=600,style=inst_style)
 
 def milestone_add():
+    now = datetime.now()
     DESI_Log.add_milestone_os([milestone_input.value, milestone_exp_start.value, milestone_exp_end.value, milestone_exp_excl.value])
     clear_input([milestone_input, milestone_exp_start, milestone_exp_end, milestone_exp_excl])
+    milestone_alert.text = 'Last Milestone Entered: {} at {}'.format(milestone_input.value, now)
 
 
 # TAB2: Nightly Progress
 global header_options
-header_options = ['Startup','Calibration','Focus','Observation']
+header_options = ['Startup','Calibration','Focus','Observation','Other']
 subtitle_2 = Div(text="Nightly Progress",width=500, style=subt_style)
 progress_inst = Div(text="Throughout the night record the progress, including comments on Calibrations and Exposures. All exposures are recorded in the eLog, so only enter information that can provide additional information.", width=800, style=inst_style)
 info_2 = Div(text="Fill In Only Relevant Details.",width=500, style=inst_style)
@@ -219,6 +224,7 @@ exp_focus_trim = TextInput(title ='Trim from Focus', placeholder = '54',value=No
 exp_tile = TextInput(title ='Tile Number', placeholder = '68001',value=None)
 exp_tile_type = Select(title="Tile Type", value = 'QSO', options=['QSO','LRG','ELG','BGS','MW'])
 exp_btn = Button(label='Add', button_type='primary')
+progress_alert = Div(text=' ', width=600,style=inst_style)
 global input_layout
 input_layout = layout([])
 
@@ -253,6 +259,16 @@ def choose_exposure():
                  [exp_tile],
                  [exp_script],
                  [exp_btn]])       
+    elif hdr_type.value == 'Other':
+        input_layout = layout([
+                 [exp_time],
+                 [exp_exposure_start, exp_exposure_finish],
+                 [exp_comment],
+                 [exp_tile_type],
+                 [exp_tile],
+                 [exp_script],
+                 [exp_btn]])    
+
 
     layout2.children[5] = input_layout
 
@@ -260,10 +276,11 @@ def progress_add():
     data = [hdr_type.value, get_time(exp_time.value), exp_comment.value, exp_exposure_start.value, exp_exposure_finish.value,
             exp_type.value, exp_script.value, get_time(exp_time_end.value), exp_focus_trim.value, exp_tile.value, exp_tile_type.value]
     DESI_Log.add_progress(data)
-
+    progress_alert.text = 'Last Input was for Observation Type *{}* at {}'.format(hdr_type.value, exp_time.value)
 
     clear_input([exp_time, exp_comment, exp_exposure_start, exp_exposure_finish, exp_type, exp_script,
                 exp_time_end, exp_focus_trim, exp_tile, exp_tile_type])
+   
 
 
 # TAB3: Weather
@@ -312,13 +329,17 @@ subtitle_4 = Div(text="Problems", width=500, style=subt_style)
 prob_inst = Div(text="Describe problems as they come up and at what time they occur. If possible, include a description of the remedy.", width=800, style=inst_style)
 prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
 prob_input = TextAreaInput(placeholder="description", rows=6, title="Problem Description:")
+prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None)
+prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=6)
 prob_btn = Button(label='Add', button_type='primary')
+prob_alert = Div(text=' ', width=600,style=inst_style)
 
 def prob_add():
     """Adds problem to nightlog
     """
-    DESI_Log.add_problem(get_time(prob_time.value),prob_input.value,'OS')
-    clear_input([prob_time, prob_input])
+    DESI_Log.add_problem(get_time(prob_time.value),prob_input.value,prob_alarm.value, prob_action.value,'OS')
+    prob_alert.text = "Last Problem Input: '{}' at {}".format(prob_input.value, prob_time.value)
+    clear_input([prob_time, prob_input, prob_alarm, prob_action])
 
 
 # TAB5: Checklists
@@ -349,10 +370,12 @@ def check_add():
 subtitle_5 = Div(text="Current DESI Night Log", width=500,style=subt_style)
 nl_btn = Button(label='Get Current DESI Night Log', button_type='primary')
 nl_text = Div(text="Current DESI Night Log",width=1000,style=inst_style)
+nl_alert = Div(text=' ',width=600, style=inst_style)
 
 def current_nl():
     """Return the current DESI Night Log
     """
+    now=datetime.now()
     DESI_Log.finish_the_night()
     path = "nightlogs/"+DESI_Log.obsday+"/nightlog.html"
     nl_file = open(path,'r')
@@ -361,6 +384,7 @@ def current_nl():
         nl_txt =  nl_txt + line + '\n'
     nl_text.text = nl_txt
     nl_file.closed
+    nl_alert.text = 'Last Updated on this page: {}'.format(now)
 
 
 
@@ -395,7 +419,8 @@ layout1b = layout([[title],
                   [plan_inst],
                   [plan_txt],
                   [plan_order, plan_input],
-                  [plan_btn]
+                  [plan_btn],
+                  [plan_alert]
                   ])
 tab1b = Panel(child=layout1b, title="Night Plan")
 
@@ -404,7 +429,8 @@ layout1c = layout([[title],
                     [milestone_inst],
                     [milestone_input],
                     [milestone_exp_start,milestone_exp_end, milestone_exp_excl],
-                    [milestone_btn]])
+                    [milestone_btn],
+                    [milestone_alert]])
 tab1c = Panel(child=layout1c, title='Milestones')
 
 layout2 = layout(children = [[title],
@@ -412,7 +438,8 @@ layout2 = layout(children = [[title],
                  [progress_inst],
                  [info_2],
                  [hdr_type, hdr_btn],
-                 [input_layout]
+                 [input_layout],
+                 [progress_alert]
                  ])
 tab2 = Panel(child=layout2, title="Nightly Progress")
 
@@ -429,13 +456,15 @@ layout4 = layout([[title],
                  [subtitle_4],
                  [prob_inst],
                  [prob_time, prob_input],
-                 [prob_btn]
+                 [prob_alarm, prob_action],
+                 [prob_btn],
+                 [prob_alert]
                  ])
 tab4 = Panel(child=layout4, title="Problems")
 
 layout5 = layout([[title],
                 [subtitle_5],
-                [nl_btn],
+                [nl_btn, nl_alert],
                 [nl_text]])
 tab5 = Panel(child=layout5, title="Current DESI Night Log")
 
