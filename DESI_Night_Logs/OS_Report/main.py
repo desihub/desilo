@@ -93,10 +93,11 @@ date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
 
 your_firstname = TextInput(title ='Your Name', placeholder = 'John')
 your_lastname = TextInput(placeholder = 'Smith')
-LO_firstname = TextInput(title ='Lead Observer Name', placeholder = 'Molly')
-LO_lastname = TextInput(placeholder = 'Jackson')
-OA_firstname = TextInput(title ='Observing Assistant Name', placeholder = 'Paul')
-OA_lastname = TextInput(placeholder = 'Lawson')
+lo_names = ['None ','Liz Buckley-Geer','Sarah Eftekharzadeh','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
+oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
+LO = Select(title='Lead Observer', value='Choose One', options=lo_names) 
+OA = Select(title='Observing Assistant', value='Choose One', options=oa_names) 
+
 
 time_sunset = TextInput(title ='Time of Sunset', placeholder = '1838')
 time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends', placeholder = '1956')
@@ -120,10 +121,14 @@ def initialize_log():
     except:
         date = datetime.now()
     global DESI_Log
+
+    LO_firstname, LO_lastname = LO.value.split(' ')
+    OA_firstname, OA_lastname = OA.value.split(' ')
+
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
     DESI_Log.initializing()
-    DESI_Log.get_started_os(your_firstname.value,your_lastname.value,LO_firstname.value,LO_lastname.value,
-        OA_firstname.value,OA_lastname.value,get_time(time_sunset.value),get_time(time_18_deg_twilight_ends.value),get_time(time_18_deg_twilight_starts.value),
+    DESI_Log.get_started_os(your_firstname.value,your_lastname.value,LO_firstname,LO_lastname,
+        OA_firstname,OA_lastname,get_time(time_sunset.value),get_time(time_18_deg_twilight_ends.value),get_time(time_18_deg_twilight_starts.value),
         get_time(time_sunrise.value),get_time(time_moonrise.value),get_time(time_moonset.value),illumination.value,sunset_weather.value)
 
     update_weather_source_data()
@@ -147,10 +152,8 @@ def connect_log():
     meta_dict = DESI_Log.get_meta_data()
     your_firstname.value = short_time(meta_dict['os_1'])
     your_lastname.value = short_time(meta_dict['os_last'])
-    LO_firstname.value = short_time(meta_dict['os_lo_1'])
-    LO_lastname.value = short_time(meta_dict['os_lo_last'])
-    OA_firstname.value = short_time(meta_dict['os_oa_1'])
-    OA_lastname.value = short_time(meta_dict['os_oa_last'])
+    LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
+    OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
     time_sunset.value = short_time(meta_dict['os_sunset'])
     time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
     time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
@@ -379,7 +382,7 @@ layout1 = layout([[title],
                  [subtitle_1],
                  [info_1],
                  [date_input,connect_bt],
-                 [[your_firstname, your_lastname], [LO_firstname, LO_lastname],[OA_firstname, OA_lastname]],
+                 [[your_firstname, your_lastname], [LO],[OA]],
                  [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
                  [illumination,sunset_weather]],
                  [init_bt],
