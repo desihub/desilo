@@ -40,7 +40,6 @@ def clear_input(items):
     """
     if isinstance(items, list):
       for item in items:
-        print(item)
         item.value = None
     else:
       items.value = None
@@ -82,7 +81,7 @@ subt_style = {'font-family':'serif','font-size':'200%'}
 
 # INITIALIZE NIGHT LOG
 title = Div(text="DESI Night Intake - Data QA Scientist", width=600,style = {'font-family':'serif','font-size':'250%'})
-page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
+page_logo = Div(text="<img src='DQS_Report/static/logo.png'>", width=350, height=300)
 instructions = Div(text="The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality. You can connect to an existing Night Log that was created by the Observing Scientist. ",width=500,style=inst_style)
 
 
@@ -96,7 +95,7 @@ your_lastname = TextInput(placeholder = 'Smith')
 init_bt = Button(label="Connect to Night Log", button_type='primary',width=300)
 connect_txt = Div(text=' ', width=600, style={'font-family':'serif','font-size':'125%','color':'red'})
 
-nl_info = Div(text="Night Log Info", width=500,style=inst_style)
+nl_info = Div(text="Night Log Info (this will populate when you've connected to an initialized NightLog)", width=500,style=inst_style)
 os_firstname = TextInput(title ='OS Name')
 os_lastname = TextInput()
 LO_firstname = TextInput(title ='LO Name')
@@ -148,9 +147,6 @@ def initialize_log():
       connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(date_input.value)
 
 
-
-
-
 #EXPOSURES
 subtitle_2 = Div(text="Exposures",width=500, style=subt_style)
 exp_inst = Div(text="For each exposure, collect information about what you observe on Night Watch (quality) and observing conditions using other tools", width=800, style=inst_style)
@@ -168,6 +164,7 @@ exp_comment = TextInput(title ='Data Quality Comment/Remark', placeholder = 'Dat
 obs_cond_comment = TextInput(title ='Observing Conditions Comment/Remark', placeholder = 'Seeing stable at 0.8arcsec',value=None)
 inst_perf_comment = TextInput(title ='Instrument Performance Comment/Remark', placeholder = 'Positioner Accuracy less than 10um',value=None)
 exp_btn = Button(label='Add', button_type='primary')
+exp_alert = Div(text=' ', width=600, style=inst_style)
 
 
 def exp_add():
@@ -182,6 +179,7 @@ def exp_add():
     q_list = ['Bad','OK','Good','Great']
     quality = q_list[quality_btns.active]
     DESI_Log.dqs_add_exp([get_time(exp_time.value), exp_exposure_start.value, exp_type.value, quality, exp_comment.value, obs_cond_comment.value, inst_perf_comment.value, exp_exposure_finish.value])
+    exp_alert.text = 'Last Exposure input {} at {}'.format(exp_exposure_start.value, exp_time.value)
     clear_input([exp_time, exp_exposure_start, exp_type, exp_comment, obs_cond_comment, inst_perf_comment, exp_exposure_finish])
 
 
@@ -190,13 +188,17 @@ subtitle_3 = Div(text="Problems", width=500, style=subt_style)
 prob_inst = Div(text="Describe problems as they come up and at what time they occur. If possible, include a description of the remedy.", width=800, style=inst_style)
 prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
 prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, title="Problem Description:")
+prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None)
+prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=6)
 prob_btn = Button(label='Add', button_type='primary')
+prob_alert = Div(text=' ', width=600,style=inst_style)
 
 def prob_add():
     """Adds problem to nightlog
     """
-    DESI_Log.add_problem(get_time(prob_time.value),prob_input.value,'DQS')
-    clear_input([prob_time, prob_input])
+    DESI_Log.add_problem(get_time(prob_time.value),prob_input.value,prob_alarm.value, prob_action.value,'DQS')
+    prob_alert.text = "Last Problem Input: '{}' at {}".format(prob_input.value, prob_time.value)
+    clear_input([prob_time, prob_input, prob_alarm, prob_action])
 
 
 # CHECKLISTS
@@ -211,7 +213,6 @@ check_btn = Button(label='Submit', button_type='primary')
 def check_add():
     """add checklist time to Night Log
     """
-    print(get_time(check_time.value))
     complete = os_checklist.active
     if len(complete) == 3:
       if check_time.value is not None:
@@ -228,8 +229,10 @@ def check_add():
 subtitle_5 = Div(text="Current DESI Night Log", width=500, style=subt_style)
 nl_btn = Button(label='Get Current DESI Night Log', button_type='primary')
 nl_text = Div(text="Current DESI Night Log",width=500, style=inst_style)
+nl_alert = Div(text=' ',width=600, style=inst_style)
 
 def current_nl():
+    now = datetime.now()
     DESI_Log.finish_the_night()
     path = "nightlogs/"+DESI_Log.obsday+"/nightlog.html"
     nl_file = open(path,'r')
@@ -238,6 +241,7 @@ def current_nl():
         nl_txt =  nl_txt + line + '\n'
     nl_text.text = nl_txt
     nl_file.closed
+    nl_alert.text = 'Last Updated on this page: {}'.format(now)
 
 
 
@@ -275,8 +279,8 @@ layout2 = layout([[title],
                  [exp_comment],
                  [obs_cond_comment],
                  [inst_perf_comment],
-                 [exp_btn]
-
+                 [exp_btn],
+                 [exp_alert]
                  ])
 tab2 = Panel(child=layout2, title="Exposures")
 
@@ -285,7 +289,9 @@ layout3 = layout([[title],
                  [subtitle_3],
                  [prob_inst],
                  [prob_time, prob_input],
-                 [prob_btn]
+                 [prob_alarm, prob_action],
+                 [prob_btn],
+                 [prob_alert]
                  ])
 tab3 = Panel(child=layout3, title="Problems")
 
@@ -299,7 +305,7 @@ tab6 = Panel(child=layout6, title="DQS Checklist")
 
 layout5 = layout([[title],
                 [subtitle_5],
-                [nl_btn],
+                [nl_btn, nl_alert],
                 [nl_text]])
 tab5 = Panel(child=layout5, title="Current DESI Night Log")
 
