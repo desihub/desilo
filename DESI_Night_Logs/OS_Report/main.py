@@ -133,8 +133,21 @@ def initialize_log():
 
     update_weather_source_data()
     info_connect.text = 'Night Log is Initialized'
-    plan_txt.text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
 
+# TAB1b: Night Plan
+subtitle_1b = Div(text="Night Plan", width=500,style=subt_style)
+plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.",width=800,style=inst_style)
+plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>',style=inst_style)
+plan_order = TextInput(title ='Expected Order:', placeholder = '1', value=None)
+plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
+plan_btn = Button(label='Add', button_type='primary')
+plan_alert = Div(text=' ',width=600, style=inst_style)
+
+def plan_add():
+    DESI_Log.add_plan_os([plan_order.value,plan_input.value])
+    plan_alert.text = 'Last item input: {}'.format(plan_input.value)
+    clear_input([plan_order, plan_input])
+    
 def connect_log():
     try:
         date = datetime.strptime(date_input.value, '%Y%m%d')
@@ -147,7 +160,9 @@ def connect_log():
       info_connect.text = 'Connected to Existing Night Log for {}'.format(date_input.value)
     else:
       info_connect.text = 'The Night Log for {} has not yet been initialized'.format(date_input.value)
-    plan_txt.text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
+    plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
+    plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
+ 
 
     meta_dict = DESI_Log.get_meta_data()
     your_firstname.value = short_time(meta_dict['os_1'])
@@ -170,19 +185,7 @@ def connect_log():
     except:
       pass
 
-# TAB1b: Night Plan
-subtitle_1b = Div(text="Night Plan", width=500,style=subt_style)
-plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.",width=800,style=inst_style)
-plan_txt = Div(text="Tonight's Plan Here: https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/",style=inst_style)
-plan_order = TextInput(title ='Expected Order:', placeholder = '1', value=None)
-plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
-plan_btn = Button(label='Add', button_type='primary')
-plan_alert = Div(text=' ',width=600, style=inst_style)
 
-def plan_add():
-    DESI_Log.add_plan_os([plan_order.value,plan_input.value])
-    plan_alert.text = 'Last item input: {}'.format(plan_input.value)
-    clear_input([plan_order, plan_input])
 
 # TAB1c: Milestones
 subtitle_1c = Div(text="Milestones & Major Accomplishments", width=500, style=subt_style)
@@ -290,8 +293,8 @@ def init_weather_source_data():
     """Creates a table with pre-identified Times for weather input
     """
     data = pd.DataFrame(columns = ['time','desc','temp','wind','humidity'])
-    hours = [17,18,19,20,21,22,23,24,1,2,3,4,5,6,7]
-    data['time'] = [("%s:00" % str(hour).zfill(2)) for hour in hours]
+    #hours = [17,18,19,20,21,22,23,24,1,2,3,4,5,6,7]
+    #data['time'] = [("%s:00" % str(hour).zfill(2)) for hour in hours]
     return ColumnDataSource(data)
 
 weather_source = init_weather_source_data()
@@ -301,14 +304,18 @@ columns = [TableColumn(field='time', title='Time (local)', width=100),
            TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
            TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
 weather_inst = Div(text="Every hour include a description of the weather and othe relevant information. Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=800, style=inst_style)
-weather_table = DataTable(source=weather_source, columns=columns, editable=True,
-              sortable=False, reorderable=False, fit_columns=False,
-              min_width=1300, sizing_mode='stretch_width')
-weather_btn = Button(label='Update NightLog', button_type='primary')
+weather_time = TextInput(title='Time',placeholder='17:00',value=None)
+weather_desc = TextInput(title='Description',placeholder='description',value=None)
+weather_temp = TextInput(title='Temperature (C)',placeholder='50',value=None)
+weather_wind = TextInput(title='Wind Speed (mph)',placeholder='10',value=None)
+weather_humidity = TextInput(title='Humidity (%)',placeholder='5',value=None)
+weather_table = DataTable(source=weather_source, columns=columns)
+weather_btn = Button(label='Add Weather', button_type='primary')
 
 def update_weather_source_data():
     """Adds initial input to weather table
     """
+
     new_data = pd.DataFrame(weather_source.data.copy())
     sunset_time = datetime.strptime(get_time(time_sunset.value),"%Y%m%dT%H:%M")
     sunset_hour = sunset_time.hour
@@ -317,12 +324,18 @@ def update_weather_source_data():
     del new_data['index']
 
     weather_source.data = new_data
+    DESI_Log.add_weather_os(data)
 
 def weather_add():
     """Adds table to Night Log
     """
-    data = pd.DataFrame(weather_source.data)
+    new_data = pd.DataFrame([[weather_time.value, weather_desc.value, weather_temp.value, weather_wind.value, weather_humidity.value]],
+                            columns = ['time','desc','temp','wind','humidity'])
+    old_data = pd.DataFrame(weather_source.data)[['time','desc','temp','wind','humidity']]
+    data = pd.concat([old_data, new_data])
+    weather_source.data = data
     DESI_Log.add_weather_os(data)
+    clear_input([weather_time, weather_desc, weather_temp, weather_wind, weather_humidity])
 
 # TAB4: Problems
 subtitle_4 = Div(text="Problems", width=500, style=subt_style)
@@ -447,8 +460,9 @@ tab2 = Panel(child=layout2, title="Nightly Progress")
 layout3 = layout([[title],
                  [subtitle_3],
                  [weather_inst],
+                 [weather_time, weather_desc, weather_temp],
+                 [weather_wind, weather_humidity, weather_btn],
                  [weather_table],
-                 [weather_btn]
                  ])
 tab3 = Panel(child=layout3, title="Weather")
 
