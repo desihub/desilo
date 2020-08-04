@@ -14,6 +14,7 @@ view at: http://localhost:5006/OS_Report
 #Imports
 import os, sys
 import pandas as pd
+import numpy as np
 from datetime import datetime
 
 from bokeh.io import curdoc
@@ -315,16 +316,16 @@ weather_btn = Button(label='Add Weather', button_type='primary')
 def update_weather_source_data():
     """Adds initial input to weather table
     """
-
+    print('here')
     new_data = pd.DataFrame(weather_source.data.copy())
     sunset_time = datetime.strptime(get_time(time_sunset.value),"%Y%m%dT%H:%M")
     sunset_hour = sunset_time.hour
-    idx = new_data[new_data.time == "%s:00"%(str(sunset_hour).zfill(2))].index[0]
-    new_data.at[idx,'desc'] = sunset_weather.value
-    del new_data['index']
+    #idx = new_data[new_data.time == "%s:00"%(str(sunset_hour).zfill(2))].index[0]
+    sunset_df = pd.DataFrame([["%s:00"%(str(sunset_hour).zfill(2)), sunset_weather.value, np.nan, np.nan,np.nan]], columns = ['time','desc','temp','wind','humidity'])
+    new_data = pd.concat([new_data, sunset_df])
 
     weather_source.data = new_data
-    DESI_Log.add_weather_os(data)
+    DESI_Log.add_weather_os(new_data)
 
 def weather_add():
     """Adds table to Night Log
