@@ -50,7 +50,7 @@ def clear_input(items):
 def get_time(time):
     """Returns strptime with utc. Takes time zone selection
     """
-    date = date_input.value
+    date = date_init.value
     zone = kp_zone #zones[time_select.active]
     try:
         t = datetime.strptime(date+":"+time,'%Y%m%d:%H%M')
@@ -90,7 +90,11 @@ instructions = Div(text="The Operating Scientist (OS) is responsible for initial
 subtitle_1 = Div(text="Initialize Night Log",width=500,style = subt_style)
 info_1 = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these formats. <b>Input all times in Local Kitt Peak time.</b>\n To continue an existing Night Log, enter the date and press the blue button. If a log has not yet been started for the day, you need to initialize it with ephemirides and press the green button",width=800,style=inst_style)
 #time_select = RadioButtonGroup(labels=["Local", "UTC"], active=0)
-date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
+date_init = Select(title="Existing Night Logs")
+days = os.listdir('nightlogs')
+init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir('nightlogs/'+day)])[::-1][0:10]
+date_init.options = list(init_nl_list)
+date_init.value = init_nl_list[0]
 
 your_name = TextInput(title ='Your Name', placeholder = 'John')
 
@@ -109,18 +113,16 @@ time_moonset = TextInput(title ='Time of Moonset', placeholder = 'daytime')
 illumination = TextInput(title ='Moon Illumination', placeholder = '50')
 sunset_weather = TextInput(title ='Weather conditions as sunset', placeholder = 'clear skies')
 
-init_bt = Button(label="Initialize Night Log", button_type='success',width=300)
-connect_bt = Button(label="Connect to Existing Night Log", button_type='primary',width=300)
+init_bt = Button(label="Initialize Today's Night Log", button_type='success',width=300)
+connect_bt = Button(label="Load Existing Night Log", button_type='primary',width=300)
 info_connect = Div(text="Not connected to Night Log", width=600, style={'font-family':'serif','font-size':'150%','color':'red'})
 
 def initialize_log():
     """
     Initialize Night Log with Input Date
     """
-    try:
-        date = datetime.strptime(date_input.value, '%Y%m%d')
-    except:
-        date = datetime.now()
+
+    date = datetime.now()
     global DESI_Log
 
     LO_firstname, LO_lastname = LO.value.split(' ')[0], ' '.join(LO.value.split(' ')[1:])
@@ -152,16 +154,16 @@ def plan_add():
     
 def connect_log():
     try:
-        date = datetime.strptime(date_input.value, '%Y%m%d')
+        date = datetime.strptime(date_init.value, '%Y%m%d')
     except:
         date = datetime.now()
     global DESI_Log
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
     exists = DESI_Log.check_exists()
     if exists:
-      info_connect.text = 'Connected to Existing Night Log for {}'.format(date_input.value)
+      info_connect.text = 'Connected to Existing Night Log for {}'.format(date_init.value)
     else:
-      info_connect.text = 'The Night Log for {} has not yet been initialized'.format(date_input.value)
+      info_connect.text = 'The Night Log for {} has not yet been initialized'.format(date_init.value)
     plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
     plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
  
@@ -418,7 +420,7 @@ layout1 = layout([[title],
                  [page_logo, instructions],
                  [subtitle_1],
                  [info_1],
-                 [date_input,connect_bt],
+                 [date_init,connect_bt],
                  [[your_name], [LO],[OA]],
                  [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
                  [illumination,sunset_weather]],

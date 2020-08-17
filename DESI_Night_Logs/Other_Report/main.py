@@ -16,6 +16,7 @@ view at: http://localhost:5006/bk_other
 #Imports
 import os, sys
 from datetime import datetime
+import numpy as np 
 
 from bokeh.io import curdoc  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, Paragraph, Button, TextAreaInput, Select)
@@ -48,7 +49,7 @@ def clear_input(items):
 def get_time(time):
     """Returns strptime with utc. Takes time zone selection
     """  
-    date = date_input.value
+    date = date_init.value
     zone = kp_zone #zones[time_select.active]
     try:
         t = datetime.strptime(date+":"+time,'%Y%m%d:%H%M')
@@ -86,11 +87,17 @@ instructions = Div(text="This Night Log is for Non-Observers. It should mainly b
 #Initialize Night Log Info
 subtitle_1 = Div(text="Connect to Night Log",width=500,style=subt_style)
 info_1 = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these formats. <b>Input all times in Local Kitt Peak time.</b>\n",width=800, style=inst_style)
-date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
+#date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
+
+date_init = Select(title="Existing Night Logs")
+days = os.listdir('nightlogs')
+init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir('nightlogs/'+day)])[::-1][0:10]
+date_init.options = list(init_nl_list)
+date_init.value = init_nl_list[0]
 
 your_name = TextInput(title ='Your Name', placeholder = 'John Doe')
 
-init_bt = Button(label="Connect to Night Log", button_type='primary',width=300)
+init_bt = Button(label="Load Existing Night Log", button_type='primary',width=300)
 
 nl_info = Paragraph(text="""Night Log Info""", width=500)
 
@@ -134,7 +141,7 @@ def initialize_log():
     Initialize Night Log with Input Date
     """
     try:
-        date = datetime.strptime(date_input.value, '%Y%m%d')
+        date = datetime.strptime(date_init.value, '%Y%m%d')
     except:
         date = datetime.now()
 
@@ -142,7 +149,7 @@ def initialize_log():
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
     exists = DESI_Log.check_exists()
     if exists:
-        nl_info.text = "Connected to Night Log for {}".format(date_input.value)
+        nl_info.text = "Connected to Night Log for {}".format(date_init.value)
         meta_dict = DESI_Log.get_meta_data()
         os_name.value = meta_dict['os_1']+' '+meta_dict['os_last']
         LO_name.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
@@ -157,7 +164,7 @@ def initialize_log():
         illumination.value = meta_dict['os_illumination']
         sunset_weather.value = meta_dict['os_weather_conditions']
     else:
-        nl_info.text = "No Night Log exists for {} at this time".format(date_input.value)
+        nl_info.text = "No Night Log exists for {} at this time".format(date_init.value)
 
 def exp_add():
     """
@@ -200,7 +207,7 @@ layout1 = layout([[title],
                  [instructions,page_logo],                 
                  [subtitle_1],
                  [info_1],
-                 [date_input, your_name],
+                 [date_init, your_name],
                  [init_bt],
                  [nl_info],
                  [[os_name], [LO_name],[OA_name], [DQS_name]],
