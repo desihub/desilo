@@ -94,14 +94,10 @@ init_bt = Button(label="Connect to Night Log", button_type='primary',width=300)
 
 nl_info = Paragraph(text="""Night Log Info""", width=500)
 
-os_firstname = TextInput(title ='Observing Scientist Name')
-os_lastname = TextInput()
-LO_firstname = TextInput(title ='Lead Observer Name')
-LO_lastname = TextInput()
-OA_firstname = TextInput(title ='Observing Assistant Name')
-OA_lastname = TextInput()
-DQS_firstname = TextInput(title= 'Data QA Scientist')
-DQS_lastname = TextInput()
+os_name = TextInput(title ='Observing Scientist Name')
+LO_name = TextInput(title ='Lead Observer Name')
+OA_name = TextInput(title ='Observing Assistant Name')
+DQS_name = TextInput(title= 'Data QA Scientist')
 time_sunset = TextInput(title ='Time of Sunset')
 time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends')
 time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends')
@@ -148,14 +144,10 @@ def initialize_log():
     if exists:
         nl_info.text = "Connected to Night Log for {}".format(date_input.value)
         meta_dict = DESI_Log.get_meta_data()
-        os_firstname.value = meta_dict['os_1']
-        os_lastname.value = meta_dict['os_last']
-        LO_firstname.value = meta_dict['os_lo_1']
-        LO_lastname.value = meta_dict['os_lo_last']
-        OA_firstname.value = meta_dict['os_oa_1']
-        OA_lastname.value = meta_dict['os_oa_last']
-        DQS_firstname.value = meta_dict['dqs_1']
-        DQS_lastname.value = meta_dict['dqs_last']
+        os_name.value = meta_dict['os_1']+' '+meta_dict['os_last']
+        LO_name.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
+        OA_name.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
+        DQS_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
         time_sunset.value = short_time(meta_dict['os_sunset'])
         time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
         time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
@@ -211,7 +203,7 @@ layout1 = layout([[title],
                  [date_input, your_name],
                  [init_bt],
                  [nl_info],
-                 [[os_firstname, os_lastname], [LO_firstname, LO_lastname],[OA_firstname, OA_lastname], [DQS_firstname,DQS_lastname]],
+                 [[os_name], [LO_name],[OA_name], [DQS_name]],
                  [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
                  [illumination,sunset_weather]]
                  ])
