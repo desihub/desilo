@@ -14,6 +14,7 @@ view at: http://localhost:5006/DQS_Report
 #Imports
 import os, sys
 from datetime import datetime
+import numpy as np
 
 from bokeh.io import curdoc  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, Button, RadioGroup, TextAreaInput, Select,  Span, CheckboxGroup, RadioButtonGroup)
@@ -47,7 +48,7 @@ def clear_input(items):
 def get_time(time):
     """Returns strptime with utc. Takes time zone selection
     """
-    date = date_input.value
+    date = date_init.value
     zone = kp_zone #zones[time_select.active]
     try:
         t = datetime.strptime(date+":"+time,'%Y%m%d:%H%M')
@@ -87,10 +88,15 @@ instructions = Div(text="The Data Quality Scientist (DQS) is responsible for ana
 
 subtitle_1 = Div(text="Connect to Night Log",width=500,style=subt_style)
 info_1 = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these formats. <b>Input all times in Local Kitt Peak time.</b> When you input the date and your name, press the blue button. All relevant Night Log meta data will be displayed below.",width=800,style=inst_style)
-date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
+#date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
 
 your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
 
+date_init = Select(title="Initialized Night Logs")
+days = os.listdir('nightlogs')
+init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir('nightlogs/'+day)])[::-1][0:10]
+date_init.options = list(init_nl_list)
+date_init.value = init_nl_list[0]
 init_bt = Button(label="Connect to Night Log", button_type='primary',width=300)
 connect_txt = Div(text=' ', width=600, style={'font-family':'serif','font-size':'125%','color':'red'})
 
@@ -112,7 +118,7 @@ def initialize_log():
     Initialize Night Log with Input Date
     """
     try:
-        date = datetime.strptime(date_input.value, '%Y%m%d')
+        date = datetime.strptime(date_init.value, '%Y%m%d')
     except:
         date = datetime.now()
     global DESI_Log
@@ -121,7 +127,7 @@ def initialize_log():
 
     your_firstname, your_lastname = your_name.value.split(' ')[0], ' '.join(your_name.value.split(' ')[1:])
     if exists:
-      connect_txt.text = 'Connected to Night Log for {}'.format(date_input.value)
+      connect_txt.text = 'Connected to Night Log for {}'.format(date_init.value)
       DESI_Log.add_dqs_observer(your_firstname, your_lastname)
       meta_dict = DESI_Log.get_meta_data()
 
@@ -138,7 +144,7 @@ def initialize_log():
       illumination.value = meta_dict['os_illumination']
       sunset_weather.value = meta_dict['os_weather_conditions']
     else:
-      connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(date_input.value)
+      connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(date_init.value)
 
 
 #EXPOSURES
@@ -252,7 +258,7 @@ layout1 = layout([[title],
                  [page_logo, instructions],
                  [subtitle_1],
                  [info_1],
-                 [date_input, your_name],
+                 [date_init, your_name],
                  [init_bt],
                  [connect_txt],
                  [nl_info],
