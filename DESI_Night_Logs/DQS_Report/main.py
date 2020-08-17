@@ -89,19 +89,15 @@ subtitle_1 = Div(text="Connect to Night Log",width=500,style=subt_style)
 info_1 = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these formats. <b>Input all times in Local Kitt Peak time.</b> When you input the date and your name, press the blue button. All relevant Night Log meta data will be displayed below.",width=800,style=inst_style)
 date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
 
-your_firstname = TextInput(title ='Your Name', placeholder = 'John')
-your_lastname = TextInput(placeholder = 'Smith')
+your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
 
 init_bt = Button(label="Connect to Night Log", button_type='primary',width=300)
 connect_txt = Div(text=' ', width=600, style={'font-family':'serif','font-size':'125%','color':'red'})
 
 nl_info = Div(text="Night Log Info (this will populate when you've connected to an initialized NightLog)", width=500,style=inst_style)
-os_firstname = TextInput(title ='OS Name')
-os_lastname = TextInput()
-LO_firstname = TextInput(title ='LO Name')
-LO_lastname = TextInput()
-OA_firstname = TextInput(title ='OA Name')
-OA_lastname = TextInput()
+os_name = TextInput(title ='OS Name')
+LO_name = TextInput(title ='LO Name')
+OA_name = TextInput(title ='OA Name')
 time_sunset = TextInput(title ='Time of Sunset')
 time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends')
 time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends')
@@ -122,19 +118,17 @@ def initialize_log():
     global DESI_Log
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
     exists = DESI_Log.check_exists()
+
+    your_firstname, your_lastname = your_name.value.split(' ')[0], ' '.join(your_name.value.split(' ')[1:])
     if exists:
       connect_txt.text = 'Connected to Night Log for {}'.format(date_input.value)
-      DESI_Log.add_dqs_observer(your_firstname.value, your_lastname.value)
+      DESI_Log.add_dqs_observer(your_firstname, your_lastname)
       meta_dict = DESI_Log.get_meta_data()
 
-      your_firstname.value = meta_dict['dqs_1']
-      your_lastname.value = meta_dict['dqs_last']
-      os_firstname.value = meta_dict['os_1']
-      os_lastname.value = meta_dict['os_last']
-      LO_firstname.value = short_time(meta_dict['os_lo_1'])
-      LO_lastname.value = short_time(meta_dict['os_lo_last'])
-      OA_firstname.value = short_time(meta_dict['os_oa_1'])
-      OA_lastname.value = short_time(meta_dict['os_oa_last'])
+      your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
+      os_name.value = meta_dict['os_1']+' '+meta_dict['os_last']
+      LO_name.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
+      OA_name.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
       time_sunset.value = short_time(meta_dict['os_sunset'])
       time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
       time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
@@ -258,11 +252,11 @@ layout1 = layout([[title],
                  [page_logo, instructions],
                  [subtitle_1],
                  [info_1],
-                 [date_input, [your_firstname, your_lastname]],
+                 [date_input, your_name],
                  [init_bt],
                  [connect_txt],
                  [nl_info],
-                 [[os_firstname, os_lastname], [LO_firstname, LO_lastname],[OA_firstname, OA_lastname]],
+                 [[os_name], [LO_name],[OA_name]],
                  [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
                  [illumination,sunset_weather]]
                  ])

@@ -92,8 +92,8 @@ info_1 = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these
 #time_select = RadioButtonGroup(labels=["Local", "UTC"], active=0)
 date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
 
-your_firstname = TextInput(title ='Your Name', placeholder = 'John')
-your_lastname = TextInput(placeholder = 'Smith')
+your_name = TextInput(title ='Your Name', placeholder = 'John')
+
 lo_names = ['None ','Liz Buckley-Geer','Sarah Eftekharzadeh','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
 oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
 LO = Select(title='Lead Observer', value='Choose One', options=lo_names) 
@@ -123,12 +123,13 @@ def initialize_log():
         date = datetime.now()
     global DESI_Log
 
-    LO_firstname, LO_lastname = LO.value.split(' ')
-    OA_firstname, OA_lastname = OA.value.split(' ')
+    LO_firstname, LO_lastname = LO.value.split(' ')[0], ' '.join(LO.value.split(' ')[1:])
+    OA_firstname, OA_lastname = OA.value.split(' ')[0], ' '.join(OA.value.split(' ')[1:])
+    your_firstname, your_lastname = your_name.value.split(' ')[0], ' '.join(your_name.value.split(' ')[1:])
 
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
     DESI_Log.initializing()
-    DESI_Log.get_started_os(your_firstname.value,your_lastname.value,LO_firstname,LO_lastname,
+    DESI_Log.get_started_os(your_firstname,your_lastname,LO_firstname,LO_lastname,
         OA_firstname,OA_lastname,get_time(time_sunset.value),get_time(time_18_deg_twilight_ends.value),get_time(time_18_deg_twilight_starts.value),
         get_time(time_sunrise.value),get_time(time_moonrise.value),get_time(time_moonset.value),illumination.value,sunset_weather.value)
 
@@ -166,8 +167,7 @@ def connect_log():
  
 
     meta_dict = DESI_Log.get_meta_data()
-    your_firstname.value = short_time(meta_dict['os_1'])
-    your_lastname.value = short_time(meta_dict['os_last'])
+    your_name.value = meta_dict['os_1']+' '+meta_dict['os_last']
     LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
     OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
     time_sunset.value = short_time(meta_dict['os_sunset'])
@@ -316,7 +316,6 @@ weather_btn = Button(label='Add Weather', button_type='primary')
 def update_weather_source_data():
     """Adds initial input to weather table
     """
-    print('here')
     new_data = pd.DataFrame(weather_source.data.copy())
     sunset_time = datetime.strptime(get_time(time_sunset.value),"%Y%m%dT%H:%M")
     sunset_hour = sunset_time.hour
@@ -420,7 +419,7 @@ layout1 = layout([[title],
                  [subtitle_1],
                  [info_1],
                  [date_input,connect_bt],
-                 [[your_firstname, your_lastname], [LO],[OA]],
+                 [[your_name], [LO],[OA]],
                  [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
                  [illumination,sunset_weather]],
                  [init_bt],
