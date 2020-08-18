@@ -296,7 +296,7 @@ tab1 = Panel(child=layout1, title="Initialization")
 global nw_dir
 if location == 'nersc':
     nw_dir = '/global/cfs/cdirs/desi/spectro/nightwatch/nersc/'
-    get_exposure_list(nw_dir)
+    get_exposure_list()
     exp_layout = layout([exp_select, exp_update],
                         [exp_type],
                         [quality_title,quality_btns],
@@ -308,7 +308,7 @@ if location == 'nersc':
 
 elif location == 'kpno':
     nw_dir = '/exposures/nightwatch/'
-    get_exposure_list(nw_dir)
+    get_exposure_list()
     exp_layout = layout([exp_select, exp_update],
                     [exp_type],
                     [quality_title,quality_btns],
