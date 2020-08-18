@@ -15,6 +15,7 @@ view at: http://localhost:5006/DQS_Report
 import os, sys
 from datetime import datetime
 import numpy as np
+import socket
 
 from bokeh.io import curdoc  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, Button, RadioGroup, TextAreaInput, Select,  Span, CheckboxGroup, RadioButtonGroup)
@@ -33,6 +34,15 @@ import nightlog as nl
 utc = TimezoneInfo()
 kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
 zones = [utc, kp_zone]
+
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
+if 'desi' in hostname:
+    location = 'kpno'
+elif '128.55' in ip_address:
+    location = 'nersc'
+else:
+    location = 'other'
 
 # EXTRA FUNCTIONS
 def clear_input(items):
@@ -165,7 +175,20 @@ obs_cond_comment = TextInput(title ='Observing Conditions Comment/Remark', place
 inst_perf_comment = TextInput(title ='Instrument Performance Comment/Remark', placeholder = 'Positioner Accuracy less than 10um',value=None)
 exp_btn = Button(label='Add', button_type='primary')
 exp_alert = Div(text=' ', width=600, style=inst_style)
+exp_select = Select(title='Exposures')
+exp_update = Button(label='Update', button_type='primary')
 
+def get_exposure_list():
+    dir_ = nw_dir+'/'+date_init.value
+    if not os.path.exists(dir_):
+        print(dir_)
+    else:
+        exposures = []
+        for path, subdirs, files in os.walk(dir_): 
+            for s in subdirs: 
+                exposures.append(s)  
+        exp_select.options = list(exposures)
+        exp_select.value = exposures[0] 
 
 def exp_add():
     """
@@ -250,6 +273,7 @@ def current_nl():
 
 init_bt.on_click(initialize_log)
 exp_btn.on_click(exp_add)
+exp_update.on_click(get_exposure_list)
 prob_btn.on_click(prob_add)
 check_btn.on_click(check_add)
 nl_btn.on_click(current_nl)
@@ -268,11 +292,34 @@ layout1 = layout([[title],
                  ])
 tab1 = Panel(child=layout1, title="Initialization")
 
-layout2 = layout([[title],
-                 [subtitle_2],
-                 [exp_inst],
-                 [info_2],
-                 [exp_time],
+
+global nw_dir
+if location == 'nersc':
+    nw_dir = '/global/cfs/cdirs/desi/spectro/nightwatch/nersc/'
+    get_exposure_list(nw_dir)
+    exp_layout = layout([exp_select, exp_update],
+                        [exp_type],
+                        [quality_title,quality_btns],
+                        [exp_comment],
+                        [obs_cond_comment],
+                        [inst_perf_comment],
+                        [exp_btn],
+                        [exp_alert])
+
+elif location == 'kpno':
+    nw_dir = '/exposures/nightwatch/'
+    get_exposure_list(nw_dir)
+    exp_layout = layout([exp_select, exp_update],
+                    [exp_type],
+                    [quality_title,quality_btns],
+                    [exp_comment],
+                    [obs_cond_comment],
+                    [inst_perf_comment],
+                    [exp_btn],
+                    [exp_alert])
+
+else:
+    exp_layout = layout([[exp_time],
                  [exp_exposure_start, exp_exposure_finish],
                  [exp_type],
                  [quality_title,quality_btns],
@@ -280,10 +327,14 @@ layout2 = layout([[title],
                  [obs_cond_comment],
                  [inst_perf_comment],
                  [exp_btn],
-                 [exp_alert]
+                 [exp_alert]])
+layout2 = layout([[title],
+                 [subtitle_2],
+                 [exp_inst],
+                 [info_2],
+                 [exp_layout]
                  ])
 tab2 = Panel(child=layout2, title="Exposures")
-
 
 layout3 = layout([[title],
                  [subtitle_3],
