@@ -141,14 +141,14 @@ class NightLog(object):
 
 
     def get_started_os(self,your_firstname,your_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
-                        time_sunrise,time_moonrise,time_moonset,illumination,weather_conditions):
+                        time_sunrise,time_moonrise,time_moonset,illumination): #,weather_conditions
         """
             Operations Scientist lists the personal present, ephemerids and weather conditions at sunset.
         """
 
         meta_dict = {'os_1':your_firstname, 'os_last':your_lastname,'os_lo_1':LO_firstname,'os_lo_last':LO_lastname,'os_oa_1':OA_firstname,'os_oa_last':OA_lastname,
                     'os_sunset':time_sunset,'os_end18':time_18_deg_twilight_ends,'os_start18':time_18_deg_twilight_starts,'os_sunrise':time_sunrise,
-                    'os_moonrise':time_moonrise,'os_moonset':time_moonset,'os_illumination':illumination,'os_weather_conditions':weather_conditions,'dqs_1':None,'dqs_last':None}
+                    'os_moonrise':time_moonrise,'os_moonset':time_moonset,'os_illumination':illumination,'dqs_1':None,'dqs_last':None}#'os_weather_conditions':weather_conditions,
 
         with open(self.meta_json,'w') as fp:
             json.dump(meta_dict, fp)
@@ -407,6 +407,26 @@ class NightLog(object):
                 file.write("*instrument performance:* {} \n".format(row['Inst_Comm']))
         file.close()
 
+    def write_intro(self):
+        file_intro=open(self.root_dir+'header','w')
+
+        meta_dict = json.load(open(self.meta_json,'r'))
+        file_intro.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
+        file_intro.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
+        file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
+        file_intro.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
+        file_intro.write("*Ephemerides in local time [UTC]*:\n")
+        file_intro.write("* sunset: {}\n".format(self.write_time(meta_dict['os_sunset'])))
+        file_intro.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['os_end18'])))
+        file_intro.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['os_start18'])))
+        file_intro.write("* sunrise: {}\n".format(self.write_time(meta_dict['os_sunrise'])))
+        file_intro.write("* moonrise: {}\n".format(self.write_time(meta_dict['os_moonrise'])))
+        file_intro.write("* moonset: {}\n".format(self.write_time(meta_dict['os_moonset'])))
+        file_intro.write("* illumination: {}\n".format(meta_dict['os_illumination']))
+        file_intro.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
+
+        file_intro.close()
+        os.system("pandoc -s {} -f textile -t html -o {}".format(self.root_dir+'header',self.root_dir+'header.html'))
 
     def finish_the_night(self):
         """
@@ -414,6 +434,7 @@ class NightLog(object):
         """
 
         file_nl=open(self.root_dir+'nightlog','w')
+        
         meta_dict = json.load(open(self.meta_json,'r'))
         file_nl.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
         file_nl.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))

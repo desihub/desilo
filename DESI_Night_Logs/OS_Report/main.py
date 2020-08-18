@@ -16,6 +16,7 @@ import os, sys
 import pandas as pd
 import numpy as np
 from datetime import datetime
+import socket
 
 from bokeh.io import curdoc
 from bokeh.models import (TextInput, ColumnDataSource, Button, TextAreaInput, Select, PreText, CheckboxGroup)
@@ -24,7 +25,7 @@ from bokeh.models.widgets.tables import (DataTable, TableColumn, NumberEditor, S
 from bokeh.layouts import layout
 from bokeh.models.widgets import Panel, Tabs
 from astropy.time import TimezoneInfo
-import astropy.units.si as u
+import astropy.units.si as u 
 
 sys.path.append(os.getcwd())
 
@@ -35,6 +36,18 @@ import nightlog as nl
 utc = TimezoneInfo()
 kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
 zones = [utc, kp_zone]
+
+hostname = socket.gethostname()
+ip_address = socket.gethostbyname(hostname)
+if 'desi' in hostname:
+    location = 'kpno'
+    from DOSlib.util import sky_calendar 
+
+elif '128.55' in ip_address:
+    location = 'nersc'
+
+else:
+    location = 'other'
 
 # EXTRA FUNCTIONS
 def clear_input(items):
@@ -67,6 +80,13 @@ def get_time(time):
       return tt.strftime("%Y%m%dT%H:%M")
     except:
       return time
+
+def get_strftime(datetime):
+    date = date_init.value
+    year, month, day = int(date[0:4]), int(date[5:6]), int(date[7:8])
+    d = datetime(year, month, day)
+    dt = datetime(d,datetime)
+    return dt.strftime("%Y%m%dT%H:%M")  
 
 def short_time(str_time):
     """Returns %H%M in whichever time zone selected
@@ -103,15 +123,15 @@ oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers'
 LO = Select(title='Lead Observer', value='Choose One', options=lo_names) 
 OA = Select(title='Observing Assistant', value='Choose One', options=oa_names) 
 
-
-time_sunset = TextInput(title ='Time of Sunset', placeholder = '1838')
-time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends', placeholder = '1956')
-time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends', placeholder = '0513')
-time_sunrise = TextInput(title ='Time of Sunrise', placeholder = '0631')
-time_moonrise = TextInput(title ='Time of Moonrise', placeholder = '0127')
-time_moonset = TextInput(title ='Time of Moonset', placeholder = 'daytime')
-illumination = TextInput(title ='Moon Illumination', placeholder = '50')
-sunset_weather = TextInput(title ='Weather conditions as sunset', placeholder = 'clear skies')
+intro_txt = Div(text=' ')
+# time_sunset = TextInput(title ='Time of Sunset', placeholder = '1838')
+# time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends', placeholder = '1956')
+# time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends', placeholder = '0513')
+# time_sunrise = TextInput(title ='Time of Sunrise', placeholder = '0631')
+# time_moonrise = TextInput(title ='Time of Moonrise', placeholder = '0127')
+# time_moonset = TextInput(title ='Time of Moonset', placeholder = 'daytime')
+# illumination = TextInput(title ='Moon Illumination', placeholder = '50')
+# sunset_weather = TextInput(title ='Weather conditions as sunset', placeholder = 'clear skies')
 
 init_bt = Button(label="Initialize Today's Night Log", button_type='success',width=300)
 connect_bt = Button(label="Load Existing Night Log", button_type='primary',width=300)
@@ -129,14 +149,33 @@ def initialize_log():
     OA_firstname, OA_lastname = OA.value.split(' ')[0], ' '.join(OA.value.split(' ')[1:])
     your_firstname, your_lastname = your_name.value.split(' ')[0], ' '.join(your_name.value.split(' ')[1:])
 
+    if location == 'kpno':
+        ephem = sky_calendar()
+        time_sunset = get_strftime(ephem['sunset'])
+        time_sunrise = get_strftime(ephem['sunrise'])
+        time_moonrise = get_strftime(ephem['moonrise'])
+        time_moonset = get_strftime(ephem['moonset'])
+        illumination = ephem['illumination']
+        dusk_18_deg = get_strftime(ephem['dusk_astronomical'])
+        dawn_18_deg = get_strftime(ephem['dawn_astronomical'])
+    else:
+        time_sunset = None
+        time_sunrise = None
+        time_moonset = None
+        time_moonset = None
+        illumination = None
+        dusk_18_deg = None
+        dawn_18_deg = None
+
+
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
     DESI_Log.initializing()
     DESI_Log.get_started_os(your_firstname,your_lastname,LO_firstname,LO_lastname,
-        OA_firstname,OA_lastname,get_time(time_sunset.value),get_time(time_18_deg_twilight_ends.value),get_time(time_18_deg_twilight_starts.value),
-        get_time(time_sunrise.value),get_time(time_moonrise.value),get_time(time_moonset.value),illumination.value,sunset_weather.value)
+        OA_firstname,OA_lastname,time_sunset,dusk_18_deg,dawn_18_deg,time_sunrise,time_moonrise,ime_moonset,illumination)
 
-    update_weather_source_data()
+    #update_weather_source_data()
     info_connect.text = 'Night Log is Initialized'
+    current_header()
 
 # TAB1b: Night Plan
 subtitle_1b = Div(text="Night Plan", width=500,style=subt_style)
@@ -169,17 +208,18 @@ def connect_log():
  
 
     meta_dict = DESI_Log.get_meta_data()
+    current_header()
     your_name.value = meta_dict['os_1']+' '+meta_dict['os_last']
     LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
     OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
-    time_sunset.value = short_time(meta_dict['os_sunset'])
-    time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
-    time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
-    time_sunrise.value = short_time(meta_dict['os_sunrise'])
-    time_moonrise.value = short_time(meta_dict['os_moonrise'])
-    time_moonset.value = short_time(meta_dict['os_moonset'])
-    illumination.value = meta_dict['os_illumination']
-    sunset_weather.value = meta_dict['os_weather_conditions']
+    # time_sunset.value = short_time(meta_dict['os_sunset'])
+    # time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
+    # time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
+    # time_sunrise.value = short_time(meta_dict['os_sunrise'])
+    # time_moonrise.value = short_time(meta_dict['os_moonrise'])
+    # time_moonset.value = short_time(meta_dict['os_moonset'])
+    # illumination.value = meta_dict['os_illumination']
+    # sunset_weather.value = meta_dict['os_weather_conditions']
 
     try:
       new_data = pd.read_csv(DESI_Log.weather_file)
@@ -386,6 +426,17 @@ subtitle_5 = Div(text="Current DESI Night Log", width=500,style=subt_style)
 nl_btn = Button(label='Get Current DESI Night Log', button_type='primary')
 nl_text = Div(text="Current DESI Night Log",width=1000,style=inst_style)
 nl_alert = Div(text=' ',width=600, style=inst_style)
+
+def current_header():
+    DESI_Log.write_intro()
+    path = "nightlogs/"+DESI_Log.obsday+"/header.html"
+    nl_file = open(path,'r')
+    intro_txt = ''
+    for line in nl_file:
+        intro_txt =  intro_txt + line + '\n'
+    intro_text.text = intro_txt
+    nl_file.closed
+
 
 def current_nl():
     """Return the current DESI Night Log
