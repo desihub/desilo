@@ -81,11 +81,11 @@ def get_time(time):
     except:
       return time
 
-def get_strftime(datetime):
+def get_strftime(time):
     date = date_init.value
     year, month, day = int(date[0:4]), int(date[5:6]), int(date[7:8])
     d = datetime(year, month, day)
-    dt = datetime(d,datetime)
+    dt = datetime.combine(d,time)
     return dt.strftime("%Y%m%dT%H:%M")  
 
 def short_time(str_time):
@@ -171,7 +171,7 @@ def initialize_log():
     DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
     DESI_Log.initializing()
     DESI_Log.get_started_os(your_firstname,your_lastname,LO_firstname,LO_lastname,
-        OA_firstname,OA_lastname,time_sunset,dusk_18_deg,dawn_18_deg,time_sunrise,time_moonrise,ime_moonset,illumination)
+        OA_firstname,OA_lastname,time_sunset,dusk_18_deg,dawn_18_deg,time_sunrise,time_moonrise,time_moonset,illumination)
 
     #update_weather_source_data()
     info_connect.text = 'Night Log is Initialized'
@@ -355,18 +355,18 @@ weather_humidity = TextInput(title='Humidity (%)',placeholder='5',value=None)
 weather_table = DataTable(source=weather_source, columns=columns)
 weather_btn = Button(label='Add Weather', button_type='primary')
 
-def update_weather_source_data():
-    """Adds initial input to weather table
-    """
-    new_data = pd.DataFrame(weather_source.data.copy())
-    sunset_time = datetime.strptime(get_time(time_sunset.value),"%Y%m%dT%H:%M")
-    sunset_hour = sunset_time.hour
-    #idx = new_data[new_data.time == "%s:00"%(str(sunset_hour).zfill(2))].index[0]
-    sunset_df = pd.DataFrame([["%s:00"%(str(sunset_hour).zfill(2)), sunset_weather.value, np.nan, np.nan,np.nan]], columns = ['time','desc','temp','wind','humidity'])
-    new_data = pd.concat([new_data, sunset_df])
+#def update_weather_source_data():
+#    """Adds initial input to weather table
+#    """
+#    new_data = pd.DataFrame(weather_source.data.copy())
+#    sunset_time = datetime.strptime(get_time(time_sunset.value),"%Y%m%dT%H:%M")
+#    sunset_hour = sunset_time.hour
+#    #idx = new_data[new_data.time == "%s:00"%(str(sunset_hour).zfill(2))].index[0]
+#    sunset_df = pd.DataFrame([["%s:00"%(str(sunset_hour).zfill(2)), sunset_weather.value, np.nan, np.nan,np.nan]], columns = ['time','desc','temp','wind','humidity'])
+#    new_data = pd.concat([new_data, sunset_df])
 
-    weather_source.data = new_data
-    DESI_Log.add_weather_os(new_data)
+#    weather_source.data = new_data
+#    DESI_Log.add_weather_os(new_data)
 
 def weather_add():
     """Adds table to Night Log
@@ -431,10 +431,10 @@ def current_header():
     DESI_Log.write_intro()
     path = "nightlogs/"+DESI_Log.obsday+"/header.html"
     nl_file = open(path,'r')
-    intro_txt = ''
+    intro = ''
     for line in nl_file:
-        intro_txt =  intro_txt + line + '\n'
-    intro_text.text = intro_txt
+        intro =  intro + line + '\n'
+    intro_txt.text = intro
     nl_file.closed
 
 
@@ -473,8 +473,7 @@ layout1 = layout([[title],
                  [info_1],
                  [date_init,connect_bt],
                  [[your_name], [LO],[OA]],
-                 [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
-                 [illumination,sunset_weather]],
+                 [intro_txt],
                  [init_bt],
                  [info_connect]
                  ])

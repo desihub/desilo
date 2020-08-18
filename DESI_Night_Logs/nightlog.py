@@ -423,7 +423,7 @@ class NightLog(object):
         file_intro.write("* moonrise: {}\n".format(self.write_time(meta_dict['os_moonrise'])))
         file_intro.write("* moonset: {}\n".format(self.write_time(meta_dict['os_moonset'])))
         file_intro.write("* illumination: {}\n".format(meta_dict['os_illumination']))
-        file_intro.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
+        #file_intro.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
 
         file_intro.close()
         os.system("pandoc -s {} -f textile -t html -o {}".format(self.root_dir+'header',self.root_dir+'header.html'))
@@ -448,7 +448,7 @@ class NightLog(object):
         file_nl.write("* moonrise: {}\n".format(self.write_time(meta_dict['os_moonrise'])))
         file_nl.write("* moonset: {}\n".format(self.write_time(meta_dict['os_moonset'])))
         file_nl.write("* illumination: {}\n".format(meta_dict['os_illumination']))
-        file_nl.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
+        #file_nl.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Plan for the night\n")
