@@ -111,17 +111,18 @@ init_bt = Button(label="Connect to Night Log", button_type='primary',width=300)
 connect_txt = Div(text=' ', width=600, style={'font-family':'serif','font-size':'125%','color':'red'})
 
 nl_info = Div(text="Night Log Info (this will populate when you've connected to an initialized NightLog)", width=500,style=inst_style)
-os_name = TextInput(title ='OS Name')
-LO_name = TextInput(title ='LO Name')
-OA_name = TextInput(title ='OA Name')
-time_sunset = TextInput(title ='Time of Sunset')
-time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends')
-time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends')
-time_sunrise = TextInput(title ='Time of Sunrise')
-time_moonrise = TextInput(title ='Time of Moonrise')
-time_moonset = TextInput(title ='Time of Moonset')
-illumination = TextInput(title ='Moon Illumination')
-sunset_weather = TextInput(title ='Weather conditions as sunset')
+intro_txt = Div(text=' ')
+# os_name = TextInput(title ='OS Name')
+# LO_name = TextInput(title ='LO Name')
+# OA_name = TextInput(title ='OA Name')
+# time_sunset = TextInput(title ='Time of Sunset')
+# time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends')
+# time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends')
+# time_sunrise = TextInput(title ='Time of Sunrise')
+# time_moonrise = TextInput(title ='Time of Moonrise')
+# time_moonset = TextInput(title ='Time of Moonset')
+# illumination = TextInput(title ='Moon Illumination')
+# sunset_weather = TextInput(title ='Weather conditions as sunset')
 
 def initialize_log():
     """
@@ -142,19 +143,30 @@ def initialize_log():
       meta_dict = DESI_Log.get_meta_data()
 
       your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
-      os_name.value = meta_dict['os_1']+' '+meta_dict['os_last']
-      LO_name.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
-      OA_name.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
-      time_sunset.value = short_time(meta_dict['os_sunset'])
-      time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
-      time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
-      time_sunrise.value = short_time(meta_dict['os_sunrise'])
-      time_moonrise.value = short_time(meta_dict['os_moonrise'])
-      time_moonset.value = short_time(meta_dict['os_moonset'])
-      illumination.value = meta_dict['os_illumination']
-      sunset_weather.value = meta_dict['os_weather_conditions']
+      current_header()
+      # os_name.value = meta_dict['os_1']+' '+meta_dict['os_last']
+      # LO_name.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
+      # OA_name.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
+      # time_sunset.value = short_time(meta_dict['os_sunset'])
+      # time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
+      # time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
+      # time_sunrise.value = short_time(meta_dict['os_sunrise'])
+      # time_moonrise.value = short_time(meta_dict['os_moonrise'])
+      # time_moonset.value = short_time(meta_dict['os_moonset'])
+      # illumination.value = meta_dict['os_illumination']
+      # sunset_weather.value = meta_dict['os_weather_conditions']
     else:
       connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(date_init.value)
+
+def current_header():
+    DESI_Log.write_intro()
+    path = "nightlogs/"+DESI_Log.obsday+"/header.html"
+    nl_file = open(path,'r')
+    intro = ''
+    for line in nl_file:
+        intro =  intro + line + '\n'
+    intro_txt.text = intro
+    nl_file.closed
 
 
 #EXPOSURES
@@ -286,9 +298,7 @@ layout1 = layout([[title],
                  [init_bt],
                  [connect_txt],
                  [nl_info],
-                 [[os_name], [LO_name],[OA_name]],
-                 [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
-                 [illumination,sunset_weather]]
+                 [intro_txt]
                  ])
 tab1 = Panel(child=layout1, title="Initialization")
 

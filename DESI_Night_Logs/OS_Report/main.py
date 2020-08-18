@@ -161,7 +161,7 @@ def initialize_log():
     else:
         time_sunset = None
         time_sunrise = None
-        time_moonset = None
+        time_moonrise = None
         time_moonset = None
         illumination = None
         dusk_18_deg = None

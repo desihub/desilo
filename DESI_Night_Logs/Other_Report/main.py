@@ -100,19 +100,19 @@ your_name = TextInput(title ='Your Name', placeholder = 'John Doe')
 init_bt = Button(label="Load Existing Night Log", button_type='primary',width=300)
 
 nl_info = Paragraph(text="""Night Log Info""", width=500)
-
-os_name = TextInput(title ='Observing Scientist Name')
-LO_name = TextInput(title ='Lead Observer Name')
-OA_name = TextInput(title ='Observing Assistant Name')
-DQS_name = TextInput(title= 'Data QA Scientist')
-time_sunset = TextInput(title ='Time of Sunset')
-time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends')
-time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends')
-time_sunrise = TextInput(title ='Time of Sunrise')
-time_moonrise = TextInput(title ='Time of Moonrise')
-time_moonset = TextInput(title ='Time of Moonset')
-illumination = TextInput(title ='Moon Illumination')
-sunset_weather = TextInput(title ='Weather conditions as sunset')
+intro_txt = Div(text=' ')
+# os_name = TextInput(title ='Observing Scientist Name')
+# LO_name = TextInput(title ='Lead Observer Name')
+# OA_name = TextInput(title ='Observing Assistant Name')
+# DQS_name = TextInput(title= 'Data QA Scientist')
+# time_sunset = TextInput(title ='Time of Sunset')
+# time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends')
+# time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends')
+# time_sunrise = TextInput(title ='Time of Sunrise')
+# time_moonrise = TextInput(title ='Time of Moonrise')
+# time_moonset = TextInput(title ='Time of Moonset')
+# illumination = TextInput(title ='Moon Illumination')
+# sunset_weather = TextInput(title ='Weather conditions as sunset')
 
 #TAB2
 subtitle_2 = Div(text="Comments",width=500, style=subt_style)
@@ -151,20 +151,19 @@ def initialize_log():
     if exists:
         nl_info.text = "Connected to Night Log for {}".format(date_init.value)
         meta_dict = DESI_Log.get_meta_data()
-        os_name.value = meta_dict['os_1']+' '+meta_dict['os_last']
-        LO_name.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
-        OA_name.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
-        DQS_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
-        time_sunset.value = short_time(meta_dict['os_sunset'])
-        time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
-        time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
-        time_sunrise.value = short_time(meta_dict['os_sunrise'])
-        time_moonrise.value = short_time(meta_dict['os_moonrise'])
-        time_moonset.value = short_time(meta_dict['os_moonset'])
-        illumination.value = meta_dict['os_illumination']
-        sunset_weather.value = meta_dict['os_weather_conditions']
+        current_header()
     else:
         nl_info.text = "No Night Log exists for {} at this time".format(date_init.value)
+
+def current_header():
+    DESI_Log.write_intro()
+    path = "nightlogs/"+DESI_Log.obsday+"/header.html"
+    nl_file = open(path,'r')
+    intro = ''
+    for line in nl_file:
+        intro =  intro + line + '\n'
+    intro_txt.text = intro
+    nl_file.closed
 
 def exp_add():
     """
@@ -210,9 +209,7 @@ layout1 = layout([[title],
                  [date_init, your_name],
                  [init_bt],
                  [nl_info],
-                 [[os_name], [LO_name],[OA_name], [DQS_name]],
-                 [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
-                 [illumination,sunset_weather]]
+                 [intro_txt]
                  ])
 tab1 = Panel(child=layout1, title="Initialization")
 
