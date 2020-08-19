@@ -79,6 +79,7 @@ class Report():
         self.check_time = TextInput(title ='Time', placeholder = '2007', value=None)
         self.check_alert = Div(text=" ", width=800, style=self.alert_style)
         self.check_btn = Button(label='Submit', button_type='primary')
+        self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=2)
 
         self.prob_subtitle = Div(text="Problems", width=500, style=self.subt_style)
         self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If possible, include a description of the remedy.", width=800, style=self.inst_style)
@@ -119,7 +120,8 @@ class Report():
                                 [self.check_subtitle],
                                 [self.checklist_inst],
                                 [self.checklist],
-                                [self.check_time, self.check_btn],
+                                [self.check_comment],
+                                [self.check_btn],
                                 [self.check_alert]])
         self.check_tab = Panel(child=checklist_layout, title="DQS Checklist")
 
@@ -283,15 +285,13 @@ class Report():
         """add checklist time to Night Log
         """
         complete = self.checklist.active
+        check_time = datetime.now().strftime("%Y%m%dT%H:%M")
         if len(complete) == len(self.checklist.labels):
-            if self.check_time.value is not None:
-                self.DESI_Log.add_to_checklist(self.get_time(self.check_time.value), self.report_type)
-                self.check_alert.text = "Checklist last submitted at {}".format(self.check_time.value)
-            else:
-                self.check_alert.text = "Must input a valid time to submit checklist"
+            self.DESI_Log.add_to_checklist(check_time, self.check_comment.value, self.report_type)
+            self.check_alert.text = "Checklist last submitted at {}".format(check_time[-5:])
         else:
             self.check_alert.text = "Must complete all tasks before submitting checklist"
-        self.clear_input(self.check_time)
+        self.clear_input(self.check_comment)
         self.checklist.active = []
 
     def prob_add(self):

@@ -325,7 +325,7 @@ class NightLog(object):
             file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
         file.close()
 
-    def add_to_checklist(self,time,user):
+    def add_to_checklist(self, time, comment, user):
         """
         Adds time that a checklist was completed. This cannot be edited.
         """
@@ -336,11 +336,11 @@ class NightLog(object):
 
         if not os.path.exists(the_path):
             file = open(the_path,'a')
-            file.write("{} checklist completed at (Local time): {}".format(user, self.write_time(time, kp_only=True)))
+            file.write("{} checklist completed at (Local time): {} ({})".format(user, self.write_time(time, kp_only=True), comment))
             file.close()
         else:
             file = open(the_path,'a')
-            file.write(", "+self.write_time(time, kp_only=True))
+            file.write("; {} ({})".format(self.write_time(time, kp_only=True), comment))
             file.close()
 
     def add_problem(self,time,problem,alarm_id,action,user):

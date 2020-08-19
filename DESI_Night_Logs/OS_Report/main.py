@@ -39,7 +39,7 @@ class OS_Report(Report):
         self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", width=800, style=self.inst_style)
         self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the focal plane?","Did you check the spectrographs?"]
 
-        self.header_options = ['Startup','Calibration','Focus','Observation','Other']
+        self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other']
 
     def plan_tab(self):
         self.plan_subtitle = Div(text="Night Plan", width=500, style=self.subt_style)
@@ -109,7 +109,7 @@ class OS_Report(Report):
                      [self.exp_time],
                      [self.exp_comment],
                      [self.exp_btn]])
-        elif self.hdr_type.value == 'Calibration':
+        elif self.hdr_type.value == 'Calibration (Arcs/Twilight)':
             self.exp_input_layout = layout([
                      [self.exp_time],
                      [self.exp_exposure_start, self.exp_exposure_finish],
