@@ -6,238 +6,58 @@ Created on May 21, 2020
 Other Observer to see Ongoing Night Log
 
 start server with the following command:
+bokeh serve --show Other_Report.py
 
-bokeh serve --show bk_other.py
-
-view at: http://localhost:5006/bk_other
+view at: http://localhost:5006/Other_Report
 """
 
-
-#Imports
 import os, sys
-from datetime import datetime
-import numpy as np 
 
-from bokeh.io import curdoc  # , output_file, save
-from bokeh.models import (TextInput, ColumnDataSource, Paragraph, Button, TextAreaInput, Select)
+from bokeh.io import curdoc
 from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout
 from bokeh.models.widgets import Panel, Tabs
-from astropy.time import TimezoneInfo
-import astropy.units.si as u 
 
 sys.path.append(os.getcwd())
-
 import nightlog as nl
-############################################
-
-utc = TimezoneInfo() 
-kp_zone = TimezoneInfo(utc_offset=-7*u.hour) 
-zones = [utc, kp_zone]
-
-# EXTRA FUNCTIONS
-def clear_input(items):
-    """
-    After submitting something to the log, this will clear the form.
-    """
-    if isinstance(items, list):
-      for item in items:
-        item.value = None
-    else:
-      items.value = None
-
-def get_time(time):
-    """Returns strptime with utc. Takes time zone selection
-    """  
-    date = date_init.value
-    zone = kp_zone #zones[time_select.active]
-    try:
-        t = datetime.strptime(date+":"+time,'%Y%m%d:%H%M')
-    except:
-        try:
-            t = datetime.strptime(date+":"+time,'%Y%m%d:%I:%M%p')
-        except:
-            try:
-                t = datetime.strptime(date+":"+time,'%Y%m%d:%H:%M')
-            except:
-                print("need format %H%M, %H:%M, %H:%M%p")
-    try:
-      tt = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
-      return tt.strftime("%Y%m%dT%H:%M")   
-    except:
-      return time 
-
-def short_time(str_time):
-    """Returns %H%M in whichever time zone selected
-    """
-    try:
-      t = datetime.strptime(str_time, "%Y%m%dT%H:%M")
-      zone = kp_zone #zones[time_select.active]
-      time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
-      return "{}:{}".format(str(time.hour).zfill(2), str(time.minute).zfill(2))
-    except:
-      return str_time
-
-inst_style = {'font-family':'serif','font-size':'150%'}
-subt_style = {'font-family':'serif','font-size':'200%'}
-
-title = Div(text="DESI Night Log - Non Observer", width=800,style = {'font-family':'serif','font-size':'250%'})
-page_logo = Div(text="<img src='Other_Report/static/logo.png'>", width=450, height=400)
-instructions = Div(text="This Night Log is for Non-Observers. It should mainly be used for observing the ongoing Night Log. In special circumstances, if a non-observer has an important comment about an exposure or problem, it can be added here. Before doing so, make sure to communicate with the Observing Scientist. ",width=500, style=inst_style)
-#Initialize Night Log Info
-subtitle_1 = Div(text="Connect to Night Log",width=500,style=subt_style)
-info_1 = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these formats. <b>Input all times in Local Kitt Peak time.</b>\n",width=800, style=inst_style)
-#date_input = TextInput(title ='DATE', value = datetime.now().strftime("%Y%m%d"))
-
-date_init = Select(title="Existing Night Logs")
-days = os.listdir('nightlogs')
-init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir('nightlogs/'+day)])[::-1][0:10]
-date_init.options = list(init_nl_list)
-date_init.value = init_nl_list[0]
-
-your_name = TextInput(title ='Your Name', placeholder = 'John Doe')
-
-init_bt = Button(label="Load Existing Night Log", button_type='primary',width=300)
-
-nl_info = Paragraph(text="""Night Log Info""", width=500)
-intro_txt = Div(text=' ')
-# os_name = TextInput(title ='Observing Scientist Name')
-# LO_name = TextInput(title ='Lead Observer Name')
-# OA_name = TextInput(title ='Observing Assistant Name')
-# DQS_name = TextInput(title= 'Data QA Scientist')
-# time_sunset = TextInput(title ='Time of Sunset')
-# time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends')
-# time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends')
-# time_sunrise = TextInput(title ='Time of Sunrise')
-# time_moonrise = TextInput(title ='Time of Moonrise')
-# time_moonset = TextInput(title ='Time of Moonset')
-# illumination = TextInput(title ='Moon Illumination')
-# sunset_weather = TextInput(title ='Weather conditions as sunset')
-
-#TAB2
-subtitle_2 = Div(text="Comments",width=500, style=subt_style)
-comment_txt = Div(text=" ",width=500,style=inst_style)
-exp_time = TextInput(title ='Time', placeholder = '2007',value=None)
-exp_comment = TextAreaInput(title ='Data Quality Comment/Remark', placeholder = 'Data Quality good',value=None)
-exp_btn = Button(label='Add', button_type='primary')
+from report import Report
 
 
-#TAB3 - Problems
-subtitle_3 = Div(text="Problems", width=500, style=subt_style)
-problem_txt = Div(text=" ", width=500, style=inst_style)
-prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
-prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, title="Problem Description:")
-prob_btn = Button(label='Add', button_type='primary')
+class Other_Report(Report):
+    def __init__(self):
+        Report.__init__(self, 'Other')
 
-#TAB4 - Display Current Night Log
-subtitle_5 = Div(text="Current Night Log", width=500, style=subt_style)
-nl_btn = Button(label='Get Current Night Log', button_type='primary')
-nl_text = Div(text="Current Night Log",width=500,style = inst_style)
+        self.title = Div(text="DESI Nightly Intake Form - Non Observer", width=800, style=self.title_style)
+        self.instructions = Div(text="This Night Log is for Non-Observers. It should mainly be used for observing the ongoing Night Log. In special circumstances, if a non-observer has an important comment about an exposure or problem, it can be added here. Before doing so, make sure to communicate with the Observing Scientist. ", width=800, style=self.inst_style)
 
+        self.comment_subtitle = Div(text="Comments", width=500, style=self.subt_style)
+        self.comment_alert = Div(text=' ', width=500, style=self.alert_style)
 
+    def get_layout(self):
 
-def initialize_log():
-    """
-    Initialize Night Log with Input Date
-    """
-    try:
-        date = datetime.strptime(date_init.value, '%Y%m%d')
-    except:
-        date = datetime.now()
+        comment_layout = layout([[self.title],
+                            [self.comment_subtitle],
+                            [self.comment_alert],
+                            [self.exp_time],
+                            [self.exp_comment],
+                            [self.exp_btn]])
+        comment_tab = Panel(child=comment_layout, title="Comments")
 
-    global DESI_Log
-    DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
-    exists = DESI_Log.check_exists()
-    if exists:
-        nl_info.text = "Connected to Night Log for {}".format(date_init.value)
-        meta_dict = DESI_Log.get_meta_data()
-        current_header()
-    else:
-        nl_info.text = "No Night Log exists for {} at this time".format(date_init.value)
+        self.get_intro_layout()
+        self.get_prob_layout()
+        self.get_nl_layout()
 
-def current_header():
-    DESI_Log.write_intro()
-    path = "nightlogs/"+DESI_Log.obsday+"/header.html"
-    nl_file = open(path,'r')
-    intro = ''
-    for line in nl_file:
-        intro =  intro + line + '\n'
-    intro_txt.text = intro
-    nl_file.closed
+        self.layout = Tabs(tabs=[self.intro_tab, comment_tab, self.prob_tab, self.nl_tab])
 
-def exp_add():
-    """
-    Function to add line about an exposure sequence in the Night Log
-    """
-    if your_name.value in [None,' ','']:
-        comment_txt.text = 'You need to enter your name on first page before submitting a comment'
-    else:
-        DESI_Log.add_comment_other(get_time(exp_time.value), exp_comment.value, your_name.value)
-        clear_input([exp_time, exp_comment])
-        comment_txt.text = "Currently this is not being published to the Night Log."
-
-def prob_add():
-    # Currently no code in jupyter notebook
-    if your_name.value == [None,' ','']:
-        problem_txt.text = 'You need to enter your name on first page before submitting a comment'
-    else:
-        DESI_Log.add_problem(get_time(prob_time.value), prob_input.value, "Other")
-        clear_input([prob_time, prob_input])
-        problem_txt.text = "Currently this is not being published to the Night Log."
-
-def current_nl():
-    DESI_Log.finish_the_night()
-    path = "nightlogs/"+DESI_Log.obsday+"/nightlog.html"
-    nl_file = open(path,'r')
-    nl_txt = ''
-    for line in nl_file:
-        nl_txt =  nl_txt + line + '\n'
-    nl_text.text = nl_txt
-    nl_file.closed
+    def run(self):
+        self.connect_bt.on_click(self.connect_log)
+        self.exp_btn.on_click(self.comment_add)
+        self.prob_btn.on_click(self.prob_add)
+        self.nl_btn.on_click(self.current_nl)
+        self.get_layout()
 
 
-# Layouts and Actions on Bokeh Page
-init_bt.on_click(initialize_log)
-exp_btn.on_click(exp_add)
-prob_btn.on_click(prob_add)
-nl_btn.on_click(current_nl)
-
-layout1 = layout([[title],
-                 [instructions,page_logo],                 
-                 [subtitle_1],
-                 [info_1],
-                 [date_init, your_name],
-                 [init_bt],
-                 [nl_info],
-                 [intro_txt]
-                 ])
-tab1 = Panel(child=layout1, title="Initialization")
-
-layout2 = layout([[title],
-                 [subtitle_2],
-                 [comment_txt],
-                 [exp_time],
-                 [exp_comment],
-                 [exp_btn]
-                 ])
-tab2 = Panel(child=layout2, title="Comments")
-
-
-layout4 = layout([[title],
-                 [subtitle_3],
-                 [problem_txt],
-                 [prob_time, prob_input],
-                 [prob_btn]
-                 ])
-tab4 = Panel(child=layout4, title="Problems")
-
-layout5 = layout([[title],
-                [subtitle_5],
-                [nl_btn],
-                [nl_text]])
-tab5 = Panel(child=layout5, title="Current Night Log")
-
-tabs = Tabs(tabs=[tab1, tab5, tab2, tab4])
-
+Other = Other_Report()
+Other.run()
 curdoc().title = 'DESI Night Log - Non Observer'
-curdoc().add_root(tabs)
+curdoc().add_root(Other.layout)
