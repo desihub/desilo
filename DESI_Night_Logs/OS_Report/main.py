@@ -10,489 +10,196 @@ bokeh serve --show OS_Report
 view at: http://localhost:5006/OS_Report
 """
 
-
-#Imports
 import os, sys
 import pandas as pd
-import numpy as np
-from datetime import datetime
 
 from bokeh.io import curdoc
-from bokeh.models import (TextInput, ColumnDataSource, Button, TextAreaInput, Select, PreText, CheckboxGroup)
+from bokeh.models import TextInput, ColumnDataSource, Button, TextAreaInput, Select
 from bokeh.models.widgets.markups import Div
-from bokeh.models.widgets.tables import (DataTable, TableColumn, NumberEditor, StringEditor,PercentEditor)
+from bokeh.models.widgets.tables import DataTable, TableColumn, NumberEditor, StringEditor, PercentEditor
 from bokeh.layouts import layout
 from bokeh.models.widgets import Panel, Tabs
-from astropy.time import TimezoneInfo
-import astropy.units.si as u
 
 sys.path.append(os.getcwd())
-
 import nightlog as nl
-
-############################################
-
-utc = TimezoneInfo()
-kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
-zones = [utc, kp_zone]
-
-# EXTRA FUNCTIONS
-def clear_input(items):
-    """
-    After submitting something to the log, this will clear the form.
-    """
-    if isinstance(items, list):
-      for item in items:
-        item.value = None
-    else:
-      items.value = None
-
-def get_time(time):
-    """Returns strptime with utc. Takes time zone selection
-    """
-    date = date_init.value
-    zone = kp_zone #zones[time_select.active]
-    try:
-        t = datetime.strptime(date+":"+time,'%Y%m%d:%H%M')
-    except:
-        try:
-            t = datetime.strptime(date+":"+time,'%Y%m%d:%I:%M%p')
-        except:
-            try:
-                t = datetime.strptime(date+":"+time,'%Y%m%d:%H:%M')
-            except:
-                print("need format %H%M, %H:%M, %H:%M%p")
-    try:
-      tt = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
-      return tt.strftime("%Y%m%dT%H:%M")
-    except:
-      return time
-
-def short_time(str_time):
-    """Returns %H%M in whichever time zone selected
-    """
-    try:
-      t = datetime.strptime(str_time, "%Y%m%dT%H:%M")
-      zone = kp_zone #zones[time_select.active]
-      time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
-      return "{}:{}".format(str(time.hour).zfill(2), str(time.minute).zfill(2))
-    except:
-      return str_time
-
-inst_style = {'font-family':'serif','font-size':'150%'}
-subt_style = {'font-family':'serif','font-size':'200%'}
-
-# TAB1: Initialize Night Log
-title = Div(text="DESI Night Intake - Operating Scientist", width=800,style = {'font-family':'serif','font-size':'250%'})
-page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
-instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Do so below or connect to an existing Night Log using the date. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour. ",width=500, style=inst_style)
-
-subtitle_1 = Div(text="Initialize Night Log",width=500,style = subt_style)
-info_1 = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these formats. <b>Input all times in Local Kitt Peak time.</b>\n To continue an existing Night Log, enter the date and press the blue button. If a log has not yet been started for the day, you need to initialize it with ephemirides and press the green button",width=800,style=inst_style)
-#time_select = RadioButtonGroup(labels=["Local", "UTC"], active=0)
-date_init = Select(title="Existing Night Logs")
-days = os.listdir('nightlogs')
-init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir('nightlogs/'+day)])[::-1][0:10]
-date_init.options = list(init_nl_list)
-date_init.value = init_nl_list[0]
-
-your_name = TextInput(title ='Your Name', placeholder = 'John')
-
-lo_names = ['None ','Liz Buckley-Geer','Sarah Eftekharzadeh','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
-oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
-LO = Select(title='Lead Observer', value='Choose One', options=lo_names) 
-OA = Select(title='Observing Assistant', value='Choose One', options=oa_names) 
-
-
-time_sunset = TextInput(title ='Time of Sunset', placeholder = '1838')
-time_18_deg_twilight_ends = TextInput(title ='Time 18 deg Twilight Ends', placeholder = '1956')
-time_18_deg_twilight_starts = TextInput(title ='Time 18 deg Twilight Ends', placeholder = '0513')
-time_sunrise = TextInput(title ='Time of Sunrise', placeholder = '0631')
-time_moonrise = TextInput(title ='Time of Moonrise', placeholder = '0127')
-time_moonset = TextInput(title ='Time of Moonset', placeholder = 'daytime')
-illumination = TextInput(title ='Moon Illumination', placeholder = '50')
-sunset_weather = TextInput(title ='Weather conditions as sunset', placeholder = 'clear skies')
-
-init_bt = Button(label="Initialize Today's Night Log", button_type='success',width=300)
-connect_bt = Button(label="Load Existing Night Log", button_type='primary',width=300)
-info_connect = Div(text="Not connected to Night Log", width=600, style={'font-family':'serif','font-size':'150%','color':'red'})
-
-def initialize_log():
-    """
-    Initialize Night Log with Input Date
-    """
-
-    date = datetime.now()
-    global DESI_Log
-
-    LO_firstname, LO_lastname = LO.value.split(' ')[0], ' '.join(LO.value.split(' ')[1:])
-    OA_firstname, OA_lastname = OA.value.split(' ')[0], ' '.join(OA.value.split(' ')[1:])
-    your_firstname, your_lastname = your_name.value.split(' ')[0], ' '.join(your_name.value.split(' ')[1:])
-
-    DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
-    DESI_Log.initializing()
-    DESI_Log.get_started_os(your_firstname,your_lastname,LO_firstname,LO_lastname,
-        OA_firstname,OA_lastname,get_time(time_sunset.value),get_time(time_18_deg_twilight_ends.value),get_time(time_18_deg_twilight_starts.value),
-        get_time(time_sunrise.value),get_time(time_moonrise.value),get_time(time_moonset.value),illumination.value,sunset_weather.value)
-
-    update_weather_source_data()
-    info_connect.text = 'Night Log is Initialized'
-
-# TAB1b: Night Plan
-subtitle_1b = Div(text="Night Plan", width=500,style=subt_style)
-plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.",width=800,style=inst_style)
-plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>',style=inst_style)
-plan_order = TextInput(title ='Expected Order:', placeholder = '1', value=None)
-plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
-plan_btn = Button(label='Add', button_type='primary')
-plan_alert = Div(text=' ',width=600, style=inst_style)
-
-def plan_add():
-    DESI_Log.add_plan_os([plan_order.value,plan_input.value])
-    plan_alert.text = 'Last item input: {}'.format(plan_input.value)
-    clear_input([plan_order, plan_input])
-    
-def connect_log():
-    try:
-        date = datetime.strptime(date_init.value, '%Y%m%d')
-    except:
-        date = datetime.now()
-    global DESI_Log
-    DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
-    exists = DESI_Log.check_exists()
-    if exists:
-      info_connect.text = 'Connected to Existing Night Log for {}'.format(date_init.value)
-    else:
-      info_connect.text = 'The Night Log for {} has not yet been initialized'.format(date_init.value)
-    plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
-    plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
- 
-
-    meta_dict = DESI_Log.get_meta_data()
-    your_name.value = meta_dict['os_1']+' '+meta_dict['os_last']
-    LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
-    OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
-    time_sunset.value = short_time(meta_dict['os_sunset'])
-    time_18_deg_twilight_ends.value = short_time(meta_dict['os_end18'])
-    time_18_deg_twilight_starts.value = short_time(meta_dict['os_start18'])
-    time_sunrise.value = short_time(meta_dict['os_sunrise'])
-    time_moonrise.value = short_time(meta_dict['os_moonrise'])
-    time_moonset.value = short_time(meta_dict['os_moonset'])
-    illumination.value = meta_dict['os_illumination']
-    sunset_weather.value = meta_dict['os_weather_conditions']
-
-    try:
-      new_data = pd.read_csv(DESI_Log.weather_file)
-      new_data = new_data[['time','desc','temp','wind','humidity']]
-      weather_source.data = new_data
-    except:
-      pass
-
-
-
-# TAB1c: Milestones
-subtitle_1c = Div(text="Milestones & Major Accomplishments", width=500, style=subt_style)
-milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.",width=800, style=inst_style)
-milestone_input = TextAreaInput(placeholder="Description", rows=6)
-milestone_exp_start = TextInput(title ='Exposure Start', placeholder = '12345', value=None)
-milestone_exp_end = TextInput(title ='Exposure End', placeholder = '12345', value=None)
-milestone_exp_excl = TextInput(title ='Excluded Exposures', placeholder = '12345', value=None)
-milestone_btn = Button(label='Add', button_type='primary')
-milestone_alert = Div(text=' ', width=600,style=inst_style)
-
-def milestone_add():
-    now = datetime.now()
-    DESI_Log.add_milestone_os([milestone_input.value, milestone_exp_start.value, milestone_exp_end.value, milestone_exp_excl.value])
-    clear_input([milestone_input, milestone_exp_start, milestone_exp_end, milestone_exp_excl])
-    milestone_alert.text = 'Last Milestone Entered: {} at {}'.format(milestone_input.value, now)
-
-
-# TAB2: Nightly Progress
-global header_options
-header_options = ['Startup','Calibration','Focus','Observation','Other']
-subtitle_2 = Div(text="Nightly Progress",width=500, style=subt_style)
-progress_inst = Div(text="Throughout the night record the progress, including comments on Calibrations and Exposures. All exposures are recorded in the eLog, so only enter information that can provide additional information.", width=800, style=inst_style)
-info_2 = Div(text="Fill In Only Relevant Details.",width=500, style=inst_style)
-hdr_type = Select(title="Observation Type", value = 'Observation', options=header_options)
-hdr_btn = Button(label='Select', button_type='primary')
-
-exp_time = TextInput(title ='Time', placeholder = '2007',value=None)
-exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=6)
-add_image = TextInput(title="Add Image",placeholder = 'Pictures/image.png',value=None)
-
-exp_exposure_start = TextInput(title ='Exposure Number: First', placeholder = '12345',value = None)
-exp_exposure_finish = TextInput(title ='Exposure Number: Last', placeholder = '12345',value = None)
-
-exp_type = Select(title="Exposure Type", value = None, options=['script','Zero','Dark','Arc','FVC','DESI'])
-exp_script = TextInput(title ='Script Name', placeholder = 'dithering.json', value=None)
-exp_time_end = TextInput(title ='Time End', placeholder = '2007',value=None)
-exp_focus_trim = TextInput(title ='Trim from Focus', placeholder = '54',value=None)
-exp_tile = TextInput(title ='Tile Number', placeholder = '68001',value=None)
-exp_tile_type = Select(title="Tile Type", value = 'QSO', options=['QSO','LRG','ELG','BGS','MW'])
-exp_btn = Button(label='Add', button_type='primary')
-progress_alert = Div(text=' ', width=600,style=inst_style)
-global input_layout
-input_layout = layout([])
-
-def choose_exposure():
-    if hdr_type.value == 'Focus':
-        input_layout = layout([
-                 [exp_time],
-                 [exp_exposure_start, exp_exposure_finish],
-                 [exp_comment],
-                 [exp_script],
-                 [exp_focus_trim],
-                 [exp_btn]])
-    elif hdr_type.value == 'Startup':
-        input_layout = layout([
-                 [exp_time],
-                 [exp_comment],
-                 [exp_btn]])
-    elif hdr_type.value == 'Calibration':
-        input_layout = layout([
-                 [exp_time],
-                 [exp_exposure_start, exp_exposure_finish],
-                 [exp_comment],
-                 [exp_type],
-                 [exp_script],
-                 [exp_btn]])
-    elif hdr_type.value == 'Observation':
-        input_layout = layout([
-                 [exp_time],
-                 [exp_exposure_start, exp_exposure_finish],
-                 [exp_comment],
-                 [exp_tile_type],
-                 [exp_tile],
-                 [exp_script],
-                 [exp_btn]])       
-    elif hdr_type.value == 'Other':
-        input_layout = layout([
-                 [exp_time],
-                 [exp_exposure_start, exp_exposure_finish],
-                 [exp_comment],
-                 [exp_tile_type],
-                 [exp_tile],
-                 [exp_script],
-                 [exp_btn]])    
-
-
-    layout2.children[5] = input_layout
-
-def progress_add():
-    data = [hdr_type.value, get_time(exp_time.value), exp_comment.value, exp_exposure_start.value, exp_exposure_finish.value,
-            exp_type.value, exp_script.value, get_time(exp_time_end.value), exp_focus_trim.value, exp_tile.value, exp_tile_type.value]
-    DESI_Log.add_progress(data)
-    progress_alert.text = 'Last Input was for Observation Type *{}* at {}'.format(hdr_type.value, exp_time.value)
-
-    clear_input([exp_time, exp_comment, exp_exposure_start, exp_exposure_finish, exp_type, exp_script,
-                exp_time_end, exp_focus_trim, exp_tile, exp_tile_type])
-   
-
-
-# TAB3: Weather
-subtitle_3 = Div(text="Weather", width=500,style=subt_style)
-
-def init_weather_source_data():
-    """Creates a table with pre-identified Times for weather input
-    """
-    data = pd.DataFrame(columns = ['time','desc','temp','wind','humidity'])
-    #hours = [17,18,19,20,21,22,23,24,1,2,3,4,5,6,7]
-    #data['time'] = [("%s:00" % str(hour).zfill(2)) for hour in hours]
-    return ColumnDataSource(data)
-
-weather_source = init_weather_source_data()
-columns = [TableColumn(field='time', title='Time (local)', width=100),
-           TableColumn(field='desc', title='Description', width=200, editor=StringEditor()),
-           TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
-           TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
-           TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
-weather_inst = Div(text="Every hour include a description of the weather and othe relevant information. Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=800, style=inst_style)
-weather_time = TextInput(title='Time',placeholder='17:00',value=None)
-weather_desc = TextInput(title='Description',placeholder='description',value=None)
-weather_temp = TextInput(title='Temperature (C)',placeholder='50',value=None)
-weather_wind = TextInput(title='Wind Speed (mph)',placeholder='10',value=None)
-weather_humidity = TextInput(title='Humidity (%)',placeholder='5',value=None)
-weather_table = DataTable(source=weather_source, columns=columns)
-weather_btn = Button(label='Add Weather', button_type='primary')
-
-def update_weather_source_data():
-    """Adds initial input to weather table
-    """
-    new_data = pd.DataFrame(weather_source.data.copy())
-    sunset_time = datetime.strptime(get_time(time_sunset.value),"%Y%m%dT%H:%M")
-    sunset_hour = sunset_time.hour
-    #idx = new_data[new_data.time == "%s:00"%(str(sunset_hour).zfill(2))].index[0]
-    sunset_df = pd.DataFrame([["%s:00"%(str(sunset_hour).zfill(2)), sunset_weather.value, np.nan, np.nan,np.nan]], columns = ['time','desc','temp','wind','humidity'])
-    new_data = pd.concat([new_data, sunset_df])
-
-    weather_source.data = new_data
-    DESI_Log.add_weather_os(new_data)
-
-def weather_add():
-    """Adds table to Night Log
-    """
-    new_data = pd.DataFrame([[weather_time.value, weather_desc.value, weather_temp.value, weather_wind.value, weather_humidity.value]],
-                            columns = ['time','desc','temp','wind','humidity'])
-    old_data = pd.DataFrame(weather_source.data)[['time','desc','temp','wind','humidity']]
-    data = pd.concat([old_data, new_data])
-    weather_source.data = data
-    DESI_Log.add_weather_os(data)
-    clear_input([weather_time, weather_desc, weather_temp, weather_wind, weather_humidity])
-
-# TAB4: Problems
-subtitle_4 = Div(text="Problems", width=500, style=subt_style)
-prob_inst = Div(text="Describe problems as they come up and at what time they occur. If possible, include a description of the remedy.", width=800, style=inst_style)
-prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
-prob_input = TextAreaInput(placeholder="description", rows=6, title="Problem Description:")
-prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None)
-prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=6)
-prob_btn = Button(label='Add', button_type='primary')
-prob_alert = Div(text=' ', width=600,style=inst_style)
-
-def prob_add():
-    """Adds problem to nightlog
-    """
-    DESI_Log.add_problem(get_time(prob_time.value),prob_input.value,prob_alarm.value, prob_action.value,'OS')
-    prob_alert.text = "Last Problem Input: '{}' at {}".format(prob_input.value, prob_time.value)
-    clear_input([prob_time, prob_input, prob_alarm, prob_action])
-
-
-# TAB5: Checklists
-subtitle_6 = Div(text="OS Checklist", width=500, style=subt_style)
-checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", width=800, style=inst_style )
-os_checklist = CheckboxGroup(
-        labels=["Did you check the weather?", "Did you check the guiding?", "Did you check the focal plane?","Did you check the spectrographs?"])
-check_time = TextInput(title ='Time', placeholder = '2007', value=None)
-check_txt = Div(text=" ",style=inst_style)
-check_btn = Button(label='Submit', button_type='primary')
-
-def check_add():
-    """add checklist time to Night Log
-    """
-    complete = os_checklist.active
-    if len(complete) == 4:
-      if check_time.value is not None:
-        DESI_Log.add_to_checklist(get_time(check_time.value), 'OS')
-        check_txt.text = "Checklist last submitted at {}".format(check_time.value)
-      else:
-        check_txt.text = "Must input a valid time to submit checklist"
-    else:
-      check_txt.text = "Must complete all tasks before submitting checklist"
-    clear_input(check_time)
-    os_checklist.active = []
-
-# TAB6: Current Night Log
-subtitle_5 = Div(text="Current DESI Night Log", width=500,style=subt_style)
-nl_btn = Button(label='Get Current DESI Night Log', button_type='primary')
-nl_text = Div(text="Current DESI Night Log",width=1000,style=inst_style)
-nl_alert = Div(text=' ',width=600, style=inst_style)
-
-def current_nl():
-    """Return the current DESI Night Log
-    """
-    now=datetime.now()
-    DESI_Log.finish_the_night()
-    path = "nightlogs/"+DESI_Log.obsday+"/nightlog.html"
-    nl_file = open(path,'r')
-    nl_txt = ''
-    for line in nl_file:
-        nl_txt =  nl_txt + line + '\n'
-    nl_text.text = nl_txt
-    nl_file.closed
-    nl_alert.text = 'Last Updated on this page: {}'.format(now)
-
-
-
-# Layouts and Actions on Bokeh Page
-
-init_bt.on_click(initialize_log)
-connect_bt.on_click(connect_log)
-exp_btn.on_click(progress_add)
-hdr_btn.on_click(choose_exposure)
-weather_btn.on_click(weather_add)
-prob_btn.on_click(prob_add)
-nl_btn.on_click(current_nl)
-check_btn.on_click(check_add)
-milestone_btn.on_click(milestone_add)
-plan_btn.on_click(plan_add)
-
-layout1 = layout([[title],
-                 [page_logo, instructions],
-                 [subtitle_1],
-                 [info_1],
-                 [date_init,connect_bt],
-                 [[your_name], [LO],[OA]],
-                 [[time_sunset,time_sunrise],[time_18_deg_twilight_ends,time_18_deg_twilight_starts],[time_moonrise,time_moonset],
-                 [illumination,sunset_weather]],
-                 [init_bt],
-                 [info_connect]
-                 ])
-tab1 = Panel(child=layout1, title="Initialization")
-
-layout1b = layout([[title],
-                  [subtitle_1b],
-                  [plan_inst],
-                  [plan_txt],
-                  [plan_order, plan_input],
-                  [plan_btn],
-                  [plan_alert]
-                  ])
-tab1b = Panel(child=layout1b, title="Night Plan")
-
-layout1c = layout([[title],
-                    [subtitle_1c],
-                    [milestone_inst],
-                    [milestone_input],
-                    [milestone_exp_start,milestone_exp_end, milestone_exp_excl],
-                    [milestone_btn],
-                    [milestone_alert]])
-tab1c = Panel(child=layout1c, title='Milestones')
-
-layout2 = layout(children = [[title],
-                 [subtitle_2],
-                 [progress_inst],
-                 [info_2],
-                 [hdr_type, hdr_btn],
-                 [input_layout],
-                 [progress_alert]
-                 ])
-tab2 = Panel(child=layout2, title="Nightly Progress")
-
-
-layout3 = layout([[title],
-                 [subtitle_3],
-                 [weather_inst],
-                 [weather_time, weather_desc, weather_temp],
-                 [weather_wind, weather_humidity, weather_btn],
-                 [weather_table],
-                 ])
-tab3 = Panel(child=layout3, title="Weather")
-
-layout4 = layout([[title],
-                 [subtitle_4],
-                 [prob_inst],
-                 [prob_time, prob_input],
-                 [prob_alarm, prob_action],
-                 [prob_btn],
-                 [prob_alert]
-                 ])
-tab4 = Panel(child=layout4, title="Problems")
-
-layout5 = layout([[title],
-                [subtitle_5],
-                [nl_btn, nl_alert],
-                [nl_text]])
-tab5 = Panel(child=layout5, title="Current DESI Night Log")
-
-layout6 = layout([[title],
-                [subtitle_6],
-                [checklist_inst],
-                [os_checklist],
-                [check_time, check_btn],
-                [check_txt]])
-tab6 = Panel(child=layout6, title="OS Checklist")
-
-tabs = Tabs(tabs=[tab1, tab1b, tab1c, tab2, tab3, tab4, tab6, tab5])
-
-curdoc().title = 'DESI Night Log - Operations Scientist'
-curdoc().add_root(tabs)
+from report import Report
+
+class OS_Report(Report):
+    def __init__(self):
+        Report.__init__(self, 'OS')
+
+        self.title = Div(text="DESI Nightly Intake - Operating Scientist", width=800, style=self.title_style)
+        self.instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Do so below or connect to an existing Night Log using the date. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.", width=500, style=self.inst_style)
+
+        self.init_bt = Button(label="Initialize Tonight's Log", button_type='primary')
+        self.LO = Select(title='Lead Observer', value='Choose One', options=self.lo_names) 
+        self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names) 
+
+        self.check_subtitle = Div(text="OS Checklist", width=500, style=self.subt_style)
+        self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", width=800, style=self.inst_style)
+        self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the focal plane?","Did you check the spectrographs?"]
+
+        self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other']
+
+    def plan_tab(self):
+        self.plan_subtitle = Div(text="Night Plan", width=500, style=self.subt_style)
+        self.plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.", width=800, style=self.inst_style)
+        self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', style=self.inst_style)
+        self.plan_order = TextInput(title ='Expected Order:', placeholder='1', value=None)
+        self.plan_input = TextAreaInput(placeholder="description", rows=6, title="Describe item of the night plan:")
+        self.plan_btn = Button(label='Add', button_type='primary')
+        self.plan_alert = Div(text=' ', width=600, style=self.alert_style)
+
+    def milestone_tab(self):
+        self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", width=500, style=self.subt_style)
+        self.milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", width=800, style=self.inst_style)
+        self.milestone_input = TextAreaInput(placeholder="Description", rows=6)
+        self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None)
+        self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None)
+        self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', value=None)
+        self.milestone_btn = Button(label='Add', button_type='primary')
+        self.milestone_alert = Div(text=' ', width=600, style=self.alert_style)
+        
+    def weather_tab(self):
+        data = pd.DataFrame(columns = ['time','desc','temp','wind','humidity'])
+        self.weather_source = ColumnDataSource(data)
+
+        self.weather_subtitle = Div(text="Weather", width=500, style=self.subt_style)
+
+        columns = [TableColumn(field='time', title='Time (local)', width=100),
+                   TableColumn(field='desc', title='Description', width=200, editor=StringEditor()),
+                   TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
+                   TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
+                   TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
+        self.weather_inst = Div(text="Every hour include a description of the weather and othe relevant information. Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=800, style=self.inst_style)
+        self.weather_time = TextInput(title='Time', placeholder='17:00', value=None)
+        self.weather_desc = TextInput(title='Description', placeholder='description', value=None)
+        self.weather_temp = TextInput(title='Temperature (C)', placeholder='50', value=None)
+        self.weather_wind = TextInput(title='Wind Speed (mph)', placeholder='10', value=None)
+        self.weather_humidity = TextInput(title='Humidity (%)', placeholder='5', value=None)
+        self.weather_table = DataTable(source=self.weather_source, columns=columns)
+        self.weather_btn = Button(label='Add Weather', button_type='primary')
+
+    def exp_tab(self):
+        self.exp_subtitle = Div(text="Nightly Progress", width=500, style=self.subt_style)
+        self.exp_inst = Div(text="Throughout the night record the progress, including comments on Calibrations and Exposures. All exposures are recorded in the eLog, so only enter information that can provide additional information.", width=800, style=self.inst_style)
+        self.hdr_type = Select(title="Observation Type", value='Observation', options=self.header_options)
+        self.hdr_btn = Button(label='Select', button_type='primary')
+
+        self.add_image = TextInput(title="Add Image", placeholder='Pictures/image.png', value=None)
+
+        self.exp_script = TextInput(title='Script Name', placeholder='dithering.json', value=None)
+        self.exp_time_end = TextInput(title='Time End', placeholder='2007', value=None)
+        self.exp_focus_trim = TextInput(title='Trim from Focus', placeholder='54', value=None)
+        self.exp_tile = TextInput(title='Tile Number', placeholder='68001', value=None)
+        self.exp_tile_type = Select(title="Tile Type", value='QSO', options=['QSO','LRG','ELG','BGS','MW'])
+        self.exp_input_layout = layout([])
+
+    def choose_exposure(self):
+        if self.hdr_type.value == 'Focus':
+            self.exp_input_layout = layout([
+                     [self.exp_time],
+                     [self.exp_exposure_start, self.exp_exposure_finish],
+                     [self.exp_comment],
+                     [self.exp_script],
+                     [self.exp_focus_trim],
+                     [self.exp_btn]])
+        elif self.hdr_type.value == 'Startup':
+            self.exp_input_layout = layout([
+                     [self.exp_time],
+                     [self.exp_comment],
+                     [self.exp_btn]])
+        elif self.hdr_type.value == 'Calibration (Arcs/Twilight)':
+            self.exp_input_layout = layout([
+                     [self.exp_time],
+                     [self.exp_exposure_start, self.exp_exposure_finish],
+                     [self.exp_comment],
+                     [self.exp_type],
+                     [self.exp_script],
+                     [self.exp_btn]])
+        elif self.hdr_type.value in ['Observation', 'Other']:
+            self.exp_input_layout = layout([
+                     [self.exp_time],
+                     [self.exp_exposure_start, self.exp_exposure_finish],
+                     [self.exp_comment],
+                     [self.exp_tile_type],
+                     [self.exp_tile],
+                     [self.exp_script],
+                     [self.exp_btn]])       
+        self.exp_layout.children[5] = self.exp_input_layout
+
+    def get_layout(self):
+        intro_layout = layout([[self.title],
+                            [self.page_logo, self.instructions],
+                            [self.intro_subtitle],
+                            [self.intro_info],
+                            [self.date_init, self.connect_bt],
+                            [self.connect_txt],
+                            [self.your_name, self.LO, self.OA],
+                            [self.init_bt],
+                            [self.nl_info],
+                            [self.intro_txt]])
+        intro_tab = Panel(child=intro_layout, title="Initialization")
+
+        plan_layout = layout([[self.title],
+                            [self.plan_subtitle],
+                            [self.plan_inst],
+                            [self.plan_txt],
+                            [self.plan_order, self.plan_input],
+                            [self.plan_btn],
+                            [self.plan_alert]])
+        plan_tab = Panel(child=plan_layout, title="Night Plan")
+
+        milestone_layout = layout([[self.title],
+                                [self.milestone_subtitle],
+                                [self.milestone_inst],
+                                [self.milestone_input],
+                                [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl],
+                                [self.milestone_btn],
+                                [self.milestone_alert]])
+        milestone_tab = Panel(child=milestone_layout, title='Milestones')
+
+        self.exp_layout = layout(children=[[self.title],
+                                [self.exp_subtitle],
+                                [self.exp_inst],
+                                [self.exp_info],
+                                [self.hdr_type, self.hdr_btn],
+                                [self.exp_input_layout],
+                                [self.exp_alert]])
+        exp_tab = Panel(child=self.exp_layout, title="Nightly Progress")
+
+        weather_layout = layout([[self.title],
+                                [self.weather_subtitle],
+                                [self.weather_inst],
+                                [self.weather_time, self.weather_desc, self.weather_temp],
+                                [self.weather_wind, self.weather_humidity, self.weather_btn],
+                                [self.weather_table],])
+        weather_tab = Panel(child=weather_layout, title="Weather")
+
+        self.get_prob_layout()
+        self.get_checklist_layout()
+        self.get_nl_layout()
+
+        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.nl_tab])
+
+    def run(self):
+        self.plan_tab()
+        self.milestone_tab()
+        self.exp_tab()
+        self.weather_tab()
+        self.init_bt.on_click(self.initialize_log) 
+        self.connect_bt.on_click(self.connect_log) 
+        self.exp_btn.on_click(self.progress_add) 
+        self.hdr_btn.on_click(self.choose_exposure)
+        self.weather_btn.on_click(self.weather_add)
+        self.prob_btn.on_click(self.prob_add)
+        self.nl_btn.on_click(self.current_nl)
+        self.check_btn.on_click(self.check_add)
+        self.milestone_btn.on_click(self.milestone_add)
+        self.plan_btn.on_click(self.plan_add)
+        self.get_layout()
+
+OS = OS_Report()
+OS.run()
+curdoc().title = 'DESI Night Log - OS Scientist'
+curdoc().add_root(OS.layout)
