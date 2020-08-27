@@ -8,7 +8,7 @@ import socket
 from bokeh.io import curdoc  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup)
 from bokeh.models.widgets.markups import Div
-from bokeh.layouts import layout
+from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs
 from astropy.time import TimezoneInfo
 import astropy.units.si as u 
@@ -24,14 +24,14 @@ class Report():
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
         self.zones = [self.utc, self.kp_zone]
 
-        self.inst_style = {'font-family':'serif','font-size':'150%'}
-        self.subt_style = {'font-family':'serif','font-size':'200%'}
-        self.title_style = {'font-family':'serif','font-size':'250%'}
-        self.alert_style = {'font-family':'serif','font-size':'150%','color':'red'}
+        self.inst_style = {'font-size':'150%'}
+        self.subt_style = {'font-size':'200%','font-style':'bold'}
+        self.title_style = {'font-size':'250%','font-style':'bold'}
+        self.alert_style = {'font-size':'150%','color':'red'}
 
         self.page_logo = Div(text="<img src='DQS_Report/static/logo.png'>", width=350, height=300)
-        self.intro_subtitle = Div(text="Connect to Night Log",width=500,style=self.subt_style)
-        self.intro_info = Div(text="Time Formats: 6:18pm = 18:18 = 1818. You can use any of these formats. <b>Input all times in Local Kitt Peak time.</b> When you input the date and your name, press the blue button. All relevant Night Log meta data will be displayed below.",width=800,style=self.inst_style)
+        self.intro_subtitle = Div(text="Connect to Night Log",css_classes=['subt-style'])
+        self.intro_info = Div(text="<b> Note: </b>: Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.",css_classes=['inst-style'])
 
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
@@ -49,46 +49,46 @@ class Report():
         self.lo_names = ['None ','Liz Buckley-Geer','Sarah Eftekharzadeh','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
         self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
         self.intro_txt = Div(text=' ')
-        self.comment_txt = Div(text=" ",width=500,style=self.inst_style)
+        self.comment_txt = Div(text=" ", css_classes=['inst-style'])
 
-        self.date_init = Select(title="Initialized Night Logs")
+        self.date_init = Select(title="Existing Night Logs")
         days = os.listdir('nightlogs')
         init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir('nightlogs/'+day)])[::-1][0:10]
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
-        self.connect_txt = Div(text=' ', width=600, style=self.alert_style)
+        self.connect_txt = Div(text=' ', css_classes=['alert-style'])
 
-        self.connect_bt = Button(label="Connect to Night Log", button_type='primary',width=300)
+        self.connect_bt = Button(label="Connect to Night Log", css_classes=['connect_button'])
 
-        self.exp_info = Div(text="Fill In Only Relevant Data",width=500, style=self.inst_style)
+        self.exp_info = Div(text="Fill In Only Relevant Data", css_classes=['inst-style'])
         self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=6)
         self.exp_time = TextInput(title ='Time', placeholder = '2007',value=None)
-        self.exp_btn = Button(label='Add', button_type='primary')
+        self.exp_btn = Button(label='Add', css_classes=['add_button'])
         self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
-        self.exp_alert = Div(text=' ', width=600, style=self.alert_style)
+        self.exp_alert = Div(text=' ', css_classes=['alert-style'])
         self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None)
         self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None)
 
-        self.nl_subtitle = Div(text="Current DESI Night Log", width=500, style=self.subt_style)
-        self.nl_btn = Button(label='Get Current DESI Night Log', button_type='primary')
-        self.nl_text = Div(text="Current DESI Night Log",width=500, style=self.inst_style)
-        self.nl_alert = Div(text=' ',width=600, style=self.inst_style)
-        self.nl_info = Div(text="Night Log Info:", width=500, style=self.inst_style)
+        self.nl_subtitle = Div(text="Current DESI Night Log", css_classes=['subt-style'])
+        self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
+        self.nl_text = Div(text="Current DESI Night Log", css_classes=['inst-style'])
+        self.nl_alert = Div(text=' ', css_classes=['inst-style'])
+        self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'])
 
         self.checklist = CheckboxGroup(labels=[])
         self.check_time = TextInput(title ='Time', placeholder = '2007', value=None)
-        self.check_alert = Div(text=" ", width=800, style=self.alert_style)
-        self.check_btn = Button(label='Submit', button_type='primary')
-        self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=2)
+        self.check_alert = Div(text=" ", css_classes=['alert-style'])
+        self.check_btn = Button(label='Submit', css_classes=['add_button'])
+        self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=2, cols=2)
 
-        self.prob_subtitle = Div(text="Problems", width=500, style=self.subt_style)
-        self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If possible, include a description of the remedy.", width=800, style=self.inst_style)
+        self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
+        self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'])
         self.prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
-        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, title="Problem Description:")
+        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, cols=2, title="Problem Description:")
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None)
-        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=6)
-        self.prob_btn = Button(label='Add', button_type='primary')
-        self.prob_alert = Div(text=' ', width=600, style=self.alert_style)
+        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=6, cols=2)
+        self.prob_btn = Button(label='Add', css_classes=['add_button'])
+        self.prob_alert = Div(text=' ', css_classes=['alert-style'])
           
 
         self.DESI_Log = None
@@ -104,43 +104,43 @@ class Report():
             items.value = None
 
     def get_intro_layout(self):
-        intro_layout = layout([[self.title],
+        intro_layout = layout([self.title,
                             [self.page_logo, self.instructions],                 
-                            [self.intro_subtitle],
-                            [self.intro_info],
+                            self.intro_subtitle,
+                            self.intro_info,
                             [self.date_init, self.your_name],
                             [self.connect_bt],
-                            [self.connect_txt],
-                            [self.nl_info],
-                            [self.intro_txt]])
+                            self.connect_txt,
+                            self.nl_info,
+                            self.intro_txt], width=1000)
         self.intro_tab = Panel(child=intro_layout, title="Initialization")
 
     def get_checklist_layout(self):
-        checklist_layout = layout([[self.title],
-                                [self.check_subtitle],
-                                [self.checklist_inst],
-                                [self.checklist],
-                                [self.check_comment],
+        checklist_layout = layout(self.title,
+                                self.check_subtitle,
+                                self.checklist_inst,
+                                self.checklist,
+                                self.check_comment,
                                 [self.check_btn],
-                                [self.check_alert]])
+                                self.check_alert, width=1000)
         self.check_tab = Panel(child=checklist_layout, title="DQS Checklist")
 
     def get_prob_layout(self):
-        prob_layout = layout([[self.title],
-                            [self.prob_subtitle],
-                            [self.prob_inst],
-                            [self.prob_time, self.prob_input],
-                            [self.prob_alarm, self.prob_action],
+        prob_layout = layout([self.title,
+                            self.prob_subtitle,
+                            self.prob_inst,
+                            [[self.prob_time, self.prob_alarm], self.prob_input],
+                            [self.prob_action,],
                             [self.prob_btn],
-                            [self.prob_alert]])
+                            self.prob_alert], width=1000)
 
         self.prob_tab = Panel(child=prob_layout, title="Problems")
 
     def get_nl_layout(self):
-        nl_layout = layout([[self.title],
-                            [self.nl_subtitle],
-                            [self.nl_btn, self.nl_alert],
-                            [self.nl_text]])
+        nl_layout = layout([self.title,
+                        self.nl_subtitle,
+                        [self.nl_btn, self.nl_alert],
+                        self.nl_text], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
 
@@ -309,8 +309,9 @@ class Report():
     def milestone_add(self):
         now = datetime.now()
         self.DESI_Log.add_milestone_os([self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value])
-        self.clear_input([self.milestone_input, self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl])
         self.milestone_alert.text = 'Last Milestone Entered: {} at {}'.format(self.milestone_input.value, now)
+        self.clear_input([self.milestone_input, self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl])
+        
 
     def weather_add(self):
         """Adds table to Night Log

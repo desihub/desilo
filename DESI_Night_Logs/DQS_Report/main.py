@@ -26,21 +26,21 @@ class DQS_Report(Report):
     def __init__(self):
         Report.__init__(self, 'DQS')
 
-        self.title = Div(text="DESI Nightly Intake - Data QA Scientist", width=600, style=self.title_style)
-        self.instructions = Div(text="The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality. You can connect to an existing Night Log that was created by the Observing Scientist. ", width=500, style=self.inst_style)
+        self.title = Div(text="DESI Nightly Intake - Data QA Scientist", css_classes=['h1-title-style'])
+        self.instructions = Div(text="The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality. You can connect to an existing Night Log that was created by the Observing Scientist. ", css_classes=['inst-style'])
 
-        self.check_subtitle = Div(text="DQS Checklist", width=500, style=self.subt_style)
-        self.checklist_inst = Div(text="Every hour, the DQS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", width=800, style=self.inst_style )
-        self.checklist.labels = ["Are all images being transferred to Night Watch?","Did you check the observing conditions?", "Did you check the guiding?"]
+        self.check_subtitle = Div(text="DQS Checklist", css_classes=['subt-style'])
+        self.checklist_inst = Div(text="Every hour, the DQS is expected to monitor several things. After completing tasks fill out this form and add any interesting observations.", css_classes=['inst-style'] )
+        self.checklist.labels = ["Are all images being transferred to Night Watch?", "Did you check the observing conditions?", "Did you check the guiding?"]
 
         self.quality_list = ['Bad','OK','Good','Great']
         self.quality_btns = RadioGroup(labels=self.quality_list, active=2)
 
     def exp_tab(self):
-        self.exp_subtitle = Div(text="Exposures", width=500, style=self.subt_style)
-        self.exp_inst = Div(text="For each exposure, collect information about what you observe on Night Watch (quality) and observing conditions using other tools", width=800, style=self.inst_style)
+        self.exp_subtitle = Div(text="Exposures", css_classes=['subt-style'])
+        self.exp_inst = Div(text="For each exposure, collect information about what you observe on Night Watch (quality) and observing conditions using other tools", css_classes=['inst-style'])
 
-        self.quality_title = Div(text='Data Quality: ', style=self.inst_style)
+        self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
         
         self.obs_cond_comment = TextInput(title='Observing Conditions Comment/Remark', placeholder='Seeing stable at 0.8arcsec', value=None)
         self.inst_perf_comment = TextInput(title='Instrument Performance Comment/Remark', placeholder='Positioner Accuracy less than 10um', value=None)
@@ -90,11 +90,11 @@ class DQS_Report(Report):
 
     def get_layout(self):
 
-        exp_layout = layout([[self.title],
-                            [self.exp_subtitle],
-                            [self.exp_inst],
-                            [self.exp_info],
-                            [self.exp_layout]])
+        exp_layout = layout([self.title,
+                            self.exp_subtitle,
+                            self.exp_inst,
+                            self.exp_info,
+                            self.exp_layout], width=1000)
         exp_tab = Panel(child=exp_layout, title="Exposures") 
 
         self.get_intro_layout()
