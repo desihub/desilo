@@ -1,0 +1,60 @@
+*Observer (OS)*: John Doe
+*Observer (DQS)*:  
+*Lead Observer*: Parker Fagrelius
+*Telescope Operator*: Amy Robertson
+*Ephemerides in local time [UTC]*:
+* sunset: None
+* 18(o) twilight ends: None
+* 18(o) twilight starts: None
+* sunrise: None
+* moonrise: None
+* moonset: None
+* illumination: None
+
+
+h3. Plan for the night
+
+The detailed operations plan for today (obsday 20200818) can be found at https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan20200818.
+
+Main items are listed below:
+
+* item number one.
+
+
+h3. Milestones and Major Progress
+* milestone #1; Exposures: [12456 - 12458], excluding None.
+
+
+h3. Problems and Operations Issues (local time [UTC])
+
+h5. Encountered by the OS
+
+
+h5. Encountered by the DQS
+
+
+- 20:10 [03:10] := problem;  AlarmID: None;  Action: 
+
+
+h3. Checklists
+
+OS checklist completed at (Local time): 15:50 ()
+DQS checklist completed at (Local time): 20:07, 20:07
+
+h3. Weather Summary
+
+- 17:13 := cloudy; Temp: 50, Wind: 10, Humidity: 4
+
+
+h3. Details on the night progress from the OS (local time [UTC])
+
+
+h5. Startup and Calibrations
+
+
+h5. Observations
+
+
+h3. Details on the night progress from the DQS (local time [UTC])
+
+

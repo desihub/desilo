@@ -1,0 +1,96 @@
+*Observer (OS)*: Parker Anne Fagrelius
+*Observer (DQS)*: LL Cool J
+*Lead Observer*: Satya Gontcho A Gontcho
+*Telescope Operator*: Amy Robertson
+*Ephemerides in local time [UTC]*:
+* sunset: 18:38 [01:38]
+* 18(o) twilight ends: 19:56 [02:56]
+* 18(o) twilight starts: 05:13 [12:13]
+* sunrise: 06:31 [13:31]
+* moonrise: 01:27 [08:27]
+* moonset: daytime
+* illumination: 50
+
+
+h3. Plan for the night
+
+The detailed operations plan for today (obsday 20200817) can be found at https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan20200817.
+
+Main items are listed below:
+
+* description.
+
+
+* item #1.
+
+
+* plan numb 2.
+
+
+h3. Milestones and Major Progress
+* things are going well; Exposures: [12345 - 12346], excluding 12345.
+
+
+* important thing happened; Exposures: [12345 - 12346], excluding 12345.
+
+
+* milesone!; Exposures: [12345 - 1246], excluding None.
+
+
+h3. Problems and Operations Issues (local time [UTC])
+
+h5. Encountered by the OS
+
+
+- 20:10 [03:10] := another problem ;  AlarmID: None;  Action: 
+
+
+- 23:50 [06:50] := problemo;  AlarmID: None;  Action: 
+
+
+h5. Encountered by the DQS
+
+
+- 20:20 [03:20] := problem;  AlarmID: None;  Action: 
+
+
+- 20:30 [03:30] := problem;  AlarmID: None;  Action: 
+
+
+h3. Checklists
+
+OS checklist completed at (Local time): 21:46, 13:47 (everything is ok)
+DQS checklist completed at (Local time): 20:10, 20:10, 21:45
+
+h3. Weather Summary
+
+- 18:00 := clear skies; Temp: nan, Wind: nan, Humidity: nan
+- 19:00 := cloudy; Temp: 50.0, Wind: 12.0, Humidity: 5.0
+
+
+h3. Details on the night progress from the OS (local time [UTC])
+
+
+h5. Startup and Calibrations
+
+
+- 21:22 [04:22] := script @None@, first exposure 12345
+- None := last exposure 12346, progress
+
+
+- 22:40 [05:40] := script @None@, first exposure 12345
+- None := last exposure 12346, comment
+
+
+h5. Observations
+
+
+- 20:15 [03:15] := exposure 12345, None sequence, None tile 68001, humidity is kind high
+
+
+h3. Details on the night progress from the DQS (local time [UTC])
+
+
+- 20:20 := Exp. # 12345 - 12346, Focus, Good, comment
+*observing conditions:* ok 
+*instrument performance:* fine 
