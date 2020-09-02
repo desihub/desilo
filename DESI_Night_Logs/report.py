@@ -231,7 +231,7 @@ class Report():
         OA_firstname, OA_lastname = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
         your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
 
-        if location == 'kpno':
+        if self.location == 'kpno':
             ephem = sky_calendar()
             time_sunset = self.get_strftime(ephem['sunset'])
             time_sunrise = self.get_strftime(ephem['sunrise'])
