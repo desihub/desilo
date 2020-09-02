@@ -507,7 +507,7 @@ class NightLog(object):
             data = pd.read_csv(self.weather_file)
             for index, row in data.iterrows():
                 if isinstance(row['desc'], str):
-                    file_nl.write("- {}:{} := {}; Temp: {}, Wind: {}, Humidity: {}\n".format(row['time'][0:2],row['time'][3:],row['desc'],str(row['temp']),str(row['wind']),row['humidity']))
+                    file_nl.write("- {} := {}; Temp: {}, Wind: {}, Humidity: {}\n".format(str(row['time']),row['desc'],str(row['temp']),str(row['wind']),row['humidity']))
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Details on the night progress from the OS (local time [UTC])\n")
