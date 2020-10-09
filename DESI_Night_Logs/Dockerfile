@@ -38,7 +38,7 @@ RUN \
             astropy             \
             bokeh               \
             pandas              \
-            pandoc              \
+            pandoc              
 
 ENV PATH=/opt/anaconda3/bin:$PATH
 WORKDIR /srv
