@@ -27,14 +27,26 @@ class Other_Report(Report):
     def __init__(self):
         Report.__init__(self, 'Other')
 
-        self.title = Div(text="DESI Nightly Intake Form - Non Observer",css_classes=['h1-title-style'])
-        self.instructions = Div(text="This Night Log is for Non-Observers. It should mainly be used for observing the ongoing Night Log. In special circumstances, if a non-observer has an important comment about an exposure or problem, it can be added here. Before doing so, make sure to communicate with the Observing Scientist. ", css_classes=['inst_style'])
-        self.page_logo = Div(text="<img src='Other_Report/static/logo.png'>", width=350, height=300)
+        self.title = Div(text="DESI Nightly Intake Form - Non Observer",css_classes=['h1-title-style'], width=1000)
+        self.instructions = Div(text="This Night Log is for Non-Observers. It should mainly be used for observing the ongoing Night Log. In special circumstances, if a non-observer has an important comment about an exposure or problem, it can be added here. Before doing so, make sure to communicate with the Observing Scientist. ", css_classes=['inst_style'], width=800)
+        self.page_logo = Div(text="<img src='Other_Report/static/logo.png'>", width=400, height=400)
 
         self.comment_subtitle = Div(text="Comments", css_classes=['subt-style'])
         self.comment_alert = Div(text=' ',  css_classes=['alert-style'])
 
     def get_layout(self):
+
+        intro_layout = layout([self.title,
+                        [self.page_logo],
+                        [self.instructions],                 
+                        self.intro_subtitle,
+                        self.intro_info,
+                        [self.date_init, self.your_name],
+                        [self.connect_bt],
+                        self.connect_txt,
+                        self.nl_info,
+                        self.intro_txt], width=1000)
+        intro_tab = Panel(child=intro_layout, title="Initialization")
 
         comment_layout = layout([self.title,
                             self.comment_subtitle,
@@ -44,11 +56,11 @@ class Other_Report(Report):
                             self.exp_btn], width=1000)
         comment_tab = Panel(child=comment_layout, title="Comments")
 
-        self.get_intro_layout()
+        #self.get_intro_layout()
         self.get_prob_layout()
         self.get_nl_layout()
 
-        self.layout = Tabs(tabs=[self.intro_tab, comment_tab, self.prob_tab, self.nl_tab])
+        self.layout = Tabs(tabs=[intro_tab, comment_tab, self.prob_tab, self.nl_tab])
 
     def run(self):
         self.connect_bt.on_click(self.connect_log)

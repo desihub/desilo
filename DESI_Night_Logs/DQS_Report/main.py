@@ -26,7 +26,7 @@ class DQS_Report(Report):
     def __init__(self):
         Report.__init__(self, 'DQS')
 
-        self.title = Div(text="DESI Nightly Intake - Data QA Scientist", css_classes=['h1-title-style'])
+        self.title = Div(text="DESI Nightly Intake - Data QA Scientist", css_classes=['h1-title-style'], width=1000)
         self.instructions = Div(text="The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality. You can connect to an existing Night Log that was created by the Observing Scientist. ", css_classes=['inst-style'])
         self.page_logo = Div(text="<img src='DQS_Report/static/logo.png'>", width=350, height=300)
 

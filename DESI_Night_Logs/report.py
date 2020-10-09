@@ -312,7 +312,6 @@ class Report():
         self.milestone_alert.text = 'Last Milestone Entered: {} at {}'.format(self.milestone_input.value, now)
         self.clear_input([self.milestone_input, self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl])
         
-
     def weather_add(self):
         """Adds table to Night Log
         """
