@@ -29,6 +29,7 @@ class Other_Report(Report):
 
         self.title = Div(text="DESI Nightly Intake Form - Non Observer",css_classes=['h1-title-style'])
         self.instructions = Div(text="This Night Log is for Non-Observers. It should mainly be used for observing the ongoing Night Log. In special circumstances, if a non-observer has an important comment about an exposure or problem, it can be added here. Before doing so, make sure to communicate with the Observing Scientist. ", css_classes=['inst_style'])
+        self.page_logo = Div(text="<img src='Other_Report/static/logo.png'>", width=350, height=300)
 
         self.comment_subtitle = Div(text="Comments", css_classes=['subt-style'])
         self.comment_alert = Div(text=' ',  css_classes=['alert-style'])

@@ -355,7 +355,7 @@ class NightLog(object):
             elif user == 'DQS':
                 the_path=self.dqs_pb_dir+"problem_"+self.get_timestamp(time)
             file=self.new_entry_or_replace(the_path)
-            print('here')
+
             file.write("- "+self.write_time(time)+" := "+str(problem)+";  AlarmID: "+str(alarm_id)+";  Action: "+str(action)+"\n")
             file.close()
 

@@ -29,7 +29,7 @@ class Report():
         self.title_style = {'font-size':'250%','font-style':'bold'}
         self.alert_style = {'font-size':'150%','color':'red'}
 
-        self.page_logo = Div(text="<img src='DQS_Report/static/logo.png'>", width=350, height=300)
+        
         self.intro_subtitle = Div(text="Connect to Night Log",css_classes=['subt-style'])
         self.intro_info = Div(text="<b> Note: </b>: Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.",css_classes=['inst-style'])
 

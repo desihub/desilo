@@ -30,13 +30,14 @@ class OS_Report(Report):
     def __init__(self):
         Report.__init__(self, 'OS')
 
-        self.title = Div(text="DESI Nightly Intake - Operating Scientist", css_classes=['h1-title-style'])# width=800, style={'font-size':'24pt','font-style':'bold'})
-        self.instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.", css_classes=['inst-style'])
-        self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------')
-        self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------')
+        self.title = Div(text="DESI Nightly Intake - Operating Scientist", css_classes=['h1-title-style'], width=1000)# width=800, style={'font-size':'24pt','font-style':'bold'})
+        self.instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.", css_classes=['inst-style'], width=500)
+        self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
+        self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.init_bt = Button(label="Initialize Tonight's Log", css_classes=['init_button'])
         self.LO = Select(title='Lead Observer', value='Choose One', options=self.lo_names) 
         self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names) 
+        self.page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
 
         self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
         self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", css_classes=['inst-style'])
