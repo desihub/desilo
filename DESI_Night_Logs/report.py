@@ -52,7 +52,7 @@ class Report():
         self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
         self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
         self.intro_txt = Div(text=' ')
-        self.comment_txt = Div(text=" ", css_classes=['inst-style'])
+        self.comment_txt = Div(text=" ", css_classes=['inst-style'], width=1000)
 
         self.date_init = Select(title="Existing Night Logs")
         days = os.listdir('nightlogs')
@@ -63,7 +63,7 @@ class Report():
 
         self.connect_bt = Button(label="Connect to Night Log", css_classes=['connect_button'])
 
-        self.exp_info = Div(text="Fill In Only Relevant Data", css_classes=['inst-style'])
+        self.exp_info = Div(text="Fill In Only Relevant Data", css_classes=['inst-style'],width=500)
         self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=6)
         self.exp_time = TextInput(title ='Time', placeholder = '2007',value=None)
         self.exp_btn = Button(label='Add', css_classes=['add_button'])
@@ -74,9 +74,9 @@ class Report():
 
         self.nl_subtitle = Div(text="Current DESI Night Log: {}".format(self.nl_file), css_classes=['subt-style'])
         self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
-        self.nl_text = Div(text="Current DESI Night Log", css_classes=['inst-style'])
+        self.nl_text = Div(text="Current DESI Night Log", css_classes=['inst-style'], width=500)
         self.nl_alert = Div(text=' ', css_classes=['inst-style'], width=500)
-        self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'])
+        self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)
 
         self.checklist = CheckboxGroup(labels=[])
         self.check_time = TextInput(title ='Time', placeholder = '2007', value=None)

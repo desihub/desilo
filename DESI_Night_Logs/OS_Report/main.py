@@ -48,7 +48,7 @@ class OS_Report(Report):
     def plan_tab(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
         self.plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.", css_classes=['inst-style'], width=1000)
-        self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'])
+        self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'], width=500)
         self.plan_order = TextInput(title ='Expected Order:', placeholder='1', value=None)
         self.plan_input = TextAreaInput(placeholder="description", rows=6, cols=3, title="Describe item of the night plan:")
         self.plan_btn = Button(label='Add', css_classes=['add_button'])
