@@ -211,7 +211,10 @@ class Report():
                 self.your_name.value = meta_dict['{}_1'.format(self.report_type.lower())]+' '+meta_dict['{}_last'.format(self.report_type.lower())]
 
             self.current_header()
-            self.nl_file = os.getcwd()+self.DESI_Log.root_dir+'nightlog.html'
+            if self.location == 'nersc':
+                self.nl_file = '/global/cfs/cdirs/desi/users/parkerf/nightlog/desilo/DESI_Night_Logs/nightlogs/'+self.DESI_Log.root_dir+'nightlog.html'
+            else:
+                self.nl_file = os.getcwd()+self.DESI_Log.root_dir+'nightlog.html'
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
             if self.report_type == 'OS':
@@ -222,8 +225,6 @@ class Report():
             new_data = pd.read_csv(self.DESI_Log.weather_file)
             new_data = new_data[['time','desc','temp','wind','humidity']]
             self.weather_source.data = new_data
-            #except:
-            #    pass
 
 
         else:

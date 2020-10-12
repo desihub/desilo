@@ -47,57 +47,64 @@ class DQS_Report(Report):
 
     def exp_tab(self):
         self.exp_subtitle = Div(text="Exposures", css_classes=['subt-style'])
-        self.exp_inst = Div(text="For each exposure, collect information about what you observe on Night Watch (quality) and observing conditions using other tools", css_classes=['inst-style'], width=1000)
+        self.exp_inst = Div(text="For each exposure, collect information about what you observe on Night Watch (quality) and observing conditions using other tools. Either select or enter an exposure number.", css_classes=['inst-style'], width=1000)
 
         self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
         
         self.obs_cond_comment = TextInput(title='Observing Conditions Comment/Remark', placeholder='Seeing stable at 0.8arcsec', value=None)
         self.inst_perf_comment = TextInput(title='Instrument Performance Comment/Remark', placeholder='Positioner Accuracy less than 10um', value=None)
         
-        self.exp_select = Select(title='(1) Select Exposure')
-        self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', value=None))
+        self.exp_select = Select(title='(1) Select Exposure',options=['None'])
+        self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', value=None)
         self.exp_update = Button(label='Update Selection List', button_type='primary')
-        self.exp+option = RadioButton(options=['Select','Enter'], active=0)
+        self.exp_option = RadioGroup(labels=['(1) Select','(2) Enter'], active=0)
 
-        if self.location == 'other':
-            self.exp_layout = layout([self.exp_time],
-                                    [self.exp_exposure_start, self.exp_exposure_finish],
-                                    [self.exp_type],
-                                    [self.quality_title,self.quality_btns],
-                                    [self.exp_comment],
-                                    [self.obs_cond_comment],
-                                    [self.inst_perf_comment],
-                                    [self.exp_btn],
-                                    [self.exp_alert])
+        # if self.location == 'other':
+        #     self.exp_layout = layout([self.exp_time],
+        #                             [self.exp_exposure_start, self.exp_exposure_finish],
+        #                             [self.exp_type],
+        #                             [self.quality_title,self.quality_btns],
+        #                             [self.exp_comment],
+        #                             [self.obs_cond_comment],
+        #                             [self.inst_perf_comment],
+        #                             [self.exp_btn],
+        #                             [self.exp_alert])
 
-        else:
-            self.get_exposure_list()
-            self.exp_layout = layout([self.exp_option, self.exp_select, self.exp_enter, self.exp_update],
-                                    [self.exp_type],
-                                    [self.quality_title, self.quality_btns],
-                                    [self.exp_comment],
-                                    [self.obs_cond_comment],
-                                    [self.inst_perf_comment],
-                                    [self.exp_btn],
-                                    [self.exp_alert])
+        # else:
+        self.get_exposure_list()
+        self.exp_layout = layout([self.exp_option, self.exp_select, self.exp_enter, self.exp_update],
+                                [self.exp_type],
+                                [self.quality_title, self.quality_btns],
+                                [self.exp_comment],
+                                [self.obs_cond_comment],
+                                [self.inst_perf_comment],
+                                [self.exp_btn],
+                                [self.exp_alert])
 
     def get_exposure_list(self):
-        dir_ = self.nw_dir+'/'+self.date_init.value
-        if not os.path.exists(dir_):
-            print(dir_)
-        else:
+        try:
+            dir_ = self.nw_dir+'/'+self.date_init.value
             exposures = []
             for path, subdirs, files in os.walk(dir_): 
                 for s in subdirs: 
                     exposures.append(s)  
             self.exp_select.options = list(exposures)
             self.exp_select.value = exposures[0] 
+        except:
+            self.exp_select.options = []
+            #self.exp_select.value = "None Avail."
+            
 
     def exp_add(self):
         quality = self.quality_list[self.quality_btns.active]
-        self.DESI_Log.dqs_add_exp([self.get_time(self.exp_time.value), self.exp_exposure_start.value, self.exp_type.value, quality, self.exp_comment.value, self.obs_cond_comment.value, self.inst_perf_comment.value, self.exp_exposure_finish.value])
-        self.exp_alert.text = 'Last Exposure input {} at {}'.format(self.exp_exposure_start.value, self.exp_time.value)
-        self.clear_input([self.exp_time, self.exp_exposure_start, self.exp_type, self.exp_comment, self.obs_cond_comment, self.inst_perf_comment, self.exp_exposure_finish])
+        if self.exp_option.active == 0:
+            exp_val = self.exp_select.value
+        elif self.exp_option.active ==1:
+            exp_val = self.exp_enter.value
+        self.DESI_Log.dqs_add_exp([self.get_time(self.exp_time.value), exp_val, self.exp_type.value, quality, self.exp_comment.value, self.obs_cond_comment.value, self.inst_perf_comment.value, None])
+        self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, self.exp_time.value)
+        self.clear_input([self.exp_time, self.exp_enter, self.exp_type, self.exp_comment, self.obs_cond_comment, self.inst_perf_comment, self.exp_exposure_finish])
+        #self.exp_option.value = '-'
 
     def get_layout(self):
 
