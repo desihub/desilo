@@ -222,10 +222,12 @@ class Report():
                 self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
                 self.LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
                 self.OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
-                self.weather_source.data = new_data
-
-                new_data = pd.read_csv(self.DESI_Log.weather_file)
-                new_data = new_data[['time','desc','temp','wind','humidity']]
+                try:
+                    self.weather_source.data = new_data
+                    new_data = pd.read_csv(self.DESI_Log.weather_file)
+                    new_data = new_data[['time','desc','temp','wind','humidity']]
+                except:
+                    pass
 
         else:
             self.connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(self.date_init.value)
