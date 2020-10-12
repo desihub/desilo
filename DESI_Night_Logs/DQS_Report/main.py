@@ -27,19 +27,27 @@ class DQS_Report(Report):
         Report.__init__(self, 'DQS')
 
         self.title = Div(text="DESI Nightly Intake - Data QA Scientist", css_classes=['h1-title-style'], width=1000)
-        self.instructions = Div(text="The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality. You can connect to an existing Night Log that was created by the Observing Scientist. ", css_classes=['inst-style'])
+        self.instructions = Div(text="The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality. You can connect to an existing Night Log that was created by the Observing Scientist. ", css_classes=['inst-style'], width=1000)
         self.page_logo = Div(text="<img src='DQS_Report/static/logo.png'>", width=350, height=300)
 
         self.check_subtitle = Div(text="DQS Checklist", css_classes=['subt-style'])
-        self.checklist_inst = Div(text="Every hour, the DQS is expected to monitor several things. After completing tasks fill out this form and add any interesting observations.", css_classes=['inst-style'] )
+        self.checklist_inst = Div(text="Every hour, the DQS is expected to monitor several things. After completing tasks fill out this form and add any interesting observations.", css_classes=['inst-style'] ,width=1000)
         self.checklist.labels = ["Are all images being transferred to Night Watch?", "Did you check the observing conditions?", "Did you check the guiding?"]
 
         self.quality_list = ['Bad','OK','Good','Great']
         self.quality_btns = RadioGroup(labels=self.quality_list, active=2)
 
+        # if self.location is in ['desi','nersc']:
+        #     self.exp_list = 
+        # else:
+        #     self.exp_list = []
+        # self.exp_option = Div(text='(1) Enter exposure number OR (2) Select from list')
+        # self.exp_enter = TextInput(title='(1) Exposure Number', placeholder='12345', value=None)
+        # self.exp_select = Select(title='(2) Select Exposures', value='Choose One', options=self.exp_list)
+
     def exp_tab(self):
         self.exp_subtitle = Div(text="Exposures", css_classes=['subt-style'])
-        self.exp_inst = Div(text="For each exposure, collect information about what you observe on Night Watch (quality) and observing conditions using other tools", css_classes=['inst-style'])
+        self.exp_inst = Div(text="For each exposure, collect information about what you observe on Night Watch (quality) and observing conditions using other tools", css_classes=['inst-style'], width=1000)
 
         self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
         

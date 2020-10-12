@@ -40,14 +40,14 @@ class OS_Report(Report):
         self.page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
 
         self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
-        self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", css_classes=['inst-style'])
+        self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", css_classes=['inst-style'], width=1000)
         self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the focal plane?","Did you check the spectrographs?"]
 
         self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other']
 
     def plan_tab(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
-        self.plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.", css_classes=['inst-style'])
+        self.plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.", css_classes=['inst-style'], width=1000)
         self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'])
         self.plan_order = TextInput(title ='Expected Order:', placeholder='1', value=None)
         self.plan_input = TextAreaInput(placeholder="description", rows=6, cols=3, title="Describe item of the night plan:")
@@ -56,7 +56,7 @@ class OS_Report(Report):
 
     def milestone_tab(self):
         self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", css_classes=['subt-style'])
-        self.milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", css_classes=['inst-style'])
+        self.milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", css_classes=['inst-style'],width=1000)
         self.milestone_input = TextAreaInput(placeholder="Description", rows=6, cols=3)
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None)
@@ -75,7 +75,7 @@ class OS_Report(Report):
                    TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
                    TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
                    TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
-        self.weather_inst = Div(text="Every hour include a description of the weather and othe relevant information. Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=800, css_classes=['inst-style'])
+        self.weather_inst = Div(text="Every hour include a description of the weather and othe relevant information. Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
         self.weather_time = TextInput(title='Time', placeholder='17:00', value=None)
         self.weather_desc = TextInput(title='Description', placeholder='description', value=None)
         self.weather_temp = TextInput(title='Temperature (C)', placeholder='50', value=None)
@@ -187,7 +187,6 @@ class OS_Report(Report):
         self.check_tab.title = 'OS Checklist'
         self.get_nl_layout()
 
-
         self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
 
@@ -211,5 +210,5 @@ class OS_Report(Report):
 OS = OS_Report()
 OS.run()
 curdoc().theme = 'dark_minimal'
-curdoc().title = 'DESI Night Log - OS Scientist'
+curdoc().title = 'DESI Night Log - Observing Scientist'
 curdoc().add_root(OS.layout)

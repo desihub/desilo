@@ -163,6 +163,9 @@ class NightLog(object):
         with open(self.meta_json, 'w') as f:
             json.dump(meta_dict, f)
 
+        self.write_intro()
+
+
 
     def get_meta_data(self):
         meta_dict = json.load(open(self.meta_json,'r'))

@@ -38,7 +38,8 @@ RUN \
             astropy             \
             bokeh               \
             pandas              \
-            pandoc              
+            pandoc              \
+            ephem 
 
 ENV PATH=/opt/anaconda3/bin:$PATH
 WORKDIR /srv
@@ -47,5 +48,5 @@ ADD OS_Report /srv/OS_Report
 ADD DQS_Report /srv/DQS_Report
 ADD Other_Report /srv/Other_Report
 
-CMD ["bokeh", "serve", "--show", "OS_Report/ DQS_Report/ Other_Report/"]
+CMD ["bokeh", "serve", "--show", "OS_Report/", "DQS_Report/", "Other_Report/"]
 

@@ -13,6 +13,9 @@ from bokeh.models.widgets import Panel, Tabs
 from astropy.time import TimezoneInfo
 import astropy.units.si as u 
 
+import ephem
+from util import sky_calendar
+
 sys.path.append(os.getcwd())
 
 import nightlog as nl
@@ -29,16 +32,16 @@ class Report():
         self.title_style = {'font-size':'250%','font-style':'bold'}
         self.alert_style = {'font-size':'150%','color':'red'}
 
-        
+        self.nl_file = None
+
         self.intro_subtitle = Div(text="Connect to Night Log",css_classes=['subt-style'])
-        self.intro_info = Div(text="<b> Note: </b>: Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.",css_classes=['inst-style'])
+        self.intro_info = Div(text="<b> Note: </b>: Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.",css_classes=['inst-style'], width=1000)
 
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
         if 'desi' in hostname:
             self.location = 'kpno'
-            from DOSlib.util import sky_calendar
-        elif '128.55' in ip_address:
+        elif 'app' in hostname: #this is not true. Needs to change.
             self.location = 'nersc'
         else:
             self.location = 'other'
@@ -46,7 +49,7 @@ class Report():
         self.nw_dir = nw_dirs[self.location] 
 
         self.your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
-        self.lo_names = ['None ','Liz Buckley-Geer','Sarah Eftekharzadeh','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
+        self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
         self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
         self.intro_txt = Div(text=' ')
         self.comment_txt = Div(text=" ", css_classes=['inst-style'])
@@ -69,10 +72,10 @@ class Report():
         self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None)
         self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None)
 
-        self.nl_subtitle = Div(text="Current DESI Night Log", css_classes=['subt-style'])
+        self.nl_subtitle = Div(text="Current DESI Night Log: {}".format(self.nl_file), css_classes=['subt-style'])
         self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
         self.nl_text = Div(text="Current DESI Night Log", css_classes=['inst-style'])
-        self.nl_alert = Div(text=' ', css_classes=['inst-style'])
+        self.nl_alert = Div(text=' ', css_classes=['inst-style'], width=500)
         self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'])
 
         self.checklist = CheckboxGroup(labels=[])
@@ -82,7 +85,7 @@ class Report():
         self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=2, cols=2)
 
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
-        self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'])
+        self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
         self.prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
         self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, cols=2, title="Problem Description:")
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None)
@@ -204,17 +207,21 @@ class Report():
                 self.your_name.value = meta_dict['{}_1'.format(self.report_type.lower())]+' '+meta_dict['{}_last'.format(self.report_type.lower())]
             elif self.report_type == 'OS':
                 self.your_name.value = meta_dict['{}_1'.format(self.report_type.lower())]+' '+meta_dict['{}_last'.format(self.report_type.lower())]
+
             self.current_header()
-            try:
+            self.nl_file = os.getcwd()+self.DESI_Log.root_dir+'nightlog.html'
+            self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
+
+            if self.report_type == 'OS':
                 plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
                 self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
-                self.LO.value = meta_dict['{}_lo_1'.format(self.report_type.lower())]+' '+meta_dict['{}_lo_last'.format(self.report_type.lower())]
-                self.OA.value = meta_dict['{}_oa_1'.format(self.report_type.lower())]+' '+meta_dict['{}_oa_last'.format(self.report_type.lower())]
-                new_data = pd.read_csv(self.DESI_Log.weather_file)
-                new_data = new_data[['time','desc','temp','wind','humidity']]
-                self.weather_source.data = new_data
-            except:
-                pass
+            self.LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
+            self.OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
+            new_data = pd.read_csv(self.DESI_Log.weather_file)
+            new_data = new_data[['time','desc','temp','wind','humidity']]
+            self.weather_source.data = new_data
+            #except:
+            #    pass
 
 
         else:
@@ -231,24 +238,14 @@ class Report():
         OA_firstname, OA_lastname = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
         your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
 
-        if self.location == 'kpno':
-            ephem = sky_calendar()
-            time_sunset = self.get_strftime(ephem['sunset'])
-            time_sunrise = self.get_strftime(ephem['sunrise'])
-            time_moonrise = self.get_strftime(ephem['moonrise'])
-            time_moonset = self.get_strftime(ephem['moonset'])
-            illumination = ephem['illumination']
-            dusk_18_deg = self.get_strftime(ephem['dusk_astronomical'])
-            dawn_18_deg = self.get_strftime(ephem['dawn_astronomical'])
-        else:
-            time_sunset = None
-            time_sunrise = None
-            time_moonrise = None
-            time_moonset = None
-            illumination = None
-            dusk_18_deg = None
-            dawn_18_deg = None
-
+        ephem = sky_calendar()
+        time_sunset = self.get_strftime(ephem['sunset'])
+        time_sunrise = self.get_strftime(ephem['sunrise'])
+        time_moonrise = self.get_strftime(ephem['moonrise'])
+        time_moonset = self.get_strftime(ephem['moonset'])
+        illumination = ephem['illumination']
+        dusk_18_deg = self.get_strftime(ephem['dusk_astronomical'])
+        dawn_18_deg = self.get_strftime(ephem['dawn_astronomical'])
 
         self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
         self.DESI_Log.initializing()
