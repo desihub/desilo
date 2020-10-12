@@ -54,8 +54,10 @@ class DQS_Report(Report):
         self.obs_cond_comment = TextInput(title='Observing Conditions Comment/Remark', placeholder='Seeing stable at 0.8arcsec', value=None)
         self.inst_perf_comment = TextInput(title='Instrument Performance Comment/Remark', placeholder='Positioner Accuracy less than 10um', value=None)
         
-        self.exp_select = Select(title='Exposures')
-        self.exp_update = Button(label='Update', button_type='primary')
+        self.exp_select = Select(title='(1) Select Exposure')
+        self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', value=None))
+        self.exp_update = Button(label='Update Selection List', button_type='primary')
+        self.exp+option = RadioButton(options=['Select','Enter'], active=0)
 
         if self.location == 'other':
             self.exp_layout = layout([self.exp_time],
@@ -70,7 +72,7 @@ class DQS_Report(Report):
 
         else:
             self.get_exposure_list()
-            self.exp_layout = layout([self.exp_select, self.exp_update],
+            self.exp_layout = layout([self.exp_option, self.exp_select, self.exp_enter, self.exp_update],
                                     [self.exp_type],
                                     [self.quality_title, self.quality_btns],
                                     [self.exp_comment],

@@ -181,7 +181,9 @@ class Report():
 
     def get_strftime(self, time):
         date = self.date_init.value
-        year, month, day = int(date[0:4]), int(date[5:6]), int(date[7:8])
+        print(date)
+        year, month, day = int(date[0:4]), int(date[4:6]), int(date[6:8])
+        print(year, month, day)
         d = datetime(year, month, day)
         dt = datetime.combine(d,time)
         return dt.strftime("%Y%m%dT%H:%M")  
@@ -215,8 +217,8 @@ class Report():
             if self.report_type == 'OS':
                 plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
                 self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
-            self.LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
-            self.OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
+                self.LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
+                self.OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
             new_data = pd.read_csv(self.DESI_Log.weather_file)
             new_data = new_data[['time','desc','temp','wind','humidity']]
             self.weather_source.data = new_data
@@ -238,14 +240,14 @@ class Report():
         OA_firstname, OA_lastname = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
         your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
 
-        ephem = sky_calendar()
-        time_sunset = self.get_strftime(ephem['sunset'])
-        time_sunrise = self.get_strftime(ephem['sunrise'])
-        time_moonrise = self.get_strftime(ephem['moonrise'])
-        time_moonset = self.get_strftime(ephem['moonset'])
-        illumination = ephem['illumination']
-        dusk_18_deg = self.get_strftime(ephem['dusk_astronomical'])
-        dawn_18_deg = self.get_strftime(ephem['dawn_astronomical'])
+        eph = sky_calendar()
+        time_sunset = self.get_strftime(eph['sunset'])
+        time_sunrise = self.get_strftime(eph['sunrise'])
+        time_moonrise = self.get_strftime(eph['moonrise'])
+        time_moonset = self.get_strftime(eph['moonset'])
+        illumination = eph['illumination']
+        dusk_18_deg = self.get_strftime(eph['dusk_astronomical'])
+        dawn_18_deg = self.get_strftime(eph['dawn_astronomical'])
 
         self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
         self.DESI_Log.initializing()
