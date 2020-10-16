@@ -41,7 +41,7 @@ class OS_Report(Report):
 
         self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
         self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", css_classes=['inst-style'], width=1000)
-        self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the focal plane?","Did you check the spectrographs?"]
+        self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Cryostat?", "Did you do a connectivity aliveness check?","Did you check the Spectrograph Chiller?"]
 
         self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other']
 
