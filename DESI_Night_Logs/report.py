@@ -35,7 +35,6 @@ class Report():
         self.nl_file = None
 
         self.intro_subtitle = Div(text="Connect to Night Log",css_classes=['subt-style'])
-        self.intro_info = Div(text="<b> Note: </b>: Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.",css_classes=['inst-style'], width=1000)
 
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
@@ -61,7 +60,7 @@ class Report():
         self.date_init.value = init_nl_list[0]
         self.connect_txt = Div(text=' ', css_classes=['alert-style'])
 
-        self.connect_bt = Button(label="Connect to Night Log", css_classes=['connect_button'])
+        self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
 
         self.exp_info = Div(text="Fill In Only Relevant Data", css_classes=['inst-style'],width=500)
         self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=6)
@@ -110,7 +109,6 @@ class Report():
         intro_layout = layout([self.title,
                             [self.page_logo, self.instructions],                 
                             self.intro_subtitle,
-                            self.intro_info,
                             [self.date_init, self.your_name],
                             [self.connect_bt],
                             self.connect_txt,

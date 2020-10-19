@@ -31,7 +31,12 @@ class OS_Report(Report):
         Report.__init__(self, 'OS')
 
         self.title = Div(text="DESI Nightly Intake - Operating Scientist", css_classes=['h1-title-style'], width=1000)# width=800, style={'font-size':'24pt','font-style':'bold'})
-        self.instructions = Div(text="The Operating Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log. Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.", css_classes=['inst-style'], width=500)
+        desc = """
+        The Operating Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log. 
+        Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.
+        <b> Note: </b>: Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.
+        """
+        self.instructions = Div(text=desc, css_classes=['inst-style'], width=500)
         self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.init_bt = Button(label="Initialize Tonight's Log", css_classes=['init_button'])
@@ -39,6 +44,8 @@ class OS_Report(Report):
         self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names) 
         self.page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
 
+        self.connect_hdr = Div(text="Connect to Existing Night Log", css_classes=['subt-style'], width=800)
+        self.init_hdr = Div(text="Initialize Tonight's Night Log", css_classes=['subt-style'], width=800)
         self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
         self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", css_classes=['inst-style'], width=1000)
         self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Cryostat?", "Did you do a connectivity aliveness check?","Did you check the Spectrograph Chiller?"]
@@ -135,11 +142,11 @@ class OS_Report(Report):
     def get_layout(self):
         intro_layout = layout([self.title,
                             [self.page_logo, self.instructions,],
-                            self.intro_subtitle,
-                            self.intro_info,
+                            self.connect_hdr,
                             [self.date_init, self.connect_bt],
                             self.connect_txt,
                             self.line,
+                            self.init_hdr,
                             [self.your_name, self.LO, self.OA],
                             [self.init_bt],
                             self.line2,
