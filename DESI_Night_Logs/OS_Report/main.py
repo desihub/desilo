@@ -12,6 +12,7 @@ view at: http://localhost:5006/OS_Report
 
 import os, sys
 import pandas as pd
+import subprocess
 
 from bokeh.io import curdoc
 from bokeh.plotting import save
@@ -50,6 +51,7 @@ class OS_Report(Report):
         self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", css_classes=['inst-style'], width=1000)
         self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Cryostat?", "Did you do a connectivity aliveness check?","Did you check the Spectrograph Chiller?"]
 
+        self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
         self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other']
 
     def plan_tab(self):
@@ -189,13 +191,63 @@ class OS_Report(Report):
                                 self.weather_table], width=1000)
         weather_tab = Panel(child=weather_layout, title="Weather")
 
+        nl_layout = layout([self.title,
+                self.nl_subtitle,
+                [self.nl_btn, self.nl_alert],
+                self.nl_text,
+                self.nl_submit_btn], width=1000)
+        nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
+
         self.get_prob_layout()
         self.get_checklist_layout()
         self.check_tab.title = 'OS Checklist'
-        self.get_nl_layout()
 
-        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
+    def nl_submit(self):
+        if self.location in ['kpno','nersc']:
+            try:
+                from ECLAPI import ECLConnection, ECLEntry
+            except ImportError:
+                ECLConnection = None
+                self.nl_text.text = "Can't connect to eLog"
+            f = self.nl_file[:-5]
+            print(f)
+            nl_file=open(f,'r')
+            nl_text = nl_file.readlines()
+            print(nl_text)
+
+            e = ECLEntry('Synopsis_Night', text=nl_text, textile=True)
+
+            subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
+            e.addSubject(subject)
+            url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi' 
+            user = 'dos'
+            pw = 'dosuser'
+            elconn = ECLConnection(url, user, pw)
+            response = elconn.post(e)
+            elconn.close()
+            if response[0] != 200:
+                raise Exception(response)
+        else:
+            self.nl_text.text = "You cannot post the eLog on this machine"
+
+        #Run other bash commands
+        year = self.date_init.value[0:4]
+        month = self.date_init.value[4:6] 
+        day = self.date_init.value[6:]
+        bashCommand1 = "cd ~/nightsum"
+        bashCommand2 = "setup nightsum"
+        bashCommand3 = "makesum -D {}-{}-{}".format(year, month, day)
+        bashCommand4 = "./run_pubsum -D {}-{}-{}".format(year, month, day)
+        results = subprocess.run(bashCommand1.split(), text=True, stdout=subprocess.PIPE, check=True)
+        print(results.stdout)
+        results = subprocess.run(bashCommand2.split(), text=True, stdout=subprocess.PIPE, check=True)
+        print(results.stdout)
+        results = subprocess.run(bashCommand3.split(), text=True, stdout=subprocess.PIPE, check=True)
+        print(results.stdout)
+        results = subprocess.run(bashCommand4.split(), text=True, stdout=subprocess.PIPE, check=True)
+        print(results.stdout)
 
     def run(self):
         self.plan_tab()
@@ -209,6 +261,7 @@ class OS_Report(Report):
         self.weather_btn.on_click(self.weather_add)
         self.prob_btn.on_click(self.prob_add)
         self.nl_btn.on_click(self.current_nl)
+        self.nl_submit_btn.on_click(self.nl_submit)
         self.check_btn.on_click(self.check_add)
         self.milestone_btn.on_click(self.milestone_add)
         self.plan_btn.on_click(self.plan_add)
