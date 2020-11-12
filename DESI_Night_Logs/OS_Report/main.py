@@ -24,6 +24,7 @@ from bokeh.models.widgets import Panel, Tabs
 from bokeh.themes import built_in_themes
 
 sys.path.append(os.getcwd())
+sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 from report import Report
 
@@ -205,49 +206,37 @@ class OS_Report(Report):
         self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
     def nl_submit(self):
-        if self.location in ['kpno','nersc']:
-            try:
-                from ECLAPI import ECLConnection, ECLEntry
-            except ImportError:
-                ECLConnection = None
-                self.nl_text.text = "Can't connect to eLog"
-            f = self.nl_file[:-5]
-            print(f)
-            nl_file=open(f,'r')
-            nl_text = nl_file.readlines()
-            print(nl_text)
 
-            e = ECLEntry('Synopsis_Night', text=nl_text, textile=True)
+        try:
+            from ECLAPI import ECLConnection, ECLEntry
+        except ImportError:
+            ECLConnection = None
+            self.nl_text.text = "Can't connect to eLog"
 
-            subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
-            e.addSubject(subject)
-            url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi' 
-            user = 'dos'
-            pw = 'dosuser'
-            elconn = ECLConnection(url, user, pw)
-            response = elconn.post(e)
-            elconn.close()
-            if response[0] != 200:
-                raise Exception(response)
-        else:
-            self.nl_text.text = "You cannot post the eLog on this machine"
+        f = self.nl_file[:-5]
+        print(f)
+        nl_file=open(f,'r')
+        lines = nl_file.readlines()
+        nl_html = ' '
+        for line in lines:
+            nl_html += line
 
-        #Run other bash commands
-        year = self.date_init.value[0:4]
-        month = self.date_init.value[4:6] 
-        day = self.date_init.value[6:]
-        bashCommand1 = "cd ~/nightsum"
-        bashCommand2 = "setup nightsum"
-        bashCommand3 = "makesum -D {}-{}-{}".format(year, month, day)
-        bashCommand4 = "./run_pubsum -D {}-{}-{}".format(year, month, day)
-        results = subprocess.run(bashCommand1.split(), text=True, stdout=subprocess.PIPE, check=True)
-        print(results.stdout)
-        results = subprocess.run(bashCommand2.split(), text=True, stdout=subprocess.PIPE, check=True)
-        print(results.stdout)
-        results = subprocess.run(bashCommand3.split(), text=True, stdout=subprocess.PIPE, check=True)
-        print(results.stdout)
-        results = subprocess.run(bashCommand4.split(), text=True, stdout=subprocess.PIPE, check=True)
-        print(results.stdout)
+        e = ECLEntry('Synopsis_Night', text=nl_html, textile=True)
+
+        subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
+        e.addSubject(subject)
+        url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi' 
+        user = 'dos'
+        pw = 'dosuser'
+        elconn = ECLConnection(url, user, pw)
+        response = elconn.post(e)
+        elconn.close()
+        if response[0] != 200:
+           raise Exception(response)
+           self.nl_text.text = "You cannot post to the eLog on this machine"
+
+        nl_text = "Night Log posted to eLog" + '</br>'
+        self.nl_text.text = nl_text
 
     def run(self):
         self.plan_tab()
