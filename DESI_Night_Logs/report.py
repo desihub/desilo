@@ -46,6 +46,7 @@ class Report():
             self.location = 'other'
         nw_dirs = {'nersc':'/global/cfs/cdirs/desi/spectro/nightwatch/nersc/', 'kpno':'/exposures/nightwatch/', 'other':None}
         self.nw_dir = nw_dirs[self.location] 
+        self.nl_dir = os.environ['NL_DIR']
 
         self.your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
         self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
@@ -54,8 +55,8 @@ class Report():
         self.comment_txt = Div(text=" ", css_classes=['inst-style'], width=1000)
 
         self.date_init = Select(title="Existing Night Logs")
-        days = os.listdir('nightlogs')
-        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir('nightlogs/'+day)])[::-1][0:10]
+        days = os.listdir(self.nl_dir)
+        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(self.nl_dir+'/'+day)])[::-1][0:10]
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
         self.connect_txt = Div(text=' ', css_classes=['alert-style'])
@@ -209,10 +210,10 @@ class Report():
                 self.your_name.value = meta_dict['{}_1'.format(self.report_type.lower())]+' '+meta_dict['{}_last'.format(self.report_type.lower())]
 
             self.current_header()
-            if self.location == 'nersc':
-                self.nl_file = '/global/cfs/cdirs/desi/users/parkerf/nightlog/desilo/DESI_Night_Logs/nightlogs/'+self.DESI_Log.root_dir+'nightlog.html'
-            else:
-                self.nl_file = os.getcwd()+'/'+self.DESI_Log.root_dir+'nightlog.html'
+            #if self.location == 'nersc':
+            self.nl_file = self.DESI_Log.root_dir+'nightlog.html'
+            # else:
+            #     self.nl_file = os.getcwd()+'/'+self.DESI_Log.root_dir+'nightlog.html'
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
             if self.report_type == 'OS':
@@ -261,7 +262,7 @@ class Report():
 
     def current_header(self):
         self.DESI_Log.write_intro()
-        path = "nightlogs/"+self.DESI_Log.obsday+"/header.html"
+        path = self.DESI_Log.root_dir+"/header.html"
         nl_file = open(path,'r')
         intro = ''
         for line in nl_file:
@@ -272,7 +273,7 @@ class Report():
     def current_nl(self):
         now = datetime.now()
         self.DESI_Log.finish_the_night()
-        path = "nightlogs/"+self.DESI_Log.obsday+"/nightlog.html"
+        path = self.DESI_Log.root_dir+"/nightlog.html"
         nl_file = open(path,'r')
         nl_txt = ''
         for line in nl_file:
@@ -280,6 +281,7 @@ class Report():
         self.nl_text.text = nl_txt
         nl_file.closed
         self.nl_alert.text = 'Last Updated on this page: {}'.format(now)
+        self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
 
     def check_add(self):
         """add checklist time to Night Log

@@ -28,7 +28,7 @@ class NightLog(object):
             Setup the nightlog framework for a given obsday.
         """
         self.obsday=year+month+day
-        self.root_dir="nightlogs/"+self.obsday+"/"
+        self.root_dir=os.environ['NL_DIR']+'/'+self.obsday+"/"
         self.os_dir=self.root_dir+"OperationsScientist/"
         self.dqs_dir=self.root_dir+"DataQualityAssessment/"
         self.os_startcal_dir=self.os_dir+'StartCal/'
