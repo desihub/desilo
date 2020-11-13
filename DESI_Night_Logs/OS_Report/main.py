@@ -34,7 +34,7 @@ class OS_Report(Report):
 
         self.title = Div(text="DESI Nightly Intake - Operating Scientist", css_classes=['h1-title-style'], width=1000)# width=800, style={'font-size':'24pt','font-style':'bold'})
         desc = """
-        The Operating Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log. 
+        The Operating Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log.
         Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.
         <b> Note: </b>: Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.
         """
@@ -42,8 +42,8 @@ class OS_Report(Report):
         self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.init_bt = Button(label="Initialize Tonight's Log", css_classes=['init_button'])
-        self.LO = Select(title='Lead Observer', value='Choose One', options=self.lo_names) 
-        self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names) 
+        self.LO = Select(title='Lead Observer', value='Choose One', options=self.lo_names)
+        self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names)
         self.page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
 
         self.connect_hdr = Div(text="Connect to Existing Night Log", css_classes=['subt-style'], width=800)
@@ -53,7 +53,7 @@ class OS_Report(Report):
         self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Cryostat?", "Did you do a connectivity aliveness check?","Did you check the Spectrograph Chiller?"]
 
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
-        self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other']
+        self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other/Comments']
 
     def plan_tab(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
@@ -73,7 +73,7 @@ class OS_Report(Report):
         self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', value=None)
         self.milestone_btn = Button(label='Add', css_classes=['add_button'])
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
-        
+
     def weather_tab(self):
         data = pd.DataFrame(columns = ['time','desc','temp','wind','humidity'])
         self.weather_source = ColumnDataSource(data)
@@ -139,7 +139,7 @@ class OS_Report(Report):
                      [self.exp_tile_type],
                      [self.exp_tile],
                      [self.exp_script],
-                     [self.exp_btn]])       
+                     [self.exp_btn]])
         self.exp_layout.children[5] = self.exp_input_layout
 
     def get_layout(self):
@@ -225,7 +225,7 @@ class OS_Report(Report):
 
         subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
         e.addSubject(subject)
-        url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi' 
+        url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
         user = 'dos'
         pw = 'dosuser'
         elconn = ECLConnection(url, user, pw)
@@ -243,9 +243,9 @@ class OS_Report(Report):
         self.milestone_tab()
         self.exp_tab()
         self.weather_tab()
-        self.init_bt.on_click(self.initialize_log) 
-        self.connect_bt.on_click(self.connect_log) 
-        self.exp_btn.on_click(self.progress_add) 
+        self.init_bt.on_click(self.initialize_log)
+        self.connect_bt.on_click(self.connect_log)
+        self.exp_btn.on_click(self.progress_add)
         self.hdr_btn.on_click(self.choose_exposure)
         self.weather_btn.on_click(self.weather_add)
         self.prob_btn.on_click(self.prob_add)
