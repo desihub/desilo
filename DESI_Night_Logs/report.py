@@ -1,7 +1,7 @@
 #Imports
 import os, sys
 from datetime import datetime
-import numpy as np 
+import numpy as np
 import pandas as pd
 import socket
 
@@ -11,7 +11,7 @@ from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs
 from astropy.time import TimezoneInfo
-import astropy.units.si as u 
+import astropy.units.si as u
 
 import ephem
 from util import sky_calendar
@@ -45,7 +45,7 @@ class Report():
         else:
             self.location = 'other'
         nw_dirs = {'nersc':'/global/cfs/cdirs/desi/spectro/nightwatch/nersc/', 'kpno':'/exposures/nightwatch/', 'other':None}
-        self.nw_dir = nw_dirs[self.location] 
+        self.nw_dir = nw_dirs[self.location]
         self.nl_dir = os.environ['NL_DIR']
 
         self.your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
@@ -63,9 +63,9 @@ class Report():
 
         self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
 
-        self.exp_info = Div(text="Fill In Only Relevant Data", css_classes=['inst-style'],width=500)
+        self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
         self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=6)
-        self.exp_time = TextInput(title ='Time', placeholder = '2007',value=None)
+        self.exp_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '2007',value=None)
         self.exp_btn = Button(label='Add', css_classes=['add_button'])
         self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
@@ -79,20 +79,20 @@ class Report():
         self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)
 
         self.checklist = CheckboxGroup(labels=[])
-        self.check_time = TextInput(title ='Time', placeholder = '2007', value=None)
+        self.check_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '2007', value=None)
         self.check_alert = Div(text=" ", css_classes=['alert-style'])
         self.check_btn = Button(label='Submit', css_classes=['add_button'])
         self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=2, cols=2)
 
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
         self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
-        self.prob_time = TextInput(title ='Time', placeholder = '2007', value=None)
+        self.prob_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '2007', value=None)
         self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, cols=2, title="Problem Description:")
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None)
         self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=6, cols=2)
         self.prob_btn = Button(label='Add', css_classes=['add_button'])
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
-          
+
 
         self.DESI_Log = None
 
@@ -108,7 +108,7 @@ class Report():
 
     def get_intro_layout(self):
         intro_layout = layout([self.title,
-                            [self.page_logo, self.instructions],                 
+                            [self.page_logo, self.instructions],
                             self.intro_subtitle,
                             [self.date_init, self.your_name],
                             [self.connect_bt],
@@ -185,7 +185,7 @@ class Report():
         print(year, month, day)
         d = datetime(year, month, day)
         dt = datetime.combine(d,time)
-        return dt.strftime("%Y%m%dT%H:%M")  
+        return dt.strftime("%Y%m%dT%H:%M")
 
     def connect_log(self):
         """
@@ -313,7 +313,7 @@ class Report():
         self.DESI_Log.add_milestone_os([self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value])
         self.milestone_alert.text = 'Last Milestone Entered: {} at {}'.format(self.milestone_input.value, now)
         self.clear_input([self.milestone_input, self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl])
-        
+
     def weather_add(self):
         """Adds table to Night Log
         """
@@ -326,13 +326,17 @@ class Report():
         self.clear_input([self.weather_time, self.weather_desc, self.weather_temp, self.weather_wind, self.weather_humidity])
 
     def progress_add(self):
-        data = [self.hdr_type.value, self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value,
+        if self.exp_time.value not in [None, 'None'," ", ""]:
+            data = [self.hdr_type.value, self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value,
                 self.exp_type.value, self.exp_script.value, self.get_time(self.exp_time_end.value), self.exp_focus_trim.value, self.exp_tile.value, self.exp_tile_type.value]
-        self.DESI_Log.add_progress(data)
-        self.exp_alert.text = 'Last Input was for Observation Type *{}* at {}'.format(self.hdr_type.value, self.exp_time.value)
+                self.DESI_Log.add_progress(data)
+                self.exp_alert.text = 'Last Input was for Observation Type *{}* at {}'.format(self.hdr_type.value, self.exp_time.value)
 
-        self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish, self.exp_type, self.exp_script,
+                self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish, self.exp_type, self.exp_script,
                     self.exp_time_end, self.exp_focus_trim, self.exp_tile, self.exp_tile_type])
+
+        else:
+            self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
 
     def comment_add(self):
 

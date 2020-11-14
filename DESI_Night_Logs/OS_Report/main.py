@@ -36,7 +36,7 @@ class OS_Report(Report):
         desc = """
         The Operating Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log.
         Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.
-        <b> Note: </b>: Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.
+        <b> Note: </b> Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.
         """
         self.instructions = Div(text=desc, css_classes=['inst-style'], width=500)
         self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
@@ -53,7 +53,7 @@ class OS_Report(Report):
         self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Cryostat?", "Did you do a connectivity aliveness check?","Did you check the Spectrograph Chiller?"]
 
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
-        self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other/Comments']
+        self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other Acquisition','Comment']
 
     def plan_tab(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
@@ -118,7 +118,7 @@ class OS_Report(Report):
                      [self.exp_script],
                      [self.exp_focus_trim],
                      [self.exp_btn]])
-        elif self.hdr_type.value == 'Startup':
+        elif self.hdr_type.value in ['Startup','Comment']:
             self.exp_input_layout = layout([
                      [self.exp_time],
                      [self.exp_comment],
@@ -131,7 +131,7 @@ class OS_Report(Report):
                      [self.exp_type],
                      [self.exp_script],
                      [self.exp_btn]])
-        elif self.hdr_type.value in ['Observation', 'Other']:
+        elif self.hdr_type.value in ['Observation', 'Other Acquisition']:
             self.exp_input_layout = layout([
                      [self.exp_time],
                      [self.exp_exposure_start, self.exp_exposure_finish],
@@ -140,7 +140,7 @@ class OS_Report(Report):
                      [self.exp_tile],
                      [self.exp_script],
                      [self.exp_btn]])
-        self.exp_layout.children[5] = self.exp_input_layout
+        self.exp_layout.children[6] = self.exp_input_layout
 
     def get_layout(self):
         intro_layout = layout([self.title,
