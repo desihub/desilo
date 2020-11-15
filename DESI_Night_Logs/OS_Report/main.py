@@ -85,8 +85,8 @@ class OS_Report(Report):
                    TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
                    TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
                    TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
-        self.weather_inst = Div(text="Every hour include a description of the weather and othe relevant information. Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
-        self.weather_time = TextInput(title='Time', placeholder='17:00', value=None)
+        self.weather_inst = Div(text="Every hour include a description of the weather and any other relevant information, as well as fill in all the fields below.  Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
+        self.weather_time = TextInput(title='Time in Kitt Peak local time', placeholder='17:00', value=None)
         self.weather_desc = TextInput(title='Description', placeholder='description', value=None)
         self.weather_temp = TextInput(title='Temperature (C)', placeholder='50', value=None)
         self.weather_wind = TextInput(title='Wind Speed (mph)', placeholder='10', value=None)

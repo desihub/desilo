@@ -87,7 +87,7 @@ class Report():
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
         self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
         self.prob_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '2007', value=None)
-        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, cols=2, title="Problem Description:")
+        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, cols=2, title="Problem Description*:")
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None)
         self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=6, cols=2)
         self.prob_btn = Button(label='Add', css_classes=['add_button'])
