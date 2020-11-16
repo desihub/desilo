@@ -299,7 +299,10 @@ class Report():
     def prob_add(self):
         """Adds problem to nightlog
         """
-        self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value,self.report_type)
+        if self.report_type == 'Other':
+            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value,self.report_type, self.your_name)
+        else:
+            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value,self.report_type)
         self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
         self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
 
@@ -341,4 +344,4 @@ class Report():
         else:
             self.DESI_Log.add_comment_other(self.get_time(self.exp_time.value), self.exp_comment.value, self.your_name.value)
             self.clear_input([self.exp_time, self.exp_comment])
-            self.comment_alert.text = "Currently this is not being published to the Night Log."
+            self.comment_alert.text = "A comment was added at {}".format(self.exp_time.value)

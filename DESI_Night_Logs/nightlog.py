@@ -27,23 +27,26 @@ class NightLog(object):
         """
             Setup the nightlog framework for a given obsday.
         """
-        self.obsday=year+month+day
-        self.root_dir=os.environ['NL_DIR']+'/'+self.obsday+"/"
-        self.os_dir=self.root_dir+"OperationsScientist/"
-        self.dqs_dir=self.root_dir+"DataQualityAssessment/"
-        self.os_startcal_dir=self.os_dir+'StartCal/'
-        self.os_obs_dir=self.os_dir+'Observations/'
+        self.obsday = year+month+day
+        self.root_dir = os.path.join(os.environ['NL_DIR'],self.obsday)
+        self.os_dir = os.path.join(self.root_dir,"OperationsScientist")
+        self.dqs_dir = os.path.join(self.root_dir,"DataQualityAssessment")
+        self.other_dir = os.path.join(self.root_dir,"OtherInput")
+        self.os_startcal_dir = os.path.join(self.os_dir,'StartCal')
+        self.os_obs_dir = os.path.join(self.os_dir,'Observations')
+        self.other_obs_dir = os.path.join(self.other_dir,'Observations')
         #self.dqs_exp_dir=self.dqs_dir+'Exposures/'
-        self.os_pb_dir=self.os_dir+'Problem/'
-        self.dqs_pb_dir=self.dqs_dir+'Problem/'
-        self.nightplan_file = self.os_dir + 'objectives.pkl'
-        self.milestone_file = self.os_dir + 'milestones.pkl'
-        self.os_cl=self.os_dir+'checklist'
-        self.dqs_cl=self.dqs_dir+'checklist'
-        self.exp_file_pkl = self.dqs_dir+'exposures.pkl'
-        self.dqs_exp_file = self.dqs_dir+'exposures'
-        self.weather_file = self.os_dir+'weather.csv'
-        self.meta_json = self.root_dir+'nightlog_meta.json'
+        self.os_pb_dir = os.path.join(self.os_dir,'Problem')
+        self.dqs_pb_dir = os.path.join(self.dqs_dir,'Problem')
+        self.other_pb_dir = os.path.join(self.other_dir,'Problem')
+        self.nightplan_file = os.path.join(self.os_dir,'objectives.pkl')
+        self.milestone_file = os.path.join(self.os_dir,'milestones.pkl')
+        self.os_cl = os.path.join(self.os_dir,'checklist')
+        self.dqs_cl = os.path.join(self.dqs_dir,'checklist')
+        self.exp_file_pkl = os.path.join(self.dqs_dir,'exposures.pkl')
+        self.dqs_exp_file = os.path.join(self.dqs_dir,'exposures')
+        self.weather_file = os.path.join(self.os_dir,'weather.csv')
+        self.meta_json = os.path.join(self.root_dir,'nightlog_meta.json')
 
         # Set this if you want to allow for replacing lines or not
         self.replace = True
@@ -56,21 +59,11 @@ class NightLog(object):
         """
             Creates the folders where all the files used to create the Night Log will be containted.
         """
+        for dir_ in [self.os_dir, self.dqs_dir, self.other_dir, self.os_pb_dir, self.dqs_pb_dir, 
+                    self.os_startcal_dir,self.os_obs_dir, self.other_obs_dir]:
+            if not os.path.exists(dir_):
+                os.makedirs(dir_)
 
-        if not os.path.exists(self.os_dir):
-            os.makedirs(self.os_dir)
-        if not os.path.exists(self.dqs_dir):
-            os.makedirs(self.dqs_dir)
-        if not os.path.exists(self.os_pb_dir):
-            os.makedirs(self.os_pb_dir)
-        if not os.path.exists(self.dqs_pb_dir):
-            os.makedirs(self.dqs_pb_dir)
-        if not os.path.exists(self.os_startcal_dir):
-            os.makedirs(self.os_startcal_dir)
-        if not os.path.exists(self.os_obs_dir):
-            os.makedirs(self.os_obs_dir)
-        #if not os.path.exists(self.dqs_exp_dir):
-        #    os.makedirs(self.dqs_exp_dir)
         return print("Your obsday is "+self.obsday)
 
 
@@ -346,12 +339,15 @@ class NightLog(object):
             file.write("; {} ({})".format(self.write_time(time, kp_only=True), comment))
             file.close()
 
-    def add_problem(self,time,problem,alarm_id,action,user):
+    def add_problem(self,time,problem,alarm_id,action,user,name=None):
         """
             Adds details on a problem encountered.
         """
         if user == 'Other':
-            pass
+            the_path = os.path.join(self.other_pb_dir,"problem_{}".format(self.get_timestamp(time)))
+            file = self.new_entry_or_replace(the_path)
+            file.write("- {} := {}; AlarmID: {}; Action: {} ({})\n".format(self.write_time(time),problem,alarm_id,action,user))
+            file.close()
         else:
             if user == 'OS':
                 the_path=self.os_pb_dir+"problem_"+self.get_timestamp(time)
@@ -373,8 +369,10 @@ class NightLog(object):
     #     file.close()
 
     def add_comment_other(self, time, comment, name):
-        ## Not sure how we want to implement this currently
-        pass
+        the_path = os.path.join(self.other_obs_dir,"comment_{}".format(self.get_timestamp(time)))
+        file = self.new_entry_or_replace(the_path)
+        file.write("- {} := {}({})\n".format(self.write_time(time),comment, name))
+        file.close()
 
     def add_dqs_exposure(self, data):
 
@@ -489,6 +487,10 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("\n")
         self.compile_entries(self.dqs_pb_dir,file_nl)
+        file_nl.write("h5. Encountered by Others\n")
+        file_nl.write("\n")
+        file_nl.write("\n")
+        self.compile_entries(self.other_pb_dir,file_nl)
         file_nl.write("h3. Checklists\n")
         file_nl.write("\n")
         if os.path.exists(self.os_cl):
@@ -531,6 +533,10 @@ class NightLog(object):
             entries = open(self.dqs_exp_file,'r')
             for x in entries:
                 file_nl.write(x)
+        file_nl.write("h3. Details from Other Observers\n")
+        file_nl.write("\n")
+        file_nl.write("\n")
+        self.compile_entries(self.other_obs_dir,file_nl)
         #self.compile_entries(self.dqs_exp_dir,file_nl)
         file_nl.close()
         os.system("pandoc -s {} -f textile -t html -o {}".format(self.root_dir+'nightlog',self.root_dir+'nightlog.html'))
