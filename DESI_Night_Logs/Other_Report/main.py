@@ -28,7 +28,11 @@ class Other_Report(Report):
         Report.__init__(self, 'Other')
 
         self.title = Div(text="DESI Nightly Intake Form - Non Observer",css_classes=['h1-title-style'], width=1000)
-        self.instructions = Div(text="This Night Log is for Non-Observers. It should mainly be used for observing the ongoing Night Log. In special circumstances, if a non-observer has an important comment about an exposure or problem, it can be added here. Before doing so, make sure to communicate with the Observing Scientist. ", css_classes=['inst_style'], width=800)
+        desc = """This Night Log is for Non-Observers. It should mainly be used for observing the ongoing Night Log. In special circumstances,
+        if a non-observer has an important comment about an exposure or problem, it can be added here. 
+        Before doing so, make sure to communicate with the Observing Scientist.
+        """
+        self.instructions = Div(text=desc+self.time_note.text, css_classes=['inst_style'], width=800)
         self.page_logo = Div(text="<img src='Other_Report/static/logo.png'>", width=400, height=400)
 
         self.comment_subtitle = Div(text="Comments", css_classes=['subt-style'])
@@ -40,17 +44,18 @@ class Other_Report(Report):
                         [self.page_logo],
                         [self.instructions],                 
                         self.intro_subtitle,
-                        self.intro_info,
+
                         [self.date_init, self.your_name],
                         [self.connect_bt],
                         self.connect_txt,
                         self.nl_info,
                         self.intro_txt], width=1000)
-        intro_tab = Panel(child=intro_layout, title="Initialization")
+        intro_tab = Panel(child=intro_layout, title="Initialization") #                        self.intro_info,
 
         comment_layout = layout([self.title,
                             self.comment_subtitle,
                             self.comment_alert,
+                            self.time_note,
                             self.exp_time,
                             self.exp_comment,
                             self.exp_btn], width=1000)
@@ -60,7 +65,7 @@ class Other_Report(Report):
         self.get_prob_layout()
         self.get_nl_layout()
 
-        self.layout = Tabs(tabs=[intro_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
+        self.layout = Tabs(tabs=[intro_tab, comment_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
 
     def run(self):
         self.connect_bt.on_click(self.connect_log)

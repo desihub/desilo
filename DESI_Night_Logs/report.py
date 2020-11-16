@@ -35,6 +35,7 @@ class Report():
         self.nl_file = None
 
         self.intro_subtitle = Div(text="Connect to Night Log",css_classes=['subt-style'])
+        self.time_note = Div(text="<b> Note: </b> Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.", css_classes=['inst-style'])
 
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
@@ -65,7 +66,7 @@ class Report():
 
         self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
         self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=6)
-        self.exp_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '2007',value=None)
+        self.exp_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '20:07',value=None)
         self.exp_btn = Button(label='Add', css_classes=['add_button'])
         self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
@@ -79,14 +80,14 @@ class Report():
         self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)
 
         self.checklist = CheckboxGroup(labels=[])
-        self.check_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '2007', value=None)
+        self.check_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '20:07', value=None)
         self.check_alert = Div(text=" ", css_classes=['alert-style'])
         self.check_btn = Button(label='Submit', css_classes=['add_button'])
         self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=2, cols=2)
 
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
         self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
-        self.prob_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '2007', value=None)
+        self.prob_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '20:07', value=None)
         self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, cols=2, title="Problem Description*:")
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None)
         self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=6, cols=2)
@@ -121,6 +122,7 @@ class Report():
         checklist_layout = layout(self.title,
                                 self.check_subtitle,
                                 self.checklist_inst,
+                                self.time_note,
                                 self.checklist,
                                 self.check_comment,
                                 [self.check_btn],
@@ -131,6 +133,7 @@ class Report():
         prob_layout = layout([self.title,
                             self.prob_subtitle,
                             self.prob_inst,
+                            self.time_note,
                             [[self.prob_time, self.prob_alarm], self.prob_input],
                             [self.prob_action,],
                             [self.prob_btn],
@@ -333,8 +336,8 @@ class Report():
 
             self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish, self.exp_type, self.exp_script,self.exp_time_end, self.exp_focus_trim, self.exp_tile, self.exp_tile_type])
 
-	else:
-        self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
+        else:
+            self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
 
     def comment_add(self):
 
