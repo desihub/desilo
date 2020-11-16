@@ -44,17 +44,18 @@ class Other_Report(Report):
                         [self.page_logo],
                         [self.instructions],                 
                         self.intro_subtitle,
-                        self.intro_info,
+
                         [self.date_init, self.your_name],
                         [self.connect_bt],
                         self.connect_txt,
                         self.nl_info,
                         self.intro_txt], width=1000)
-        intro_tab = Panel(child=intro_layout, title="Initialization")
+        intro_tab = Panel(child=intro_layout, title="Initialization") #                        self.intro_info,
 
         comment_layout = layout([self.title,
                             self.comment_subtitle,
                             self.comment_alert,
+                            self.time_note,
                             self.exp_time,
                             self.exp_comment,
                             self.exp_btn], width=1000)
@@ -64,7 +65,11 @@ class Other_Report(Report):
         self.get_prob_layout()
         self.get_nl_layout()
 
+<<<<<<< HEAD
         self.layout = Tabs(tabs=[intro_tab, comment_tab, self.prob_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
+=======
+        self.layout = Tabs(tabs=[intro_tab, comment_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
+>>>>>>> 716b9326e72f745fa176d6e3a520e36be5520e09
 
     def run(self):
         self.connect_bt.on_click(self.connect_log)

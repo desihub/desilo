@@ -36,9 +36,8 @@ class OS_Report(Report):
         desc = """
         The Operating Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log.
         Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.
-        <b> Note: </b>: Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.
         """
-        self.instructions = Div(text=desc, css_classes=['inst-style'], width=500)
+        self.instructions = Div(text=desc+self.time_note.text, css_classes=['inst-style'], width=500)
         self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.init_bt = Button(label="Initialize Tonight's Log", css_classes=['init_button'])
@@ -53,7 +52,7 @@ class OS_Report(Report):
         self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Cryostat?", "Did you do a connectivity aliveness check?","Did you check the Spectrograph Chiller?"]
 
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
-        self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other/Comments']
+        self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other Acquisition','Comment']
 
     def plan_tab(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
@@ -85,8 +84,8 @@ class OS_Report(Report):
                    TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
                    TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
                    TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
-        self.weather_inst = Div(text="Every hour include a description of the weather and othe relevant information. Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
-        self.weather_time = TextInput(title='Time', placeholder='17:00', value=None)
+        self.weather_inst = Div(text="Every hour include a description of the weather and any other relevant information, as well as fill in all the fields below.  Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
+        self.weather_time = TextInput(title='Time in Kitt Peak local time', placeholder='17:00', value=None)
         self.weather_desc = TextInput(title='Description', placeholder='description', value=None)
         self.weather_temp = TextInput(title='Temperature (C)', placeholder='50', value=None)
         self.weather_wind = TextInput(title='Wind Speed (mph)', placeholder='10', value=None)
@@ -103,7 +102,7 @@ class OS_Report(Report):
         self.add_image = TextInput(title="Add Image", placeholder='Pictures/image.png', value=None)
 
         self.exp_script = TextInput(title='Script Name', placeholder='dithering.json', value=None)
-        self.exp_time_end = TextInput(title='Time End', placeholder='2007', value=None)
+        self.exp_time_end = TextInput(title='Time End', placeholder='20:07', value=None)
         self.exp_focus_trim = TextInput(title='Trim from Focus', placeholder='54', value=None)
         self.exp_tile = TextInput(title='Tile Number', placeholder='68001', value=None)
         self.exp_tile_type = Select(title="Tile Type", value='QSO', options=['QSO','LRG','ELG','BGS','MW'])
@@ -118,7 +117,7 @@ class OS_Report(Report):
                      [self.exp_script],
                      [self.exp_focus_trim],
                      [self.exp_btn]])
-        elif self.hdr_type.value == 'Startup':
+        elif self.hdr_type.value in ['Startup','Comment']:
             self.exp_input_layout = layout([
                      [self.exp_time],
                      [self.exp_comment],
@@ -131,7 +130,7 @@ class OS_Report(Report):
                      [self.exp_type],
                      [self.exp_script],
                      [self.exp_btn]])
-        elif self.hdr_type.value in ['Observation', 'Other']:
+        elif self.hdr_type.value in ['Observation', 'Other Acquisition']:
             self.exp_input_layout = layout([
                      [self.exp_time],
                      [self.exp_exposure_start, self.exp_exposure_finish],
@@ -140,11 +139,11 @@ class OS_Report(Report):
                      [self.exp_tile],
                      [self.exp_script],
                      [self.exp_btn]])
-        self.exp_layout.children[5] = self.exp_input_layout
+        self.exp_layout.children[6] = self.exp_input_layout
 
     def get_layout(self):
         intro_layout = layout([self.title,
-                            [self.page_logo, self.instructions,],
+                            [self.page_logo, self.instructions],
                             self.connect_hdr,
                             [self.date_init, self.connect_bt],
                             self.connect_txt,
@@ -160,6 +159,7 @@ class OS_Report(Report):
         plan_layout = layout([self.title,
                             self.plan_subtitle,
                             self.plan_inst,
+                            self.time_note,
                             self.plan_txt,
                             [self.plan_order, self.plan_input],
                             [self.plan_btn],
@@ -169,6 +169,7 @@ class OS_Report(Report):
         milestone_layout = layout([self.title,
                                 self.milestone_subtitle,
                                 self.milestone_inst,
+                                self.time_note,
                                 self.milestone_input,
                                 [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl],
                                 [self.milestone_btn],
@@ -178,6 +179,7 @@ class OS_Report(Report):
         self.exp_layout = layout(children=[self.title,
                                 self.exp_subtitle,
                                 self.exp_inst,
+                                self.time_note,
                                 self.exp_info,
                                 [self.hdr_type, self.hdr_btn],
                                 self.exp_input_layout,
@@ -187,6 +189,7 @@ class OS_Report(Report):
         weather_layout = layout([self.title,
                                 self.weather_subtitle,
                                 self.weather_inst,
+                                self.time_note,
                                 [self.weather_time, self.weather_desc, self.weather_temp],
                                 [self.weather_wind, self.weather_humidity, self.weather_btn],
                                 self.weather_table], width=1000)

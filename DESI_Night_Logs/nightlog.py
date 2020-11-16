@@ -273,7 +273,7 @@ class NightLog(object):
                 self.supcal_add_spec_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
             else:
                 self.supcal_add_seq_os(exp_time,exp_exposure_start,exp_type,exp_comment)
-        elif (hdr_type == 'Observation') | (hdr_type == 'Other'):
+        elif (hdr_type == 'Observation') | (hdr_type == 'Other Acquisition') | (hdr_type == 'Comment'):
             if exp_script not in [None,'None', " ", ""]:
                 self.obs_add_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
             else:
@@ -435,7 +435,7 @@ class NightLog(object):
         """
 
         file_nl=open(self.root_dir+'nightlog','w')
-        
+
         meta_dict = json.load(open(self.meta_json,'r'))
         file_nl.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
         file_nl.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
