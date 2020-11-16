@@ -60,7 +60,7 @@ class NightLog(object):
             Creates the folders where all the files used to create the Night Log will be containted.
         """
         for dir_ in [self.os_dir, self.dqs_dir, self.other_dir, self.os_pb_dir, self.dqs_pb_dir, 
-                    self.os_startcal_dir,self.os_obs_dir, self.other_obs_dir]:
+                    self.os_startcal_dir,self.other_pb_dir, self.os_obs_dir, self.other_obs_dir]:
             if not os.path.exists(dir_):
                 os.makedirs(dir_)
 
@@ -114,16 +114,14 @@ class NightLog(object):
 
         if os.path.exists(the_path):
             os.remove(the_path)
-            return open(the_path,'a')
-        else:
-            return open(the_path,'a')
+        return open(the_path,'a')
 
 
     def compile_entries(self,the_path,file_nl):
         if not os.path.exists(the_path):
             file_nl.write("\n")
         else :
-            entries=sorted(glob.glob(the_path+"*"))
+            entries=sorted(glob.glob(the_path+"/*"))
             if len(entries) > 0:
                 for e in entries:
                     tmp_obs_e=open(e,'r')
@@ -141,7 +139,7 @@ class NightLog(object):
 
         meta_dict = {'os_1':your_firstname, 'os_last':your_lastname,'os_lo_1':LO_firstname,'os_lo_last':LO_lastname,'os_oa_1':OA_firstname,'os_oa_last':OA_lastname,
                     'os_sunset':time_sunset,'os_end18':time_18_deg_twilight_ends,'os_start18':time_18_deg_twilight_starts,'os_sunrise':time_sunrise,
-                    'os_moonrise':time_moonrise,'os_moonset':time_moonset,'os_illumination':illumination,'dqs_1':None,'dqs_last':None}#'os_weather_conditions':weather_conditions,
+                    'os_moonrise':time_moonrise,'os_moonset':time_moonset,'os_illumination':illumination,'dqs_1':None,'dqs_last':None}
 
         with open(self.meta_json,'w') as fp:
             json.dump(meta_dict, fp)
@@ -158,18 +156,15 @@ class NightLog(object):
 
         self.write_intro()
 
-
-
     def get_meta_data(self):
         meta_dict = json.load(open(self.meta_json,'r'))
         return meta_dict
-
 
     def add_plan_os(self, data_list):
         """
             Operations Scientist lists the objectives for the night.
         """
-        objectives = ['Order','Objective']
+        objectives = ['Order', 'Objective']
         if not os.path.exists(self.nightplan_file):
             df = pd.DataFrame(columns=objectives)
             df.to_pickle(self.nightplan_file)
@@ -196,62 +191,12 @@ class NightLog(object):
         """
         data.to_csv(self.weather_file)
 
-
-
-    def supcal_add_com_os(self,time,remark):
-        """
-            Operations Scientist comment/remark on Start Up & Calibrations procedures.
-        """
-
-        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time)
-        file=self.new_entry_or_replace(the_path)
-        file.write("- "+self.write_time(time)+" := "+remark+"\n")
-        file.close()
-
-    def supcal_add_seq_os(self,time,exp_num,exp_type,comment):
-        """
-            Operations Scientist adds new sequence in Start Up & Calibrations.
-        """
-
-        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time)
-        file=self.new_entry_or_replace(the_path)
-        file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+", "+comment+"\n")
-        file.close()
-
-    def supcal_add_spec_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment):
-        """
-            Operations Scientist adds new script (spectrograph cals) in Start Up & Calibrations.
-        """
-
-        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time_start)
-        file=self.new_entry_or_replace(the_path)
-        if time_stop in [None, "", " "]:
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", "+comment+"\n")
-        else:
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
-            file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
-        file.close()
-
-    def supcal_add_focus_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment,trim):
-        """
-            Operations Scientist adds new script (focus) in Start Up & Calibrations.
-        """
-
-        the_path=self.os_startcal_dir+"startup_calibrations_"+self.get_timestamp(time_start)
-        file=self.new_entry_or_replace(the_path)
-        if time_stop in [None, "", " "]:
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comment+"\n")
-        else:
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
-            file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
-        file.close()
-
     def obs_new_item_os(self,time,header):
         """
             Operations Scientist adds new item on the Observing section.
         """
 
-        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time)
+        the_path=os.path.join(self.os_obs_dir,"observing_{}".format(self.get_timestamp(time)))
         file=self.new_entry_or_replace(the_path)
         file.write("h5. "+header+"\n")
         file.write("\n")
@@ -263,62 +208,39 @@ class NightLog(object):
         """
         data_list = np.array(data_list)
         data_list[np.where(data_list == None)] = 'None'
-        hdr_type, exp_time, exp_comment, exp_exposure_start, exp_exposure_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type = data_list
-        if hdr_type == 'Focus':
-            self.supcal_add_focus_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment,exp_focus_trim)
-        elif hdr_type == 'Startup':
-            self.supcal_add_com_os(exp_time,exp_comment)
-        elif hdr_type == 'Calibration':
-            if exp_script not in [None, 'None'," ", ""]:
-                self.supcal_add_spec_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
-            else:
-                self.supcal_add_seq_os(exp_time,exp_exposure_start,exp_type,exp_comment)
-        elif (hdr_type == 'Observation') | (hdr_type == 'Other Acquisition') | (hdr_type == 'Comment'):
-            if exp_script not in [None,'None', " ", ""]:
-                self.obs_add_script_os(exp_time,exp_exposure_start,exp_script,exp_time_end,exp_exposure_finish,exp_comment)
-            else:
-                if exp_exposure_start not in [None,'None', " ", ""]:
-                    self.obs_add_seq_os(exp_time, exp_tile, exp_type, exp_exposure_start, exp_type, exp_comment)
-                else:
-                    self.obs_add_com_os(exp_time,exp_comment)
+        hdr_type, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type = data_list
+        if hdr_type in ['Focus', 'Startup', 'Calibration']:
+            the_path=os.path.join(self.os_startcal_dir,"startup_calibrations_{}".format(self.get_timestamp(exp_time)))
+            self.progress_sequence(the_path, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type)
 
+        elif hdr_type in ['Observation', 'Other Acquisition', 'Comment']:
+            the_path=os.path.join(self.os_obs_dir,"observing_{}".format(self.get_timestamp(exp_time)))
+            self.progress_sequence(the_path, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type)
 
-    def obs_add_seq_os(self,time, tile_number, tile_type, exp_num, exp_type, comment):
-        """
-            NEED TO UPDATE THIS
-        """
-
-        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time)
+    def progress_sequence(self, the_path, time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type):
         file=self.new_entry_or_replace(the_path)
-
-        if tile_number in [None, "", " "]:
-            file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+comment+"\n")
-        else :
-            file.write("- "+self.write_time(time)+" := exposure "+exp_num+", "+exp_type+" sequence, "+tile_type+" tile "+tile_number+", "+comment+"\n")
-        file.close()
-
-    def obs_add_com_os(self,time,remark):
-        """
-            Operations Scientist comment/remark in the Observing section.
-        """
-
-        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time)
-        file=self.new_entry_or_replace(the_path)
-        file.write("- "+self.write_time(time)+" := "+remark+"\n")
-        file.close()
-
-    def obs_add_script_os(self,time_start,exp_first,script,time_stop,exp_last,comment):
-        """
-            Operations Scientist adds new script in the Observing section.
-        """
-
-        the_path=self.os_obs_dir+"observing_"+self.get_timestamp(time_start)
-        file=self.new_entry_or_replace(the_path)
-        if (time_stop == "") or (time_stop == " ") :
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+", last exposure "+exp_last+", trim = "+trim+", "+comment+"\n")
-        else:
-            file.write("- "+self.write_time(time_start)+" := script @"+script+"@, first exposure "+exp_first+"\n")
-            file.write("- "+self.write_time(time_stop)+" := last exposure "+exp_last+", "+comment+"\n")
+        text = "- {} := ".format(self.write_time(time))
+        if exp_script not in [None, 'None', " ", ""]:
+            text += "script @{}@; ".format(exp_script)
+        if exp_start not in [None, 'None', " ", ""]:
+            text += 'exposure {}; '.format(exp_start)
+        if exp_type not in [None, 'None', " ", ""]:
+            text += '{} sequence; '.format(exp_type)
+        if exp_tile_type not in [None, 'None', " ", ""]:
+            text += '{}; '.format(exp_tile_type)
+        if exp_tile not in [None, 'None', " ", ""]:
+            text += 'tile {}; '.format(exp_tile)
+        if exp_time_end not in [None, 'None', " ", ""]:
+            text += '/n'
+            text += "- {} := ".format(self.write_time(exp_time_end))
+        if exp_finish not in [None, 'None', " ", ""]:
+            text += 'last exp. {}; '.format(exp_finish)
+        if exp_focus_trim not in [None, 'None', " ", ""]:
+            text += 'trim {}; '.format(exp_focus_trim)
+        if comment not in [None, 'None', " ", ""]:
+            text += '{}'.format(comment)
+        text += '\n'
+        file.write(text)
         file.close()
 
     def add_to_checklist(self, time, comment, user):
@@ -339,39 +261,40 @@ class NightLog(object):
             file.write("; {} ({})".format(self.write_time(time, kp_only=True), comment))
             file.close()
 
-    def add_problem(self,time,problem,alarm_id,action,user,name=None):
+    def prob_seq(self, time, problem, alarm_id, action):
+        text = "- {} :=".format(self.write_time(time))
+        if problem not in [None, 'None', " ", ""]:
+            text += '{}'.format(problem)
+        if alarm_id not in [None, 'None', " ", ""]:
+            text += '; AlarmID: {}'.format(alarm_id)
+        if action not in [None, 'None', " ", ""]:
+            text += '; Action: {}'.format(action)
+        return text
+
+    def add_problem(self, time, problem, alarm_id, action, user, name=None):
         """
             Adds details on a problem encountered.
         """
         if user == 'Other':
             the_path = os.path.join(self.other_pb_dir,"problem_{}".format(self.get_timestamp(time)))
             file = self.new_entry_or_replace(the_path)
-            file.write("- {} := {}; AlarmID: {}; Action: {} ({})\n".format(self.write_time(time),problem,alarm_id,action,user))
+            text = self.prob_seq(time,problem,alarm_id,action) + ' ({})\n'.format(name)
+            file.write(text)
             file.close()
         else:
             if user == 'OS':
-                the_path=self.os_pb_dir+"problem_"+self.get_timestamp(time)
+                the_path=os.path.join(self.os_pb_dir,"problem_{}".format(self.get_timestamp(time)))
             elif user == 'DQS':
-                the_path=self.dqs_pb_dir+"problem_"+self.get_timestamp(time)
+                the_path=os.path.join(self.dqs_pb_dir,"problem_{}".format(self.get_timestamp(time)))
             file=self.new_entry_or_replace(the_path)
 
-            file.write("- "+self.write_time(time)+" := "+str(problem)+";  AlarmID: "+str(alarm_id)+";  Action: "+str(action)+"\n")
+            file.write(self.prob_seq(time,problem,alarm_id,action) + '\n')
             file.close()
-
-    # def add_exp_dqs(self,data_list):
-    #     """
-    #         Data Quality Scientist adds assessement of a given exposure processed by NightWatch.
-    #     """
-    #     exp_time, exp_exposure_start, exp_type, quality, exp_comment, obs_cond_comment, inst_perf_comment, exp_exposure_finish = data_list
-    #     the_path=self.dqs_dir+self.get_timestamp(time_start)
-    #     file=self.new_entry_or_replace(the_path)
-    #     file.write(self.write_time(time)+" := "+remark+"\n")
-    #     file.close()
 
     def add_comment_other(self, time, comment, name):
         the_path = os.path.join(self.other_obs_dir,"comment_{}".format(self.get_timestamp(time)))
         file = self.new_entry_or_replace(the_path)
-        file.write("- {} := {}({})\n".format(self.write_time(time),comment, name))
+        file.write("- {} := {}({})\n".format(self.write_time(time), comment, name))
         file.close()
 
     def add_dqs_exposure(self, data):
@@ -409,7 +332,7 @@ class NightLog(object):
         file.close()
 
     def write_intro(self):
-        file_intro=open(self.root_dir+'header','w')
+        file_intro=open(os.path.join(self.root_dir,'header'),'w')
 
         meta_dict = json.load(open(self.meta_json,'r'))
         file_intro.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
@@ -427,14 +350,14 @@ class NightLog(object):
         #file_intro.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
 
         file_intro.close()
-        os.system("pandoc -s {} -f textile -t html -o {}".format(self.root_dir+'header',self.root_dir+'header.html'))
+        os.system("pandoc -s {} -f textile -t html -o {}".format(os.path.join(self.root_dir,'header'),os.path.join(self.root_dir,'header.html')))
 
     def finish_the_night(self):
         """
             Merge together all the different files into one '.txt' file to copy past on the eLog.
         """
 
-        file_nl=open(self.root_dir+'nightlog','w')
+        file_nl=open(os.path.join(self.root_dir,'nightlog'),'w')
 
         meta_dict = json.load(open(self.meta_json,'r'))
         file_nl.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
@@ -539,6 +462,6 @@ class NightLog(object):
         self.compile_entries(self.other_obs_dir,file_nl)
         #self.compile_entries(self.dqs_exp_dir,file_nl)
         file_nl.close()
-        os.system("pandoc -s {} -f textile -t html -o {}".format(self.root_dir+'nightlog',self.root_dir+'nightlog.html'))
+        os.system("pandoc -s {} -f textile -t html -o {}".format(os.path.join(self.root_dir,'nightlog'),os.path.join(self.root_dir,'nightlog.html')))
     # merge together all the different files into one .txt file to copy past on the eLog
     # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository

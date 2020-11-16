@@ -57,7 +57,7 @@ class Report():
 
         self.date_init = Select(title="Existing Night Logs")
         days = os.listdir(self.nl_dir)
-        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(self.nl_dir+'/'+day)])[::-1][0:10]
+        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
         self.connect_txt = Div(text=' ', css_classes=['alert-style'])
@@ -214,7 +214,7 @@ class Report():
 
             self.current_header()
             #if self.location == 'nersc':
-            self.nl_file = self.DESI_Log.root_dir+'nightlog.html'
+            self.nl_file = os.path.join(self.DESI_Log.root_dir,'nightlog.html')
             # else:
             #     self.nl_file = os.getcwd()+'/'+self.DESI_Log.root_dir+'nightlog.html'
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
@@ -265,7 +265,7 @@ class Report():
 
     def current_header(self):
         self.DESI_Log.write_intro()
-        path = self.DESI_Log.root_dir+"/header.html"
+        path = os.path.join(self.DESI_Log.root_dir,"header.html")
         nl_file = open(path,'r')
         intro = ''
         for line in nl_file:
@@ -276,7 +276,7 @@ class Report():
     def current_nl(self):
         now = datetime.now()
         self.DESI_Log.finish_the_night()
-        path = self.DESI_Log.root_dir+"/nightlog.html"
+        path = os.path.join(self.DESI_Log.root_dir,"nightlog.html")
         nl_file = open(path,'r')
         nl_txt = ''
         for line in nl_file:
@@ -303,7 +303,7 @@ class Report():
         """Adds problem to nightlog
         """
         if self.report_type == 'Other':
-            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value,self.report_type, self.your_name)
+            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value,self.report_type, self.your_name.value)
         else:
             self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value,self.report_type)
         self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)

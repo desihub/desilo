@@ -65,11 +65,8 @@ class Other_Report(Report):
         self.get_prob_layout()
         self.get_nl_layout()
 
-<<<<<<< HEAD
         self.layout = Tabs(tabs=[intro_tab, comment_tab, self.prob_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
-=======
-        self.layout = Tabs(tabs=[intro_tab, comment_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
->>>>>>> 716b9326e72f745fa176d6e3a520e36be5520e09
+
 
     def run(self):
         self.connect_bt.on_click(self.connect_log)
