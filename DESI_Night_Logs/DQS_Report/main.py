@@ -111,6 +111,7 @@ class DQS_Report(Report):
         exp_layout = layout([self.title,
                             self.exp_subtitle,
                             self.exp_inst,
+                            self.time_note,
                             self.exp_info,
                             self.exp_layout], width=1000)
         exp_tab = Panel(child=exp_layout, title="Exposures") 
