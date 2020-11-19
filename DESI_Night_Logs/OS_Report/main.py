@@ -11,6 +11,7 @@ view at: http://localhost:5006/OS_Report
 """
 
 import os, sys
+import time
 import pandas as pd
 import subprocess
 
@@ -195,10 +196,13 @@ class OS_Report(Report):
                                 self.weather_table], width=1000)
         weather_tab = Panel(child=weather_layout, title="Weather")
 
+        self.get_nl_layout()
         nl_layout = layout([self.title,
                 self.nl_subtitle,
-                [self.nl_btn, self.nl_alert],
+                self.nl_alert,
                 self.nl_text,
+                self.exptable_alert,
+                self.exp_table,
                 self.nl_submit_btn], width=1000)
         nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
@@ -210,36 +214,39 @@ class OS_Report(Report):
 
     def nl_submit(self):
 
-        try:
-            from ECLAPI import ECLConnection, ECLEntry
-        except ImportError:
-            ECLConnection = None
-            self.nl_text.text = "Can't connect to eLog"
+        if not self.current_nl():
+            self.nl_text.text = 'You cannot submit a Night Log to the eLog until you have connected to an existing Night Log or initialized tonights Night Log'
+        else:
+            try:
+                from ECLAPI import ECLConnection, ECLEntry
+            except ImportError:
+                ECLConnection = None
+                self.nl_text.text = "Can't connect to eLog"
 
-        f = self.nl_file[:-5]
-        print(f)
-        nl_file=open(f,'r')
-        lines = nl_file.readlines()
-        nl_html = ' '
-        for line in lines:
-            nl_html += line
+            f = self.nl_file[:-5]
+            print(f)
+            nl_file=open(f,'r')
+            lines = nl_file.readlines()
+            nl_html = ' '
+            for line in lines:
+                nl_html += line
 
-        e = ECLEntry('Synopsis_Night', text=nl_html, textile=True)
+            e = ECLEntry('Synopsis_Night', text=nl_html, textile=True)
 
-        subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
-        e.addSubject(subject)
-        url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
-        user = 'dos'
-        pw = 'dosuser'
-        elconn = ECLConnection(url, user, pw)
-        response = elconn.post(e)
-        elconn.close()
-        if response[0] != 200:
-           raise Exception(response)
-           self.nl_text.text = "You cannot post to the eLog on this machine"
+            subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
+            e.addSubject(subject)
+            url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
+            user = 'dos'
+            pw = 'dosuser'
+            elconn = ECLConnection(url, user, pw)
+            response = elconn.post(e)
+            elconn.close()
+            if response[0] != 200:
+               raise Exception(response)
+               self.nl_text.text = "You cannot post to the eLog on this machine"
 
-        nl_text = "Night Log posted to eLog" + '</br>'
-        self.nl_text.text = nl_text
+            nl_text = "Night Log posted to eLog" + '</br>'
+            self.nl_text.text = nl_text
 
     def run(self):
         self.plan_tab()
@@ -252,15 +259,17 @@ class OS_Report(Report):
         self.hdr_btn.on_click(self.choose_exposure)
         self.weather_btn.on_click(self.weather_add)
         self.prob_btn.on_click(self.prob_add)
-        self.nl_btn.on_click(self.current_nl)
+        #self.nl_btn.on_click(self.current_nl)
         self.nl_submit_btn.on_click(self.nl_submit)
         self.check_btn.on_click(self.check_add)
         self.milestone_btn.on_click(self.milestone_add)
         self.plan_btn.on_click(self.plan_add)
         self.get_layout()
 
+    
 OS = OS_Report()
 OS.run()
 curdoc().theme = 'dark_minimal'
 curdoc().title = 'DESI Night Log - Observing Scientist'
 curdoc().add_root(OS.layout)
+curdoc().add_periodic_callback(OS.current_nl, 30000)

@@ -132,12 +132,13 @@ class DQS_Report(Report):
         self.exp_update.on_click(self.get_exposure_list)
         self.prob_btn.on_click(self.prob_add)
         self.check_btn.on_click(self.check_add)
-        self.nl_btn.on_click(self.current_nl) 
         self.get_layout()
+        self.current_nl()
 
 
 DQS = DQS_Report()
 DQS.run()
 curdoc().title = 'DESI Night Log - Data QA Scientist'
 curdoc().add_root(DQS.layout)
+curdoc().add_periodic_callback(DQS.current_nl, 30000)
 

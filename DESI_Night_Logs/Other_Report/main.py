@@ -54,11 +54,11 @@ class Other_Report(Report):
 
         comment_layout = layout([self.title,
                             self.comment_subtitle,
-                            self.comment_alert,
                             self.time_note,
                             self.exp_time,
                             self.exp_comment,
-                            self.exp_btn], width=1000)
+                            self.exp_btn,
+                            self.comment_alert], width=1000)
         comment_tab = Panel(child=comment_layout, title="Comments")
 
         #self.get_intro_layout()
@@ -72,7 +72,6 @@ class Other_Report(Report):
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.comment_add)
         self.prob_btn.on_click(self.prob_add)
-        self.nl_btn.on_click(self.current_nl)
         self.get_layout()
 
 
@@ -80,3 +79,4 @@ Other = Other_Report()
 Other.run()
 curdoc().title = 'DESI Night Log - Non Observer'
 curdoc().add_root(Other.layout)
+curdoc().add_periodic_callback(Other.current_nl, 30000)
