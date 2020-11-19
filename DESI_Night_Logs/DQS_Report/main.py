@@ -140,5 +140,5 @@ DQS = DQS_Report()
 DQS.run()
 curdoc().title = 'DESI Night Log - Data QA Scientist'
 curdoc().add_root(DQS.layout)
-curdoc().add_periodic_callback(DQS.current_nl, 15000)
+curdoc().add_periodic_callback(DQS.current_nl, 30000)
 

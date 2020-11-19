@@ -147,19 +147,18 @@ class Report():
         self.prob_tab = Panel(child=prob_layout, title="Problems")
 
     def get_nl_layout(self):
-        exp_data = pd.DataFrame(columns = ['night','id','sequence','action','flavor','obstype','exptime','program'])
+        exp_data = pd.DataFrame(columns = ['night','id','sequence','flavor','obstype','exptime','program'])
         self.explist_source = ColumnDataSource(exp_data)
 
         columns = [TableColumn(field='night', title='Night', width=100),
                    TableColumn(field='id', title='Exposure', width=100),
                    TableColumn(field='sequence', title='Sequence', width=100),
-                   TableColumn(field='action', title='Action', width=100),
                    TableColumn(field='flavor', title='Flavor', width=100),
                     TableColumn(field='obstype', title='Obstype', width=100),
                    TableColumn(field='exptime', title='Exptime', width=100),
-                   TableColumn(field='program', title='Program', width=100)]
+                   TableColumn(field='program', title='Program', width=200)]
 
-        self.exp_table = DataTable(source=self.explist_source, columns=columns)
+        self.exp_table = DataTable(source=self.explist_source, columns=columns, width=1000)
 
         nl_layout = layout([self.title,                        
                         self.nl_subtitle,
@@ -212,9 +211,7 @@ class Report():
 
     def get_strftime(self, time):
         date = self.date_init.value
-        print(date)
         year, month, day = int(date[0:4]), int(date[4:6]), int(date[6:8])
-        print(year, month, day)
         d = datetime(year, month, day)
         dt = datetime.combine(d,time)
         return dt.strftime("%Y%m%dT%H:%M")
@@ -325,8 +322,8 @@ class Report():
 
     def get_exp_list(self):
         if self.location == 'kpno':
-            exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE date_obs == '{self.night}'", self.conn)
-            self.explist_source.data = exp_df[['night','id','sequence','action','flavor','obstype','exptime','program']]
+            exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
+            self.explist_source.data = exp_df[['night','id','sequence','flavor','obstype','exptime','program']]
         else:
             self.exptable_alert.text = 'Cannot connect to Exposure Data Base'
 
