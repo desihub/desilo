@@ -272,4 +272,4 @@ OS.run()
 curdoc().theme = 'dark_minimal'
 curdoc().title = 'DESI Night Log - Observing Scientist'
 curdoc().add_root(OS.layout)
-curdoc().add_periodic_callback(OS.current_nl, 15000)
+curdoc().add_periodic_callback(OS.current_nl, 30000)
