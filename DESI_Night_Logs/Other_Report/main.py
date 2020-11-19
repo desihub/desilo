@@ -54,11 +54,11 @@ class Other_Report(Report):
 
         comment_layout = layout([self.title,
                             self.comment_subtitle,
-                            self.comment_alert,
                             self.time_note,
                             self.exp_time,
                             self.exp_comment,
-                            self.exp_btn], width=1000)
+                            self.exp_btn,
+                            self.comment_alert], width=1000)
         comment_tab = Panel(child=comment_layout, title="Comments")
 
         #self.get_intro_layout()
