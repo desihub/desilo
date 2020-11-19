@@ -169,6 +169,14 @@ class Report():
                         self.exp_table], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
+    def get_img_layout(self):
+        img_layout = layout([self.title,
+                            self.img_subtitle,
+                            self.img_inst,
+                            self.img_input,
+                            self.img_comment,
+                            self.img_btn])
+
 
     def short_time(self, str_time):
         """Returns %H%M in whichever time zone selected
