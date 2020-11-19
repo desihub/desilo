@@ -72,7 +72,6 @@ class Other_Report(Report):
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.comment_add)
         self.prob_btn.on_click(self.prob_add)
-        self.nl_btn.on_click(self.current_nl)
         self.get_layout()
 
 
@@ -80,3 +79,4 @@ Other = Other_Report()
 Other.run()
 curdoc().title = 'DESI Night Log - Non Observer'
 curdoc().add_root(Other.layout)
+curdoc().add_periodic_callback(Other.current_nl, 15000)

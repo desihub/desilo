@@ -1,5 +1,6 @@
 #Imports
 import os, sys
+import time, sched
 from datetime import datetime
 import numpy as np
 import pandas as pd
@@ -75,8 +76,8 @@ class Report():
 
         self.nl_subtitle = Div(text="Current DESI Night Log: {}".format(self.nl_file), css_classes=['subt-style'])
         self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
-        self.nl_text = Div(text="Current DESI Night Log", css_classes=['inst-style'], width=500)
-        self.nl_alert = Div(text=' ', css_classes=['inst-style'], width=500)
+        self.nl_text = Div(text=" ", css_classes=['inst-style'], width=1000)
+        self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)
 
         self.checklist = CheckboxGroup(labels=[])
@@ -144,7 +145,7 @@ class Report():
     def get_nl_layout(self):
         nl_layout = layout([self.title,
                         self.nl_subtitle,
-                        [self.nl_btn, self.nl_alert],
+                        self.nl_alert,
                         self.nl_text], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
@@ -230,6 +231,7 @@ class Report():
                     new_data = new_data[['time','desc','temp','wind','humidity']]
                 except:
                     pass
+            self.current_nl()
 
         else:
             self.connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(self.date_init.value)
@@ -274,17 +276,23 @@ class Report():
         nl_file.closed
 
     def current_nl(self):
-        now = datetime.now()
-        self.DESI_Log.finish_the_night()
-        path = os.path.join(self.DESI_Log.root_dir,"nightlog.html")
-        nl_file = open(path,'r')
-        nl_txt = ''
-        for line in nl_file:
-            nl_txt =  nl_txt + line + '\n'
-        self.nl_text.text = nl_txt
-        nl_file.closed
-        self.nl_alert.text = 'Last Updated on this page: {}'.format(now)
-        self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
+        try:
+            now = datetime.now()
+            self.DESI_Log.finish_the_night()
+            path = os.path.join(self.DESI_Log.root_dir,"nightlog.html")
+            nl_file = open(path,'r')
+            nl_txt = ''
+            for line in nl_file:
+                nl_txt =  nl_txt + line + '\n'
+            self.nl_text.text = nl_txt
+            nl_file.closed
+            self.nl_alert.text = 'Last Updated on this page: {}'.format(now)
+            self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
+            return True
+        except:
+            self.nl_alert.text = 'You are not connected to a Night Log'
+            return False
+
 
     def check_add(self):
         """add checklist time to Night Log
