@@ -196,10 +196,13 @@ class OS_Report(Report):
                                 self.weather_table], width=1000)
         weather_tab = Panel(child=weather_layout, title="Weather")
 
+        self.get_nl_layout()
         nl_layout = layout([self.title,
                 self.nl_subtitle,
                 self.nl_alert,
                 self.nl_text,
+                self.exptable_alert,
+                self.exp_table,
                 self.nl_submit_btn], width=1000)
         nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 

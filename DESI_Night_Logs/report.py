@@ -5,12 +5,14 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 import socket
+import psycopg2
 
 from bokeh.io import curdoc  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup)
 from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs
+from bokeh.models.widgets.tables import DataTable, TableColumn
 from astropy.time import TimezoneInfo
 import astropy.units.si as u
 
@@ -42,6 +44,7 @@ class Report():
         ip_address = socket.gethostbyname(hostname)
         if 'desi' in hostname:
             self.location = 'kpno'
+            self.conn = psycopg2.connect(host="desi-db", port="5442", database="desi_dev", user="desi_reader", password="reader")
         elif 'app' in hostname: #this is not true. Needs to change.
             self.location = 'nersc'
         else:
@@ -79,6 +82,7 @@ class Report():
         self.nl_text = Div(text=" ", css_classes=['inst-style'], width=1000)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)
+        self.exptable_alert = Div(text=" ",css_classes=['alert-style'], width=500)
 
         self.checklist = CheckboxGroup(labels=[])
         self.check_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '20:07', value=None)
@@ -143,10 +147,26 @@ class Report():
         self.prob_tab = Panel(child=prob_layout, title="Problems")
 
     def get_nl_layout(self):
-        nl_layout = layout([self.title,
+        exp_data = pd.DataFrame(columns = ['night','id','sequence','action','flavor','obstype','exptime','program'])
+        self.explist_source = ColumnDataSource(exp_data)
+
+        columns = [TableColumn(field='night', title='Night', width=100),
+                   TableColumn(field='id', title='Exposure', width=100),
+                   TableColumn(field='sequence', title='Sequence', width=100),
+                   TableColumn(field='action', title='Action', width=100),
+                   TableColumn(field='flavor', title='Flavor', width=100),
+                    TableColumn(field='obstype', title='Obstype', width=100),
+                   TableColumn(field='exptime', title='Exptime', width=100),
+                   TableColumn(field='program', title='Program', width=100)]
+
+        self.exp_table = DataTable(source=self.explist_source, columns=columns)
+
+        nl_layout = layout([self.title,                        
                         self.nl_subtitle,
                         self.nl_alert,
-                        self.nl_text], width=1000)
+                        self.nl_text,
+                        self.exptable_alert,
+                        self.exp_table], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
 
@@ -200,6 +220,7 @@ class Report():
         except:
             date = datetime.now()
 
+        self.night = str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
         self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
         exists = self.DESI_Log.check_exists()
 
@@ -288,10 +309,18 @@ class Report():
             nl_file.closed
             self.nl_alert.text = 'Last Updated on this page: {}'.format(now)
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
+            self.get_exp_list()
             return True
         except:
             self.nl_alert.text = 'You are not connected to a Night Log'
             return False
+
+    def get_exp_list(self):
+        if self.location == 'kpno':
+            exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE date_obs == '{self.night}'", self.conn)
+            self.explist_source.data = exp_df[['night','id','sequence','action','flavor','obstype','exptime','program']]
+        else:
+            self.exptable_alert.text = 'Cannot connect to Exposure Data Base'
 
 
     def check_add(self):
@@ -356,5 +385,6 @@ class Report():
             self.comment_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
             self.DESI_Log.add_comment_other(self.get_time(self.exp_time.value), self.exp_comment.value, self.your_name.value)
-            self.clear_input([self.exp_time, self.exp_comment])
             self.comment_alert.text = "A comment was added at {}".format(self.exp_time.value)
+            self.clear_input([self.exp_time, self.exp_comment])
+            
