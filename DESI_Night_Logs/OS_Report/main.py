@@ -208,9 +208,10 @@ class OS_Report(Report):
 
         self.get_prob_layout()
         self.get_checklist_layout()
+        self.get_img_layout()
         self.check_tab.title = 'OS Checklist'
 
-        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.img_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
     def nl_submit(self):
 
@@ -264,6 +265,7 @@ class OS_Report(Report):
         self.check_btn.on_click(self.check_add)
         self.milestone_btn.on_click(self.milestone_add)
         self.plan_btn.on_click(self.plan_add)
+        self.img_btn.on_click(self.image_add)
         self.get_layout()
 
     

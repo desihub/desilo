@@ -119,9 +119,10 @@ class DQS_Report(Report):
         self.get_intro_layout()
         self.get_prob_layout()
         self.get_checklist_layout()
+        self.get_img_layout()
         self.get_nl_layout()
 
-        tabs = Tabs(tabs=[self.intro_tab, exp_tab, self.prob_tab, self.check_tab, self.nl_tab])
+        tabs = Tabs(tabs=[self.intro_tab, exp_tab, self.prob_tab, self.check_tab, self.img_tab, self.nl_tab])
 
         self.layout = tabs
 
