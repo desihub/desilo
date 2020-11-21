@@ -46,6 +46,9 @@ class OS_Report(Report):
         self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names)
         self.page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
 
+        self.contributer_list = TextAreaInput(placeholder='Contributer names (include all)', rows=2, cols=3, title='Names of all Contributers')
+        self.contributer_btn = Button(label='Update Contributer List', css_classes=['add_button'], width=300)
+
         self.connect_hdr = Div(text="Connect to Existing Night Log", css_classes=['subt-style'], width=800)
         self.init_hdr = Div(text="Initialize Tonight's Night Log", css_classes=['subt-style'], width=800)
         self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
@@ -106,7 +109,7 @@ class OS_Report(Report):
         self.exp_time_end = TextInput(title='Time End', placeholder='20:07', value=None)
         self.exp_focus_trim = TextInput(title='Trim from Focus', placeholder='54', value=None)
         self.exp_tile = TextInput(title='Tile Number', placeholder='68001', value=None)
-        self.exp_tile_type = Select(title="Tile Type", value='QSO', options=['QSO','LRG','ELG','BGS','MW'])
+        self.exp_tile_type = Select(title="Tile Type", value=None, options=['QSO','LRG','ELG','BGS','MW'])
         self.exp_input_layout = layout([])
 
     def choose_exposure(self):
@@ -153,6 +156,8 @@ class OS_Report(Report):
                             [self.your_name, self.LO, self.OA],
                             [self.init_bt],
                             self.line2,
+                            self.contributer_list,
+                            self.contributer_btn,
                             self.nl_info,
                             self.intro_txt], width=1000)
         intro_tab = Panel(child=intro_layout, title="Initialization")
@@ -208,9 +213,10 @@ class OS_Report(Report):
 
         self.get_prob_layout()
         self.get_checklist_layout()
+        self.get_img_layout()
         self.check_tab.title = 'OS Checklist'
 
-        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.img_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
     def nl_submit(self):
 
@@ -264,6 +270,8 @@ class OS_Report(Report):
         self.check_btn.on_click(self.check_add)
         self.milestone_btn.on_click(self.milestone_add)
         self.plan_btn.on_click(self.plan_add)
+        self.img_btn.on_click(self.image_add)
+        self.contributer_btn.on_click(self.add_contributer_list)
         self.get_layout()
 
     

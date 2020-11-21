@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import socket
 import psycopg2
+import subprocess
 
 from bokeh.io import curdoc  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup)
@@ -99,6 +100,12 @@ class Report():
         self.prob_btn = Button(label='Add', css_classes=['add_button'])
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
 
+        self.img_subtitle = Div(text="Images", css_classes=['subt-style'])
+        self.img_inst = Div(text="Include images in the Night Log by entering the location of the images on the desi server", css_classes=['inst-style'], width=1000)
+        self.img_input = TextInput(title='image file location', placeholder='/n/home/desiobserver/image.png',value=None)
+        self.img_comment = TextAreaInput(placeholder='comment about image', rows=6, cols=2, title='Image caption')
+        self.img_btn = Button(label='Add', css_classes=['add_button'])
+        self.img_alert = Div(text=" ",width=1000)
 
         self.DESI_Log = None
 
@@ -167,6 +174,16 @@ class Report():
                         self.exptable_alert,
                         self.exp_table], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
+
+    def get_img_layout(self):
+        img_layout = layout([self.title,
+                            self.img_subtitle,
+                            self.img_inst,
+                            self.img_input,
+                            self.img_comment,
+                            self.img_btn,
+                            self.img_alert], width=1000)
+        self.img_tab = Panel(child=img_layout, title='Images')
 
 
     def short_time(self, str_time):
@@ -249,6 +266,12 @@ class Report():
                     new_data = new_data[['time','desc','temp','wind','humidity']]
                 except:
                     pass
+                if os.path.exists(self.DESI_Log.contributer_file):
+                    cont_txt = ''
+                    f =  open(self.DESI_Log.contributer_file, "r") 
+                    for line in f:
+                        cont_txt += line
+                    self.contributer_list.value = cont_txt
             self.current_nl()
 
         else:
@@ -282,6 +305,11 @@ class Report():
         #update_weather_source_data()
         self.connect_txt.text = 'Night Log is Initialized'
         self.current_header()
+        self.current_nl()
+        days = os.listdir(self.nl_dir)
+        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
+        self.date_init.options = list(init_nl_list)
+        self.date_init.value = init_nl_list[0]
 
     def current_header(self):
         self.DESI_Log.write_intro()
@@ -384,4 +412,28 @@ class Report():
             self.DESI_Log.add_comment_other(self.get_time(self.exp_time.value), self.exp_comment.value, self.your_name.value)
             self.comment_alert.text = "A comment was added at {}".format(self.exp_time.value)
             self.clear_input([self.exp_time, self.exp_comment])
+
+
+    def add_contributer_list(self):
+        cont_list = self.contributer_list.value
+        self.DESI_Log.add_contributer_list(cont_list)
+
+    def image_add(self):
+        """Copies image from the input location to the image folder for the nightlog. 
+        Then calls add_image() from nightlog.py which writes it to the html file
+        Then gives preview of image of last image.
+        """
+        image_loc = self.img_input.value
+        image_name = os.path.split(image_loc)[1]
+        image_type = os.path.splitext(image_name)[1]
+        bashCommand1 = "cp {} {}".format(image_loc,self.DESI_Log.image_dir)
+        bashCommand2 = "cp {} {}".format(image_loc,self.report_type+"_Report/static/images/tmp_img{}".format(image_type))
+        results = subprocess.run(bashCommand1.split(), text=True, stdout=subprocess.PIPE, check=True)
+        results = subprocess.run(bashCommand2.split(), text=True, stdout=subprocess.PIPE, check=True)
+        self.DESI_Log.add_image(os.path.join(self.DESI_Log.image_dir,image_name), self.img_comment.value)
+        preview = '<img src="{}_Report/static/images/tmp_img{}" style="width:300px;height:300px;">'.format(self.report_type,image_type)
+        preview += "\n"
+        preview += "{}".format(self.img_comment.value)
+        self.img_alert.text = preview
+        self.clear_input([self.img_input, self.img_comment])
             
