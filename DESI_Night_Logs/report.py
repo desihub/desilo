@@ -266,6 +266,12 @@ class Report():
                     new_data = new_data[['time','desc','temp','wind','humidity']]
                 except:
                     pass
+                if os.path.exists(self.DESI_Log.contributer_file):
+                    cont_txt = ''
+                    f =  open(self.DESI_Log.contributer_file, "r") 
+                    for line in f:
+                        cont_txt += line
+                    self.contributer_list.value = cont_txt
             self.current_nl()
 
         else:
@@ -300,6 +306,10 @@ class Report():
         self.connect_txt.text = 'Night Log is Initialized'
         self.current_header()
         self.current_nl()
+        days = os.listdir(self.nl_dir)
+        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
+        self.date_init.options = list(init_nl_list)
+        self.date_init.value = init_nl_list[0]
 
     def current_header(self):
         self.DESI_Log.write_intro()
@@ -402,6 +412,11 @@ class Report():
             self.DESI_Log.add_comment_other(self.get_time(self.exp_time.value), self.exp_comment.value, self.your_name.value)
             self.comment_alert.text = "A comment was added at {}".format(self.exp_time.value)
             self.clear_input([self.exp_time, self.exp_comment])
+
+
+    def add_contributer_list(self):
+        cont_list = self.contributer_list.value
+        self.DESI_Log.add_contributer_list(cont_list)
 
     def image_add(self):
         """Copies image from the input location to the image folder for the nightlog. 

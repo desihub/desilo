@@ -49,6 +49,7 @@ class NightLog(object):
         self.weather_file = os.path.join(self.os_dir,'weather.csv')
         self.meta_json = os.path.join(self.root_dir,'nightlog_meta.json')
         self.image_file = os.path.join(self.image_dir, 'image_list')
+        self.contributer_file = os.path.join(self.root_dir, 'contributer_file')
 
         # Set this if you want to allow for replacing lines or not
         self.replace = True
@@ -213,11 +214,11 @@ class NightLog(object):
         hdr_type, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type = data_list
         if hdr_type in ['Focus', 'Startup', 'Calibration']:
             the_path=os.path.join(self.os_startcal_dir,"startup_calibrations_{}".format(self.get_timestamp(exp_time)))
-            self.progress_sequence(the_path, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type)
 
         elif hdr_type in ['Observation', 'Other Acquisition', 'Comment']:
             the_path=os.path.join(self.os_obs_dir,"observing_{}".format(self.get_timestamp(exp_time)))
-            self.progress_sequence(the_path, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type)
+        
+        self.progress_sequence(the_path, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type)
 
     def progress_sequence(self, the_path, time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type):
         file=self.new_entry_or_replace(the_path)
@@ -344,6 +345,11 @@ class NightLog(object):
         file.write("{}".format(comment))
         file.close()
 
+    def add_contributer_list(self, contributers):
+        file = open(self.contributer_file, 'w')
+        file.write(contributers)
+        file.write("\n")
+        file.close()
 
     def write_intro(self):
         file_intro=open(os.path.join(self.root_dir,'header'),'w')
@@ -389,6 +395,15 @@ class NightLog(object):
         #file_nl.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
         file_nl.write("\n")
         file_nl.write("\n")
+        if os.path.exists(self.contributer_file):
+            file_nl.write("h3. Contributers\n")
+            file_nl.write("\n")
+            file_nl.write("\n")
+            f =  open(self.contributer_file, "r") 
+            for line in f:
+                file_nl.write(line)
+                file_nl.write("\n")
+                file_nl.write("\n")
         file_nl.write("h3. Plan for the night\n")
         file_nl.write("\n")
         file_nl.write("The detailed operations plan for today (obsday "+self.obsday+") can be found at https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan"+self.obsday+".\n")
@@ -477,9 +492,13 @@ class NightLog(object):
         #self.compile_entries(self.dqs_exp_dir,file_nl)
         if os.path.exists(self.image_file):
             file_nl.write("h3. Images\n")
+            file_nl.write("\n")
+            file_nl.write("\n")
             f =  open(self.image_file, "r") 
             for line in f:
                 file_nl.write(line)
+                file_nl.write("\n")
+                file_nl.write("\n")
         file_nl.close()
         os.system("pandoc --self-contained --metadata pagetitle='report' -s {} -f textile -t html -o {}".format(os.path.join(self.root_dir,'nightlog'),os.path.join(self.root_dir,'nightlog.html')))
     # merge together all the different files into one .txt file to copy past on the eLog
