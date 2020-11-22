@@ -218,41 +218,8 @@ class OS_Report(Report):
 
         self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.img_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
-    def nl_submit(self):
 
-        if not self.current_nl():
-            self.nl_text.text = 'You cannot submit a Night Log to the eLog until you have connected to an existing Night Log or initialized tonights Night Log'
-        else:
-            try:
-                from ECLAPI import ECLConnection, ECLEntry
-            except ImportError:
-                ECLConnection = None
-                self.nl_text.text = "Can't connect to eLog"
-
-            f = self.nl_file[:-5]
-            print(f)
-            nl_file=open(f,'r')
-            lines = nl_file.readlines()
-            nl_html = ' '
-            for line in lines:
-                nl_html += line
-
-            e = ECLEntry('Synopsis_Night', text=nl_html, textile=True)
-
-            subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
-            e.addSubject(subject)
-            url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
-            user = 'dos'
-            pw = 'dosuser'
-            elconn = ECLConnection(url, user, pw)
-            response = elconn.post(e)
-            elconn.close()
-            if response[0] != 200:
-               raise Exception(response)
-               self.nl_text.text = "You cannot post to the eLog on this machine"
-
-            nl_text = "Night Log posted to eLog" + '</br>'
-            self.nl_text.text = nl_text
+            
 
     def run(self):
         self.plan_tab()

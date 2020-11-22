@@ -50,6 +50,7 @@ class NightLog(object):
         self.meta_json = os.path.join(self.root_dir,'nightlog_meta.json')
         self.image_file = os.path.join(self.image_dir, 'image_list')
         self.contributer_file = os.path.join(self.root_dir, 'contributer_file')
+        self.explist_file = os.path.join(self.root_dir, 'exposures.csv')
 
         # Set this if you want to allow for replacing lines or not
         self.replace = True

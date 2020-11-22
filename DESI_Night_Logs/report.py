@@ -20,8 +20,11 @@ import astropy.units.si as u
 import ephem
 from util import sky_calendar
 
-sys.path.append(os.getcwd())
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
+sys.path.append(os.getcwd())
+sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
 class Report():
@@ -154,16 +157,16 @@ class Report():
         self.prob_tab = Panel(child=prob_layout, title="Problems")
 
     def get_nl_layout(self):
-        exp_data = pd.DataFrame(columns = ['night','id','sequence','flavor','obstype','exptime','program'])
+        exp_data = pd.DataFrame(columns = ['night','id','program','sequence','flavor','obstype','exptime'])
         self.explist_source = ColumnDataSource(exp_data)
 
-        columns = [TableColumn(field='night', title='Night', width=100),
-                   TableColumn(field='id', title='Exposure', width=100),
+        columns = [TableColumn(field='night', title='Night', width=50),
+                   TableColumn(field='id', title='Exposure', width=50),
                    TableColumn(field='sequence', title='Sequence', width=100),
-                   TableColumn(field='flavor', title='Flavor', width=100),
-                    TableColumn(field='obstype', title='Obstype', width=100),
-                   TableColumn(field='exptime', title='Exptime', width=100),
-                   TableColumn(field='program', title='Program', width=200)]
+                   TableColumn(field='flavor', title='Flavor', width=50),
+                    TableColumn(field='obstype', title='Obstype', width=50),
+                   TableColumn(field='exptime', title='Exptime', width=50),
+                   TableColumn(field='program', title='Program', width=300)]
 
         self.exp_table = DataTable(source=self.explist_source, columns=columns, width=1000)
 
@@ -343,9 +346,15 @@ class Report():
     def get_exp_list(self):
         if self.location == 'kpno':
             exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
-            self.explist_source.data = exp_df[['night','id','sequence','flavor','obstype','exptime','program']]
+            self.explist_source.data = exp_df[['night','id','program','sequence','flavor','obstype','exptime']].iloc[::-1]
+            exp_df.to_csv(self.DESI_Log.explist_file, index=False)
         else:
             self.exptable_alert.text = 'Cannot connect to Exposure Data Base'
+
+    def exp_to_html(self):
+        exp_df = pd.read_csv(self.DESI_Log.explist_file)
+        exp_html = exp_df.to_html()
+        return exp_html
 
 
     def check_add(self):
@@ -436,4 +445,101 @@ class Report():
         preview += "{}".format(self.img_comment.value)
         self.img_alert.text = preview
         self.clear_input([self.img_input, self.img_comment])
+
+    def nl_submit(self):
+
+        if not self.current_nl():
+            self.nl_text.text = 'You cannot submit a Night Log to the eLog until you have connected to an existing Night Log or initialized tonights Night Log'
+        else:
+            try:
+                from ECLAPI import ECLConnection, ECLEntry
+            except ImportError:
+                ECLConnection = None
+                self.nl_text.text = "Can't connect to eLog"
+
+            f = self.nl_file[:-5]
+            print(f)
+            nl_file=open(f,'r')
+            lines = nl_file.readlines()
+            nl_html = ' '
+            for line in lines:
+                nl_html += line
+
+            e = ECLEntry('Synopsis_Night', text=nl_html, textile=True)
+
+            subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
+            e.addSubject(subject)
+            url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
+            user = 'dos'
+            pw = 'dosuser'
+            elconn = ECLConnection(url, user, pw)
+            response = elconn.post(e)
+            elconn.close()
+            if response[0] != 200:
+               raise Exception(response)
+               self.nl_text.text = "You cannot post to the eLog on this machine"
+
+            nl_text = "Night Log posted to eLog" + '</br>'
+            self.nl_text.text = nl_text
+
+            self.email_nightsum(user_email = "desi-nightlog@desi.lbl.gov")
+
+        def email_nightsum(user_email = None):
+
+            #dest_dir = '/software/www2/html/nightsum'
+
+            sender = "noreply-ecl@noao.edu"
+
+            #if mjd == None:
+            #    mjd = default_mjd()
+
+            # Create message container - the correct MIME type is multipart/alternative.
+            msg = MIMEMultipart('alternative')
+            msg['Subject'] = "Night Summary %s" % self.date_init.value #mjd2iso(mjd)
+            msg['From'] = sender
+            if len(user_email) == 1:
+                msg['To'] = user_email[0]
+            else:
+                msg['To'] = ', '.join(user_email)
+
+
+            # Create the body of the message (a plain-text and an HTML version).
+            f = self.nl_file
+            nl_file=open(f,'r')
+            lines = nl_file.readlines()
+            nl_html = ' '
+            for line in lines:
+                nl_html += line
+            exp_list = self.exp_to_html()
+            nl_html = ("<h3 id='exposures'>Exposures</h3>")
+            for line in exp_list
+                nl_html += line
+
+            html = ""
+            text = ""
+            mess = nl_html #self.nl_htmlopen("%s/%s/nightsum.html" % (dest_dir,night_dir))
+                        
+            while True:
+                l = mess.readline()
+                if not l:
+                    break
+
+                html = html + l
+                text = text + l
+
+            # Record the MIME types of both parts - text/plain and text/html.
+            part1 = MIMEText(text, 'plain')
+            part2 = MIMEText(html, 'html')
+
+            # Attach parts into message container.
+            # According to RFC 2046, the last part of a multipart message, in this case
+            # the HTML message, is best and preferred.
+            msg.attach(part1)
+            msg.attach(part2)
+
+            # Send the message via local SMTP server.
+            s = smtplib.SMTP('localhost')
+            s.send_message(msg)
+            s.quit()
+
             
