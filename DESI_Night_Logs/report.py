@@ -483,6 +483,8 @@ class Report():
             self.nl_text.text = nl_text
 
             self.email_nightsum(user_email = "desi-nightlog@desi.lbl.gov")
+            nl_text = "Night Summary emailed to collaboration" + '</br>'
+            self.nl_text.text = nl_text
 
         def email_nightsum(user_email = None):
 
