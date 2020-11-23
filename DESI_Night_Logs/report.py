@@ -23,7 +23,7 @@ from util import sky_calendar
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.MIMEImage import MIMEImage
+from email.mime.image import MIMEImage
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
@@ -461,7 +461,6 @@ class Report():
                 self.nl_text.text = "Can't connect to eLog"
 
             f = self.nl_file[:-5]
-            print(f)
             nl_file=open(f,'r')
             lines = nl_file.readlines()
             nl_html = ' '
@@ -475,28 +474,23 @@ class Report():
             url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
             user = 'dos'
             pw = 'dosuser'
-            #elconn = ECLConnection(url, user, pw)
-            #response = elconn.post(e)
-            #elconn.close()
-            #if response[0] != 200:
-            #   raise Exception(response)
-            #   self.nl_text.text = "You cannot post to the eLog on this machine"
+            elconn = ECLConnection(url, user, pw)
+            response = elconn.post(e)
+            elconn.close()
+            if response[0] != 200:
+               raise Exception(response)
+               self.nl_text.text = "You cannot post to the eLog on this machine"
 
             nl_text = "Night Log posted to eLog" + '</br>'
             self.nl_text.text = nl_text
 
-            self.email_nightsum(user_email = ["parfa30@gmail.com"])#"desi-nightlog@desi.lbl.gov")
+            self.email_nightsum(user_email = ["parfa30@gmail.com","desi-nightlog@desi.lbl.gov")
             nl_text = "Night Summary emailed to collaboration" + '</br>'
             self.nl_text.text = nl_text
 
     def email_nightsum(self,user_email = None):
 
-        #dest_dir = '/software/www2/html/nightsum'
-
         sender = "noreply-ecl@noao.edu"
-
-        #if mjd == None:
-        #    mjd = default_mjd()
 
         # Create message container - the correct MIME type is multipart/alternative.
         msg = MIMEMultipart('alternative')
@@ -506,7 +500,6 @@ class Report():
             msg['To'] = user_email[0]
         else:
             msg['To'] = ', '.join(user_email)
-
 
         # Create the body of the message (a plain-text and an HTML version).
         f = self.nl_file
@@ -542,7 +535,6 @@ class Report():
         for line in exp_list:
             nl_html += line
 
-
         # Record the MIME types of both parts - text/plain and text/html.
         part1 = MIMEText(nl_html, 'plain')
         part2 = MIMEText(nl_html, 'html')
@@ -555,7 +547,7 @@ class Report():
 
         # Add images
         for i, img in enumerate(images):
-            fp = open(img, 'rb')
+            fp = open(os.path.join(self.DESI_Log.image_dir,img), 'rb')
             msgImage = MIMEImage(fp.read())
             fp.close()
             msgImage.add_header('Content-ID', '<image{}>'.format(i))
