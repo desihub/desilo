@@ -26,6 +26,7 @@ from bokeh.themes import built_in_themes
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
+os.environ["NL_DIR"] = "/n/home/desiobserver/parkerf/desilo/nightlogs"
 import nightlog as nl
 from report import Report
 

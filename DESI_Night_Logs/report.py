@@ -20,6 +20,7 @@ import astropy.units.si as u
 import ephem
 from util import sky_calendar
 
+import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -353,6 +354,7 @@ class Report():
 
     def exp_to_html(self):
         exp_df = pd.read_csv(self.DESI_Log.explist_file)
+        exp_df = exp_df[['night','id','program','sequence','flavor','obstype','exptime']]
         exp_html = exp_df.to_html()
         return exp_html
 
@@ -472,76 +474,77 @@ class Report():
             url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
             user = 'dos'
             pw = 'dosuser'
-            elconn = ECLConnection(url, user, pw)
-            response = elconn.post(e)
-            elconn.close()
-            if response[0] != 200:
-               raise Exception(response)
-               self.nl_text.text = "You cannot post to the eLog on this machine"
+            #elconn = ECLConnection(url, user, pw)
+            #response = elconn.post(e)
+            #elconn.close()
+            #if response[0] != 200:
+            #   raise Exception(response)
+            #   self.nl_text.text = "You cannot post to the eLog on this machine"
 
             nl_text = "Night Log posted to eLog" + '</br>'
             self.nl_text.text = nl_text
 
-            self.email_nightsum(user_email = "desi-nightlog@desi.lbl.gov")
+            self.email_nightsum(user_email = "parfa30@gmail.com")#"desi-nightlog@desi.lbl.gov")
             nl_text = "Night Summary emailed to collaboration" + '</br>'
             self.nl_text.text = nl_text
 
-        def email_nightsum(user_email = None):
+    def email_nightsum(self,user_email = None):
 
-            #dest_dir = '/software/www2/html/nightsum'
+        #dest_dir = '/software/www2/html/nightsum'
 
-            sender = "noreply-ecl@noao.edu"
+        sender = "noreply-ecl@noao.edu"
 
-            #if mjd == None:
-            #    mjd = default_mjd()
+        #if mjd == None:
+        #    mjd = default_mjd()
 
-            # Create message container - the correct MIME type is multipart/alternative.
-            msg = MIMEMultipart('alternative')
-            msg['Subject'] = "Night Summary %s" % self.date_init.value #mjd2iso(mjd)
-            msg['From'] = sender
-            if len(user_email) == 1:
-                msg['To'] = user_email[0]
-            else:
-                msg['To'] = ', '.join(user_email)
+        # Create message container - the correct MIME type is multipart/alternative.
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = "Night Summary %s" % self.date_init.value #mjd2iso(mjd)
+        msg['From'] = sender
+        if len(user_email) == 1:
+            msg['To'] = user_email[0]
+        else:
+            msg['To'] = ', '.join(user_email)
 
 
-            # Create the body of the message (a plain-text and an HTML version).
-            f = self.nl_file
-            nl_file=open(f,'r')
-            lines = nl_file.readlines()
-            nl_html = ' '
-            for line in lines:
-                nl_html += line
-            exp_list = self.exp_to_html()
-            nl_html = ("<h3 id='exposures'>Exposures</h3>")
-            for line in exp_list
-                nl_html += line
+        # Create the body of the message (a plain-text and an HTML version).
+        f = self.nl_file
+        nl_file=open(f,'r')
+        lines = nl_file.readlines()
+        nl_html = ' '
+        for line in lines:
+            nl_html += line
+        exp_list = self.exp_to_html()
+        nl_html += ("<h3 id='exposures'>Exposures</h3>")
+        for line in exp_list:
+            nl_html += line
 
-            html = ""
-            text = ""
-            mess = nl_html #self.nl_htmlopen("%s/%s/nightsum.html" % (dest_dir,night_dir))
-                        
-            while True:
-                l = mess.readline()
-                if not l:
-                    break
+        html = ""
+        text = ""
+        mess = nl_html #self.nl_htmlopen("%s/%s/nightsum.html" % (dest_dir,night_dir))
+        html = mess
+        text = mess
+        print(html)
+        #while True:
+        #    l = mess.readline()
+        #    if not l:
+        #        break
 
-                html = html + l
-                text = text + l
+        #    html = html + l
+        #    text = text + l
 
-            # Record the MIME types of both parts - text/plain and text/html.
-            part1 = MIMEText(text, 'plain')
-            part2 = MIMEText(html, 'html')
+        # Record the MIME types of both parts - text/plain and text/html.
+        part1 = MIMEText(text, 'plain')
+        part2 = MIMEText(html, 'html')
 
-            # Attach parts into message container.
-            # According to RFC 2046, the last part of a multipart message, in this case
-            # the HTML message, is best and preferred.
-            msg.attach(part1)
-            msg.attach(part2)
+        # Attach parts into message container.
+        # According to RFC 2046, the last part of a multipart message, in this case
+        # the HTML message, is best and preferred.
+        msg.attach(part1)
+        msg.attach(part2)
 
-            # Send the message via local SMTP server.
-            s = smtplib.SMTP('localhost')
-            s.send_message(msg)
-            s.quit()
+        # Send the message via local SMTP server.
+        s = smtplib.SMTP('localhost')
+        s.send_message(msg)
+        s.quit()
 
-            
