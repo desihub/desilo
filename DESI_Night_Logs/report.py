@@ -172,7 +172,7 @@ class Report():
 
         self.exp_table = DataTable(source=self.explist_source, columns=columns, width=1000)
 
-        nl_layout = layout([self.title,                        
+        nl_layout = layout([self.title,
                         self.nl_subtitle,
                         self.nl_alert,
                         self.nl_text,
@@ -273,7 +273,7 @@ class Report():
                     pass
                 if os.path.exists(self.DESI_Log.contributer_file):
                     cont_txt = ''
-                    f =  open(self.DESI_Log.contributer_file, "r") 
+                    f =  open(self.DESI_Log.contributer_file, "r")
                     for line in f:
                         cont_txt += line
                     self.contributer_list.value = cont_txt
@@ -431,7 +431,7 @@ class Report():
         self.DESI_Log.add_contributer_list(cont_list)
 
     def image_add(self):
-        """Copies image from the input location to the image folder for the nightlog. 
+        """Copies image from the input location to the image folder for the nightlog.
         Then calls add_image() from nightlog.py which writes it to the html file
         Then gives preview of image of last image.
         """
@@ -484,7 +484,7 @@ class Report():
             nl_text = "Night Log posted to eLog" + '</br>'
             self.nl_text.text = nl_text
 
-            self.email_nightsum(user_email = ["parfa30@gmail.com","desi-nightlog@desi.lbl.gov")
+            self.email_nightsum(user_email = ["parfa30@gmail.com","satya.gontcho@gmail.com","desi-nightlog@desi.lbl.gov"])
             nl_text = "Night Summary emailed to collaboration" + '</br>'
             self.nl_text.text = nl_text
 
@@ -517,10 +517,10 @@ class Report():
         nl_html += '\n'
 
         images = os.listdir(self.DESI_Log.image_dir)
-        images = [s for s in images if os.path.splitext(s)[1] != '']  
+        images = [s for s in images if os.path.splitext(s)[1] != '']
         f = open(self.DESI_Log.image_file,'r')
         image_lines = f.readlines()
-        
+
         for ii, line in enumerate(image_lines):
             for i, img in enumerate(images):
                 if img in line:
@@ -557,4 +557,3 @@ class Report():
         s = smtplib.SMTP('localhost')
         s.send_message(msg)
         s.quit()
-
