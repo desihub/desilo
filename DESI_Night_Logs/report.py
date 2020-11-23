@@ -23,6 +23,7 @@ from util import sky_calendar
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.MIMEImage import MIMEImage
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
@@ -512,36 +513,53 @@ class Report():
         nl_file=open(f,'r')
         lines = nl_file.readlines()
         nl_html = ' '
+        img_names = []
         for line in lines:
             nl_html += line
+
+        # Add images
+        x = nl_html.find('Images')
+        nl_html = nl_html[:x]
+        nl_html += "<h3 id='images'>Images</h3>"
+        nl_html += '\n'
+
+        images = os.listdir(self.DESI_Log.image_dir)
+        images = [s for s in images if os.path.splitext(s)[1] != '']  
+        f = open(self.DESI_Log.image_file,'r')
+        image_lines = f.readlines()
+        
+        for ii, line in enumerate(image_lines):
+            for i, img in enumerate(images):
+                if img in line:
+                    nl_html += '<img src="cid:image{}" style="width:300px;height:300px;">'.format(i)
+                    nl_html += '\n'
+                    nl_html += '{}'.format(image_lines[ii+1])
+                    nl_html += '\n'
+
+        # Add exposures
         exp_list = self.exp_to_html()
         nl_html += ("<h3 id='exposures'>Exposures</h3>")
         for line in exp_list:
             nl_html += line
 
-        html = ""
-        text = ""
-        mess = nl_html #self.nl_htmlopen("%s/%s/nightsum.html" % (dest_dir,night_dir))
-        html = mess
-        text = mess
-        print(html)
-        #while True:
-        #    l = mess.readline()
-        #    if not l:
-        #        break
-
-        #    html = html + l
-        #    text = text + l
 
         # Record the MIME types of both parts - text/plain and text/html.
-        part1 = MIMEText(text, 'plain')
-        part2 = MIMEText(html, 'html')
+        part1 = MIMEText(nl_html, 'plain')
+        part2 = MIMEText(nl_html, 'html')
 
         # Attach parts into message container.
         # According to RFC 2046, the last part of a multipart message, in this case
         # the HTML message, is best and preferred.
         msg.attach(part1)
         msg.attach(part2)
+
+        # Add images
+        for i, img in enumerate(images):
+            fp = open(img, 'rb')
+            msgImage = MIMEImage(fp.read())
+            fp.close()
+            msgImage.add_header('Content-ID', '<image{}>'.format(i))
+            msg.attach(msgImage)
 
         # Send the message via local SMTP server.
         s = smtplib.SMTP('localhost')
