@@ -192,9 +192,9 @@ class NightLog(object):
     def milestone_seq(self, row):
         text = "* {}".format(row['Desc'])
         if row['Exp_Start'] not in [None, 'None', " ", ""]:
-            text += .write("; Exposure(s): {}".format(row['Exp_Start']))
+            text += "; Exposure(s): {}".format(row['Exp_Start'])
         if row['Exp_Stop'] not in [None, 'None', " ", ""]:   
-            text += .write(" - {}".format(row['Exp_Stop'])) 
+            text += " - {}".format(row['Exp_Stop'])
         if row['Exp_Excl'] not in [None, 'None', " ", ""]:   
             text += ", excluding {}".format(row['Exp_Excl'])
         text += "\n"
