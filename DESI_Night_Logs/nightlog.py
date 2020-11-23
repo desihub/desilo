@@ -125,6 +125,8 @@ class NightLog(object):
         if not os.path.exists(the_path):
             file_nl.write("\n")
         else :
+            file_nl.write("\n")
+            file_nl.write("\n")
             entries=sorted(glob.glob(the_path+"/*"))
             if len(entries) > 0:
                 for e in entries:
@@ -267,14 +269,12 @@ class NightLog(object):
         elif user == 'DQS':
             the_path = self.dqs_cl
 
+        file = open(the_path,'a')
         if not os.path.exists(the_path):
-            file = open(the_path,'a')
-            file.write("{} checklist completed at (Local time): {} ({})".format(user, self.write_time(time, kp_only=True), comment))
-            file.close()
-        else:
-            file = open(the_path,'a')
-            file.write("; {} ({})".format(self.write_time(time, kp_only=True), comment))
-            file.close()
+            file.write("{} checklist completed at (Local time):".format(user))
+        file.write("* {} - {}".format(self.write_time(time, kp_only=True), comment))
+        file.write("\n")
+        file.close()
 
     def prob_seq(self, time, problem, alarm_id, action):
         text = "- {} :=".format(self.write_time(time))
@@ -407,6 +407,8 @@ class NightLog(object):
         #file_nl.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
         file_nl.write("\n")
         file_nl.write("\n")
+
+        #Contributers
         if os.path.exists(self.contributer_file):
             file_nl.write("h3. Contributers\n")
             file_nl.write("\n")
@@ -417,14 +419,15 @@ class NightLog(object):
                 file_nl.write("\n")
                 file_nl.write("\n")
             f.close()
+
+        #Plan for the night
         file_nl.write("h3. Plan for the night\n")
         file_nl.write("\n")
         file_nl.write("The detailed operations plan for today (obsday "+self.obsday+") can be found at https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan"+self.obsday+".\n")
         file_nl.write("\n")
-        file_nl.write("Main items are listed below:\n")
-        file_nl.write("\n")
-        #self.compile_entries(self.os_dir+"nightplan_",file_nl)
         if os.path.exists(self.nightplan_file):
+            file_nl.write("Main items are listed below:\n")
+            file_nl.write("\n")
             m_entries = pd.read_pickle(self.nightplan_file)
             for idx, row in m_entries.iterrows():
                 file_nl.write("* {}.\n".format(row['Objective']))
@@ -432,6 +435,8 @@ class NightLog(object):
                 file_nl.write("\n")
         else:
             file_nl.write("\n")
+
+        #Milestones/Accomplishments
         file_nl.write("h3. Milestones and Major Progress")
         file_nl.write("\n")
         if os.path.exists(self.milestone_file):
@@ -442,39 +447,50 @@ class NightLog(object):
                 file_nl.write("\n")
         else:
             file_nl.write("\n")
+
+        #Problems
         file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
         file_nl.write("\n")
-        file_nl.write("h5. Encountered by the OS\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
-        self.compile_entries(self.os_pb_dir,file_nl)
-        file_nl.write("h5. Encountered by the DQS\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
-        self.compile_entries(self.dqs_pb_dir,file_nl)
-        file_nl.write("h5. Encountered by Others\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
-        self.compile_entries(self.other_pb_dir,file_nl)
+        if len(os.listdir(self.os_pb_dir)) > 0:
+            file_nl.write("h5. Encountered by the OS\n")
+            self.compile_entries(self.os_pb_dir,file_nl)
+        else:
+            file_nl.write("\n")
+        if len(os.listdir(self.dqs_pb_dir)) > 0:
+            file_nl.write("h5. Encountered by the DQS\n")
+            self.compile_entries(self.dqs_pb_dir,file_nl)
+        else:
+            file_nl.write("\n")
+        if len(os.listdir(self.other_pb_dir)) > 0:
+            file_nl.write("h5. Encountered by Others\n")
+            self.compile_entries(self.other_pb_dir,file_nl)
+        else:
+            file_nl.write("\n")
+        
+        #Checklists
         file_nl.write("h3. Checklists\n")
         file_nl.write("\n")
         if os.path.exists(self.os_cl):
             os_cl_entries=open(self.os_cl,'r')
-            for x in os_cl_entries:
-                file_nl.write(x)
+            lines = os_cl_entries.readlines()
+            for line in lines:
+                file_nl.write(line)
                 file_nl.write("\n")
                 file_nl.write("\n")
             os_cl_entries.close()
         file_nl.write("\n")
         if os.path.exists(self.dqs_cl):
             dqs_cl_entries=open(self.dqs_cl,'r')
-            for x in dqs_cl_entries:
-                file_nl.write(x)
+            lines = dqs_cl_entries.readlines()
+            for line in lines:
+                file_nl.write(line)
                 file_nl.write("\n")
                 file_nl.write("\n")
             dqs_cl_entries.close()
         file_nl.write("\n")
         file_nl.write("\n")
+        
+        #Weather
         file_nl.write("h3. Weather Summary\n")
         file_nl.write("\n")
         if os.path.exists(self.weather_file):
@@ -485,31 +501,37 @@ class NightLog(object):
                     file_nl.write("\n")
                     file_nl.write("\n")
         file_nl.write("\n")
-        file_nl.write("h3. Details on the night progress from the OS (local time [UTC])\n")
+
+        #Nightly Progress
+        file_nl.write("h3. Details on the Night Progress (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("\n")
-        file_nl.write("h5. Startup and Calibrations\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
-        self.compile_entries(self.os_startcal_dir,file_nl)
-        file_nl.write("h5. Observations\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
-        self.compile_entries(self.os_obs_dir,file_nl)
-        file_nl.write("h3. Details on the night progress from the DQS (local time [UTC])\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
+        if len(os.listdir(self.os_startcal_dir)) > 0:
+            file_nl.write("h5. Startup and Calibrations (OS) \n")
+            self.compile_entries(self.os_startcal_dir,file_nl)
+        else:
+            file_nl.write("\n")
+        if len(os.listdir(self.os_obs_dir)) > 0:
+            file_nl.write("h5. Observations (OS) \n")
+            self.compile_entries(self.os_obs_dir,file_nl)
+        else:
+            file_nl.write("\n")
         if os.path.exists(self.dqs_exp_file):
+            file_nl.write("h3. Exposure Quality (DQS)\n")
+            file_nl.write("\n")
+            file_nl.write("\n")
             entries = open(self.dqs_exp_file,'r')
             for x in entries:
                 file_nl.write(x)
                 file_nl.write("\n")
                 file_nl.write("\n")
-        file_nl.write("h3. Details from Other Observers\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
-        self.compile_entries(self.other_obs_dir,file_nl)
-        #self.compile_entries(self.dqs_exp_dir,file_nl)
+        else:
+            file_nl.write("\n")
+        if len(os.listdir(self.other_obs_dir)) > 0:
+            file_nl.write("h3. Comments from Other Observers/Experts\n")
+            self.compile_entries(self.other_obs_dir,file_nl)
+
+        #Images
         if os.path.exists(self.image_file):
             file_nl.write("h3. Images\n")
             file_nl.write("\n")
