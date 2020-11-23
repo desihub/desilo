@@ -484,7 +484,7 @@ class Report():
             nl_text = "Night Log posted to eLog" + '</br>'
             self.nl_text.text = nl_text
 
-            self.email_nightsum(user_email = "parfa30@gmail.com")#"desi-nightlog@desi.lbl.gov")
+            self.email_nightsum(user_email = ["parfa30@gmail.com"])#"desi-nightlog@desi.lbl.gov")
             nl_text = "Night Summary emailed to collaboration" + '</br>'
             self.nl_text.text = nl_text
 

@@ -189,6 +189,17 @@ class NightLog(object):
         df = df.append(data_df)
         df.to_pickle(self.milestone_file)
 
+    def milestone_seq(self, row):
+        text = "* {}".format(row['Desc'])
+        if row['Exp_Start'] not in [None, 'None', " ", ""]:
+            text += .write("; Exposure(s): {}".format(row['Exp_Start']))
+        if row['Exp_Stop'] not in [None, 'None', " ", ""]:   
+            text += .write(" - {}".format(row['Exp_Stop'])) 
+        if row['Exp_Excl'] not in [None, 'None', " ", ""]:   
+            text += ", excluding {}".format(row['Exp_Excl'])
+        text += "\n"
+        return text
+
 
     def add_weather_os(self, data):
         """Operations Scientist adds information regarding the weather.
@@ -405,6 +416,7 @@ class NightLog(object):
                 file_nl.write(line)
                 file_nl.write("\n")
                 file_nl.write("\n")
+            f.close()
         file_nl.write("h3. Plan for the night\n")
         file_nl.write("\n")
         file_nl.write("The detailed operations plan for today (obsday "+self.obsday+") can be found at https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan"+self.obsday+".\n")
@@ -425,7 +437,7 @@ class NightLog(object):
         if os.path.exists(self.milestone_file):
             m_entries = pd.read_pickle(self.milestone_file)
             for idx, row in m_entries.iterrows():
-                file_nl.write("* {}; Exposures: [{} - {}], excluding {}.\n".format(row['Desc'],row['Exp_Start'],row['Exp_Stop'],row['Exp_Excl']))
+                file_nl.write(self.milestone_seq(row))
                 file_nl.write("\n")
                 file_nl.write("\n")
         else:
@@ -450,12 +462,16 @@ class NightLog(object):
             os_cl_entries=open(self.os_cl,'r')
             for x in os_cl_entries:
                 file_nl.write(x)
+                file_nl.write("\n")
+                file_nl.write("\n")
             os_cl_entries.close()
         file_nl.write("\n")
         if os.path.exists(self.dqs_cl):
             dqs_cl_entries=open(self.dqs_cl,'r')
             for x in dqs_cl_entries:
                 file_nl.write(x)
+                file_nl.write("\n")
+                file_nl.write("\n")
             dqs_cl_entries.close()
         file_nl.write("\n")
         file_nl.write("\n")
@@ -466,7 +482,8 @@ class NightLog(object):
             for index, row in data.iterrows():
                 if isinstance(row['desc'], str):
                     file_nl.write("- {} := {}; Temp: {}, Wind: {}, Humidity: {}\n".format(str(row['time']),row['desc'],str(row['temp']),str(row['wind']),row['humidity']))
-        file_nl.write("\n")
+                    file_nl.write("\n")
+                    file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Details on the night progress from the OS (local time [UTC])\n")
         file_nl.write("\n")
@@ -486,6 +503,8 @@ class NightLog(object):
             entries = open(self.dqs_exp_file,'r')
             for x in entries:
                 file_nl.write(x)
+                file_nl.write("\n")
+                file_nl.write("\n")
         file_nl.write("h3. Details from Other Observers\n")
         file_nl.write("\n")
         file_nl.write("\n")
