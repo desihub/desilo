@@ -272,7 +272,9 @@ class NightLog(object):
         file = open(the_path,'a')
         if not os.path.exists(the_path):
             file.write("{} checklist completed at (Local time):".format(user))
+            file.write("\n\n")
         file.write("* {} - {}".format(self.write_time(time, kp_only=True), comment))
+        file.write("\n")
         file.write("\n")
         file.close()
 
