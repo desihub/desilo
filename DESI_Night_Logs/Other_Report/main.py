@@ -55,7 +55,7 @@ class Other_Report(Report):
         comment_layout = layout([self.title,
                             self.comment_subtitle,
                             self.time_note,
-                            self.exp_time,
+                            [self.time_title, self.exp_time, self.now_btn],
                             self.exp_comment,
                             self.exp_btn,
                             self.comment_alert], width=1000)
@@ -70,6 +70,8 @@ class Other_Report(Report):
 
 
     def run(self):
+        self.time_tabs = [None, self.exp_time, self.prob_time, None, None]
+        self.now_btn.on_click(self.time_is_now)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.comment_add)
         self.prob_btn.on_click(self.prob_add)

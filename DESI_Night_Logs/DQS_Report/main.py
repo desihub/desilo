@@ -128,6 +128,8 @@ class DQS_Report(Report):
 
     def run(self):
         self.exp_tab()
+        self.time_tabs = [None, None, self.prob_time, None, None, None]
+        self.now_btn.on_click(self.time_is_now)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.exp_add)
         self.exp_update.on_click(self.get_exposure_list)

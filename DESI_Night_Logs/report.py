@@ -44,7 +44,7 @@ class Report():
         self.nl_file = None
 
         self.intro_subtitle = Div(text="Connect to Night Log",css_classes=['subt-style'])
-        self.time_note = Div(text="<b> Note: </b> Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time.", css_classes=['inst-style'])
+        self.time_note = Div(text="<b> Note: </b> Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time. Either enter the time or hit the <b> Now </b> button if it just occured.", css_classes=['inst-style'])
 
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
@@ -66,6 +66,8 @@ class Report():
         self.comment_txt = Div(text=" ", css_classes=['inst-style'], width=1000)
 
         self.date_init = Select(title="Existing Night Logs")
+        self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
+        self.now_btn = Button(label='Now', css_classes=['now_button'], width=50)
         days = os.listdir(self.nl_dir)
         init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
         self.date_init.options = list(init_nl_list)
@@ -75,8 +77,8 @@ class Report():
         self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
 
         self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
-        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=6)
-        self.exp_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '20:07',value=None)
+        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=3)
+        self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
         self.exp_btn = Button(label='Add', css_classes=['add_button'])
         self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
@@ -91,24 +93,24 @@ class Report():
         self.exptable_alert = Div(text=" ",css_classes=['alert-style'], width=500)
 
         self.checklist = CheckboxGroup(labels=[])
-        self.check_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '20:07', value=None)
+        self.check_time = TextInput(placeholder = '20:07', value=None) #title ='Time in Kitt Peak local time*', 
         self.check_alert = Div(text=" ", css_classes=['alert-style'])
         self.check_btn = Button(label='Submit', css_classes=['add_button'])
-        self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=2, cols=2)
+        self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
 
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
         self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
-        self.prob_time = TextInput(title ='Time in Kitt Peak local time*', placeholder = '20:07', value=None)
-        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=6, cols=2, title="Problem Description*:")
-        self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None)
-        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=6, cols=2)
+        self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
+        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=3, title="Problem Description*:")
+        self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
+        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=3)
         self.prob_btn = Button(label='Add', css_classes=['add_button'])
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
 
         self.img_subtitle = Div(text="Images", css_classes=['subt-style'])
         self.img_inst = Div(text="Include images in the Night Log by entering the location of the images on the desi server", css_classes=['inst-style'], width=1000)
         self.img_input = TextInput(title='image file location', placeholder='/n/home/desiobserver/image.png',value=None)
-        self.img_comment = TextAreaInput(placeholder='comment about image', rows=6, cols=2, title='Image caption')
+        self.img_comment = TextAreaInput(placeholder='comment about image', rows=8, cols=3, title='Image caption')
         self.img_btn = Button(label='Add', css_classes=['add_button'])
         self.img_alert = Div(text=" ",width=1000)
 
@@ -139,7 +141,6 @@ class Report():
         checklist_layout = layout(self.title,
                                 self.check_subtitle,
                                 self.checklist_inst,
-                                self.time_note,
                                 self.checklist,
                                 self.check_comment,
                                 [self.check_btn],
@@ -151,8 +152,9 @@ class Report():
                             self.prob_subtitle,
                             self.prob_inst,
                             self.time_note,
-                            [[self.prob_time, self.prob_alarm], self.prob_input],
-                            [self.prob_action,],
+                            [self.time_title, self.prob_time, self.now_btn], 
+                            self.prob_alarm,
+                            [self.prob_input, self.prob_action],
                             [self.prob_btn],
                             self.prob_alert], width=1000)
 
@@ -448,6 +450,14 @@ class Report():
         preview += "{}".format(self.img_comment.value)
         self.img_alert.text = preview
         self.clear_input([self.img_input, self.img_comment])
+
+    def time_is_now(self):
+        now = datetime.now().astimezone(tz=self.kp_zone) 
+        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"))
+        tab = self.layout.active
+        time_input = self.time_tabs[tab]
+
+        time_input.value = now_time
 
     def nl_submit(self):
 
