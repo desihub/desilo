@@ -26,7 +26,7 @@ from bokeh.themes import built_in_themes
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
-os.environ["NL_DIR"] = "/software/www2/html/nightlogs"
+os.environ["NL_DIR"] = "/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs"
 import nightlog as nl
 from report import Report
 
@@ -59,19 +59,21 @@ class OS_Report(Report):
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
         self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other Acquisition','Comment']
 
+
+
     def plan_tab(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
         self.plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.", css_classes=['inst-style'], width=1000)
         self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'], width=500)
         self.plan_order = TextInput(title ='Expected Order:', placeholder='1', value=None)
-        self.plan_input = TextAreaInput(placeholder="description", rows=6, cols=3, title="Describe item of the night plan:")
+        self.plan_input = TextAreaInput(placeholder="description", rows=8, cols=3, title="Describe item of the night plan:")
         self.plan_btn = Button(label='Add', css_classes=['add_button'])
         self.plan_alert = Div(text=' ', css_classes=['alert-style'])
 
     def milestone_tab(self):
         self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", css_classes=['subt-style'])
         self.milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", css_classes=['inst-style'],width=1000)
-        self.milestone_input = TextAreaInput(placeholder="Description", rows=6, cols=3)
+        self.milestone_input = TextAreaInput(placeholder="Description", rows=10, cols=3)
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None)
         self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', value=None)
@@ -84,13 +86,13 @@ class OS_Report(Report):
 
         self.weather_subtitle = Div(text="Weather", css_classes=['subt-style'])
 
-        columns = [TableColumn(field='time', title='Time (local)', width=100),
+        columns = [TableColumn(field='time', title='Time (local)', width=75),
                    TableColumn(field='desc', title='Description', width=200, editor=StringEditor()),
                    TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
-                   TableColumn(field='wind', title='Wind Speed (mph)', width=100, editor=NumberEditor()),
+                   TableColumn(field='wind', title='Wind Speed (mph)', width=120, editor=NumberEditor()),
                    TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
         self.weather_inst = Div(text="Every hour include a description of the weather and any other relevant information, as well as fill in all the fields below.  Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
-        self.weather_time = TextInput(title='Time in Kitt Peak local time', placeholder='17:00', value=None)
+        self.weather_time = TextInput(placeholder='17:00', value=None, width=100) #title='Time in Kitt Peak local time', 
         self.weather_desc = TextInput(title='Description', placeholder='description', value=None)
         self.weather_temp = TextInput(title='Temperature (C)', placeholder='50', value=None)
         self.weather_wind = TextInput(title='Wind Speed (mph)', placeholder='10', value=None)
@@ -116,7 +118,7 @@ class OS_Report(Report):
     def choose_exposure(self):
         if self.hdr_type.value == 'Focus':
             self.exp_input_layout = layout([
-                     [self.exp_time],
+                     [self.time_title, self.exp_time, self.now_btn],
                      [self.exp_exposure_start, self.exp_exposure_finish],
                      [self.exp_comment],
                      [self.exp_script],
@@ -124,12 +126,12 @@ class OS_Report(Report):
                      [self.exp_btn]])
         elif self.hdr_type.value in ['Startup','Comment']:
             self.exp_input_layout = layout([
-                     [self.exp_time],
+                     [self.time_title, self.exp_time, self.now_btn],
                      [self.exp_comment],
                      [self.exp_btn]])
         elif self.hdr_type.value == 'Calibration (Arcs/Twilight)':
             self.exp_input_layout = layout([
-                     [self.exp_time],
+                     [self.time_title, self.exp_time, self.now_btn],
                      [self.exp_exposure_start, self.exp_exposure_finish],
                      [self.exp_comment],
                      [self.exp_type],
@@ -137,7 +139,7 @@ class OS_Report(Report):
                      [self.exp_btn]])
         elif self.hdr_type.value in ['Observation', 'Other Acquisition']:
             self.exp_input_layout = layout([
-                     [self.exp_time],
+                     [self.time_title, self.exp_time, self.now_btn],
                      [self.exp_exposure_start, self.exp_exposure_finish],
                      [self.exp_comment],
                      [self.exp_tile_type],
@@ -166,7 +168,6 @@ class OS_Report(Report):
         plan_layout = layout([self.title,
                             self.plan_subtitle,
                             self.plan_inst,
-                            self.time_note,
                             self.plan_txt,
                             [self.plan_order, self.plan_input],
                             [self.plan_btn],
@@ -176,7 +177,6 @@ class OS_Report(Report):
         milestone_layout = layout([self.title,
                                 self.milestone_subtitle,
                                 self.milestone_inst,
-                                self.time_note,
                                 self.milestone_input,
                                 [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl],
                                 [self.milestone_btn],
@@ -197,7 +197,8 @@ class OS_Report(Report):
                                 self.weather_subtitle,
                                 self.weather_inst,
                                 self.time_note,
-                                [self.weather_time, self.weather_desc, self.weather_temp],
+                                [self.time_title, self.weather_time, self.now_btn], 
+                                [self.weather_desc, self.weather_temp],
                                 [self.weather_wind, self.weather_humidity, self.weather_btn],
                                 self.weather_table], width=1000)
         weather_tab = Panel(child=weather_layout, title="Weather")
@@ -219,14 +220,13 @@ class OS_Report(Report):
 
         self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.img_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
-
-            
-
     def run(self):
         self.plan_tab()
         self.milestone_tab()
         self.exp_tab()
         self.weather_tab()
+        self.time_tabs = [None, None, None, self.exp_time, self.weather_time, self.prob_time, None, None]
+        self.now_btn.on_click(self.time_is_now)
         self.init_bt.on_click(self.initialize_log)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.progress_add)
@@ -240,6 +240,7 @@ class OS_Report(Report):
         self.plan_btn.on_click(self.plan_add)
         self.img_btn.on_click(self.image_add)
         self.contributer_btn.on_click(self.add_contributer_list)
+        
         self.get_layout()
 
     

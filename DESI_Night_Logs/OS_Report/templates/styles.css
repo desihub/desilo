@@ -1,3 +1,12 @@
+.now_button button.bk.bk-btn.bk-btn-default {
+    color: black;
+    width: 50px;
+    font-size:12pt;
+    text-align: left;
+    background-color: gray;
+    border-color: black;
+}
+
 .connect_button button.bk.bk-btn.bk-btn-default {
     color: black;
     width: 300px;
