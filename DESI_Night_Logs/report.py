@@ -161,14 +161,13 @@ class Report():
         self.prob_tab = Panel(child=prob_layout, title="Problems")
 
     def get_nl_layout(self):
-        exp_data = pd.DataFrame(columns = ['night','id','program','sequence','flavor','obstype','exptime'])
+        exp_data = pd.DataFrame(columns = ['night','id','program','sequence','flavor','exptime'])
         self.explist_source = ColumnDataSource(exp_data)
 
         columns = [TableColumn(field='night', title='Night', width=50),
                    TableColumn(field='id', title='Exposure', width=50),
                    TableColumn(field='sequence', title='Sequence', width=100),
                    TableColumn(field='flavor', title='Flavor', width=50),
-                    TableColumn(field='obstype', title='Obstype', width=50),
                    TableColumn(field='exptime', title='Exptime', width=50),
                    TableColumn(field='program', title='Program', width=300)]
 
@@ -350,14 +349,15 @@ class Report():
     def get_exp_list(self):
         if self.location == 'kpno':
             exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
-            self.explist_source.data = exp_df[['night','id','program','sequence','flavor','obstype','exptime']].iloc[::-1]
+            self.explist_source.data = exp_df[['night','id','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False) 
+            exp_df = exp_df.sort_values(by='id')
             exp_df.to_csv(self.DESI_Log.explist_file, index=False)
         else:
             self.exptable_alert.text = 'Cannot connect to Exposure Data Base'
 
     def exp_to_html(self):
         exp_df = pd.read_csv(self.DESI_Log.explist_file)
-        exp_df = exp_df[['night','id','program','sequence','flavor','obstype','exptime']]
+        exp_df = exp_df[['night','id','program','sequence','flavor','exptime']]
         exp_html = exp_df.to_html()
         return exp_html
 
