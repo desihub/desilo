@@ -10,6 +10,7 @@ view at: http://localhost:5006/DQS_Report
 """
 
 import os, sys
+from datetime import datetime
 
 from bokeh.io import curdoc  # , output_file, save
 from bokeh.models import TextInput, Button, RadioGroup, Select
@@ -101,7 +102,9 @@ class DQS_Report(Report):
             exp_val = self.exp_select.value
         elif self.exp_option.active ==1:
             exp_val = self.exp_enter.value
-        self.DESI_Log.dqs_add_exp([self.get_time(self.exp_time.value), exp_val, self.exp_type.value, quality, self.exp_comment.value, self.obs_cond_comment.value, self.inst_perf_comment.value, None])
+        now = datetime.now().astimezone(tz=self.kp_zone) 
+        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"))
+        self.DESI_Log.dqs_add_exp([now_time, exp_val, self.exp_type.value, quality, self.exp_comment.value, self.obs_cond_comment.value, self.inst_perf_comment.value, None])
         self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, self.exp_time.value)
         self.clear_input([self.exp_time, self.exp_enter, self.exp_type, self.exp_comment, self.obs_cond_comment, self.inst_perf_comment, self.exp_exposure_finish])
         #self.exp_option.value = '-'
@@ -111,7 +114,6 @@ class DQS_Report(Report):
         exp_layout = layout([self.title,
                             self.exp_subtitle,
                             self.exp_inst,
-                            self.time_note,
                             self.exp_info,
                             self.exp_layout], width=1000)
         exp_tab = Panel(child=exp_layout, title="Exposures") 

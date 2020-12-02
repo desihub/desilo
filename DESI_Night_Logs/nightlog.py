@@ -36,7 +36,7 @@ class NightLog(object):
         self.os_startcal_dir = os.path.join(self.os_dir,'StartCal')
         self.os_obs_dir = os.path.join(self.os_dir,'Observations')
         self.other_obs_dir = os.path.join(self.other_dir,'Observations')
-        #self.dqs_exp_dir=self.dqs_dir+'Exposures/'
+        self.dqs_exp_dir=self.dqs_dir+'Exposures/'
         self.os_pb_dir = os.path.join(self.os_dir,'Problem')
         self.dqs_pb_dir = os.path.join(self.dqs_dir,'Problem')
         self.other_pb_dir = os.path.join(self.other_dir,'Problem')
@@ -122,8 +122,7 @@ class NightLog(object):
         return open(the_path,'a')
 
 
-    def compile_entries(self,the_path,file_nl,report):
-        type_colors = {'OS':'red','DQS':'blue','Other':'green'}
+    def compile_entries(self,the_path,file_nl):
         if not os.path.exists(the_path):
             file_nl.write("\n")
         else :
@@ -140,6 +139,41 @@ class NightLog(object):
                     tmp_obs_e.close()
                     file_nl.write("\n")
                     file_nl.write("\n")
+
+    def combine_problem_entries(self, file_nl):
+        tbl = []
+        types = np.array(['OS','DQS','Other'])
+        for i,d in enumerate([self.os_pb_dir, self.dqs_pb_dir, self.other_pb_dir]):
+            if len(os.listdir(d)) > 0:
+                for f in os.listdir(d):
+                    tbl.append([types[i], f[-4:], os.path.join(d,f)])
+        df = pd.DataFrame(tbl, columns=['type','time','file'])
+        df_ = df.sort_values(by='time')
+        for i,row in df_.iterrows():
+            tmp_obs_e=open(row.file,'r')
+            x = tmp_obs_e.read()
+            file_nl.write(x)
+            tmp_obs_e.close()
+            file_nl.write("\n")
+            file_nl.write("\n")
+
+    def combine_progress_entries(self, file_nl):
+        tbl = []
+        types = np.array(['OS','Other'])
+        for i,d in enumerate([self.os_obs_dir, self.other_obs_dir]):
+            if len(os.listdir(d)) > 0:
+                for f in os.listdir(d):
+                    tbl.append([types[i], f[-4:], os.path.join(d,f)])
+        df = pd.DataFrame(tbl, columns=['type','time','file'])
+        df_ = df.sort_values(by='time')
+        for i,row in df_.iterrows():
+            tmp_obs_e=open(row.file,'r')
+            x = tmp_obs_e.read()
+            file_nl.write(x)
+            tmp_obs_e.close()
+            file_nl.write("\n")
+            file_nl.write("\n")
+
 
 
     def get_started_os(self,your_firstname,your_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
@@ -283,14 +317,22 @@ class NightLog(object):
         file.write("\n")
         file.close()
 
-    def prob_seq(self, time, problem, alarm_id, action):
+    def prob_seq(self, time, problem, alarm_id, action, user):
         text = "- {} := ".format(self.write_time(time))
+        if user == 'DQS':
+            text += '*'
+        if user == 'Other':
+            text += '_'
         if problem not in [None, 'None', " ", ""]:
-            text += "%{color: red}{}%".format(problem)
+            text += "{}".format(problem)
         if alarm_id not in [None, 'None', " ", ""]:
             text += '; AlarmID: {}'.format(alarm_id)
         if action not in [None, 'None', " ", ""]:
             text += '; Action: {}'.format(action)
+        if user == 'DQS':
+            text += '*'
+        if user == 'Other':
+            text += '_'
         return text
 
     def add_problem(self, time, problem, alarm_id, action, user, name=None):
@@ -300,7 +342,7 @@ class NightLog(object):
         if user == 'Other':
             the_path = os.path.join(self.other_pb_dir,"problem_{}".format(self.get_timestamp(time)))
             file = self.new_entry_or_replace(the_path)
-            text = self.prob_seq(time,problem,alarm_id,action) + ' ({})\n'.format(name)
+            text = self.prob_seq(time,problem,alarm_id,action, user) + ' ({})\n'.format(name)
             file.write(text)
             file.close()
         else:
@@ -310,17 +352,16 @@ class NightLog(object):
                 the_path=os.path.join(self.dqs_pb_dir,"problem_{}".format(self.get_timestamp(time)))
             file=self.new_entry_or_replace(the_path)
 
-            file.write(self.prob_seq(time,problem,alarm_id,action) + '\n')
+            file.write(self.prob_seq(time,problem,alarm_id,action,user) + '\n')
             file.close()
 
     def add_comment_other(self, time, comment, name):
         the_path = os.path.join(self.other_obs_dir,"comment_{}".format(self.get_timestamp(time)))
         file = self.new_entry_or_replace(the_path)
-        file.write("- {} := {}({})\n".format(self.write_time(time), comment, name))
+        file.write("- {} := _{}({})_\n".format(self.write_time(time), comment, name))
         file.close()
 
     def add_dqs_exposure(self, data):
-
         self.exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
         if not os.path.exists(self.exp_file_pkl):
             init_df = pd.DataFrame(columns=self.exp_columns)
@@ -337,16 +378,15 @@ class NightLog(object):
 
 
     def dqs_add_exp(self,data):
-
         df = self.add_dqs_exposure(data)
 
         file = open(self.dqs_exp_file,'w')
         for index, row in df.iterrows():
 
             if row['Exp_Last'] is not None:
-                file.write("- {}:{} := Exp. # {} - {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][2:4], row['Exp_Start'], row['Exp_Last'], row['Exp_Type'],row['Quality'],row['Comm']))
+                file.write("- {}:{} := Exp. # {} - {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][3:], row['Exp_Start'], row['Exp_Last'], row['Exp_Type'],row['Quality'],row['Comm']))
             else:
-                file.write("- {}:{} := Exp. # {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][2:4], row['Exp_Start'], row['Exp_Type'],row['Quality'],row['Comm']))
+                file.write("- {}:{} := Exp. # {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][3:], row['Exp_Start'], row['Exp_Type'],row['Quality'],row['Comm']))
             if row['Obs_Comm'] not in [None, " ", ""]:
                 file.write("*observing conditions:* {} \n".format(row['Obs_Comm']))
             if row['Inst_Comm'] not in [None, " ", ""]:
@@ -476,24 +516,11 @@ class NightLog(object):
 
         #Problems
         file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
+        file_nl.write("\n")
         file_nl.write("h5. OS, *DQS*, _Other_ \n")
         file_nl.write("\n")
-        if len(os.listdir(self.os_pb_dir)) > 0:
-            file_nl.write("h5. Encountered by the OS\n")
-            self.compile_entries(self.os_pb_dir,file_nl,'OS')
-        else:
-            file_nl.write("\n")
-        if len(os.listdir(self.dqs_pb_dir)) > 0:
-            file_nl.write("h5. Encountered by the DQS\n")
-            self.compile_entries(self.dqs_pb_dir,file_nl,'DQS')
-        else:
-            file_nl.write("\n")
-        if len(os.listdir(self.other_pb_dir)) > 0:
-            file_nl.write("h5. Encountered by Others\n")
-            self.compile_entries(self.other_pb_dir,file_nl,'Other')
-        else:
-            file_nl.write("\n")
-        
+        self.combine_problem_entries(file_nl)
+
         #Checklists
         file_nl.write("h3. Checklists\n")
         file_nl.write("\n")
@@ -534,29 +561,24 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("\n")
         if len(os.listdir(self.os_startcal_dir)) > 0:
-            file_nl.write("h5. Startup and Calibrations (OS) \n")
+            file_nl.write("h5. Startup and Calibrations \n")
             self.compile_entries(self.os_startcal_dir,file_nl,'OS')
         else:
             file_nl.write("\n")
-        if len(os.listdir(self.os_obs_dir)) > 0:
-            file_nl.write("h5. Observations (OS) \n")
-            self.compile_entries(self.os_obs_dir,file_nl,'OS')
-        else:
-            file_nl.write("\n")
+ 
+        file_nl.write("h5. Progress/Exposures (OS, _Other_) \n")
+        self.combine_progress_entries(file_nl)
+        file_nl.write("\n")
+
         if os.path.exists(self.dqs_exp_file):
-            file_nl.write("h3. Exposure Quality (DQS)\n")
+            file_nl.write("h5. Exposure Quality (DQS)\n")
             file_nl.write("\n")
             file_nl.write("\n")
             entries = open(self.dqs_exp_file,'r')
             for x in entries:
                 file_nl.write(x)
                 file_nl.write("\n")
-                file_nl.write("\n")
-        else:
-            file_nl.write("\n")
-        if len(os.listdir(self.other_obs_dir)) > 0:
-            file_nl.write("h3. Comments from Other Observers/Experts\n")
-            self.compile_entries(self.other_obs_dir,file_nl,'Other')
+
 
         #Images
         if os.path.exists(self.image_file):
