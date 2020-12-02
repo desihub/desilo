@@ -59,7 +59,8 @@ class OS_Report(Report):
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
         self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other Acquisition','Comment']
 
-
+        self.summary = TextAreaInput(rows=4, cols=4, title='End of Night Summary')
+        self.summary_btn = Button(label='Add Summary', css_classes=['add_button'])
 
     def plan_tab(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
@@ -180,6 +181,8 @@ class OS_Report(Report):
                                 self.milestone_input,
                                 [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl],
                                 [self.milestone_btn],
+                                self.summary,
+                                self.summary_btn,
                                 self.milestone_alert], width=1000)
         milestone_tab = Panel(child=milestone_layout, title='Milestones')
 
@@ -240,6 +243,7 @@ class OS_Report(Report):
         self.plan_btn.on_click(self.plan_add)
         self.img_btn.on_click(self.image_add)
         self.contributer_btn.on_click(self.add_contributer_list)
+        self.summary_btn.on_click(self.add_summary)
         
         self.get_layout()
 

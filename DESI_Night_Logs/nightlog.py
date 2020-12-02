@@ -50,6 +50,7 @@ class NightLog(object):
         self.meta_json = os.path.join(self.root_dir,'nightlog_meta.json')
         self.image_file = os.path.join(self.image_dir, 'image_list')
         self.contributer_file = os.path.join(self.root_dir, 'contributer_file')
+        self.summary_file = os.path.join(self.root_dir, 'summary_file')
         self.explist_file = os.path.join(self.root_dir, 'exposures.csv')
 
         # Set this if you want to allow for replacing lines or not
@@ -121,7 +122,8 @@ class NightLog(object):
         return open(the_path,'a')
 
 
-    def compile_entries(self,the_path,file_nl):
+    def compile_entries(self,the_path,file_nl,report):
+        type_colors = {'OS':'red','DQS':'blue','Other':'green'}
         if not os.path.exists(the_path):
             file_nl.write("\n")
         else :
@@ -131,7 +133,10 @@ class NightLog(object):
             if len(entries) > 0:
                 for e in entries:
                     tmp_obs_e=open(e,'r')
-                    file_nl.write(tmp_obs_e.read())
+                    x = tmp_obs_e.read()
+                    # txt = '%color:{}{}%'.format(type_colors[report],str(x))
+                    # print(txt)
+                    file_nl.write(x)
                     tmp_obs_e.close()
                     file_nl.write("\n")
                     file_nl.write("\n")
@@ -279,9 +284,9 @@ class NightLog(object):
         file.close()
 
     def prob_seq(self, time, problem, alarm_id, action):
-        text = "- {} :=".format(self.write_time(time))
+        text = "- {} := ".format(self.write_time(time))
         if problem not in [None, 'None', " ", ""]:
-            text += '{}'.format(problem)
+            text += "%{color: red}{}%".format(problem)
         if alarm_id not in [None, 'None', " ", ""]:
             text += '; AlarmID: {}'.format(alarm_id)
         if action not in [None, 'None', " ", ""]:
@@ -365,6 +370,12 @@ class NightLog(object):
         file.write("\n")
         file.close()
 
+    def add_summary(self, summary):
+        file = open(self.summary_file, 'w')
+        file.write(summary)
+        file.write("\n")
+        file.close()
+
     def write_intro(self):
         file_intro=open(os.path.join(self.root_dir,'header'),'w')
 
@@ -422,6 +433,18 @@ class NightLog(object):
                 file_nl.write("\n")
             f.close()
 
+        #Night Summary
+        if os.path.exists(self.summary_file):
+            file_nl.write("h3. Night Summary\n")
+            file_nl.write("\n")
+            file_nl.write("\n")
+            f =  open(self.summary_file, "r") 
+            for line in f:
+                file_nl.write(line)
+                file_nl.write("\n")
+                file_nl.write("\n")
+            f.close()
+
         #Plan for the night
         file_nl.write("h3. Plan for the night\n")
         file_nl.write("\n")
@@ -438,6 +461,7 @@ class NightLog(object):
         else:
             file_nl.write("\n")
 
+
         #Milestones/Accomplishments
         file_nl.write("h3. Milestones and Major Progress")
         file_nl.write("\n")
@@ -452,20 +476,21 @@ class NightLog(object):
 
         #Problems
         file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
+        file_nl.write("h5. OS, *DQS*, _Other_ \n")
         file_nl.write("\n")
         if len(os.listdir(self.os_pb_dir)) > 0:
             file_nl.write("h5. Encountered by the OS\n")
-            self.compile_entries(self.os_pb_dir,file_nl)
+            self.compile_entries(self.os_pb_dir,file_nl,'OS')
         else:
             file_nl.write("\n")
         if len(os.listdir(self.dqs_pb_dir)) > 0:
             file_nl.write("h5. Encountered by the DQS\n")
-            self.compile_entries(self.dqs_pb_dir,file_nl)
+            self.compile_entries(self.dqs_pb_dir,file_nl,'DQS')
         else:
             file_nl.write("\n")
         if len(os.listdir(self.other_pb_dir)) > 0:
             file_nl.write("h5. Encountered by Others\n")
-            self.compile_entries(self.other_pb_dir,file_nl)
+            self.compile_entries(self.other_pb_dir,file_nl,'Other')
         else:
             file_nl.write("\n")
         
@@ -510,12 +535,12 @@ class NightLog(object):
         file_nl.write("\n")
         if len(os.listdir(self.os_startcal_dir)) > 0:
             file_nl.write("h5. Startup and Calibrations (OS) \n")
-            self.compile_entries(self.os_startcal_dir,file_nl)
+            self.compile_entries(self.os_startcal_dir,file_nl,'OS')
         else:
             file_nl.write("\n")
         if len(os.listdir(self.os_obs_dir)) > 0:
             file_nl.write("h5. Observations (OS) \n")
-            self.compile_entries(self.os_obs_dir,file_nl)
+            self.compile_entries(self.os_obs_dir,file_nl,'OS')
         else:
             file_nl.write("\n")
         if os.path.exists(self.dqs_exp_file):
@@ -531,7 +556,7 @@ class NightLog(object):
             file_nl.write("\n")
         if len(os.listdir(self.other_obs_dir)) > 0:
             file_nl.write("h3. Comments from Other Observers/Experts\n")
-            self.compile_entries(self.other_obs_dir,file_nl)
+            self.compile_entries(self.other_obs_dir,file_nl,'Other')
 
         #Images
         if os.path.exists(self.image_file):

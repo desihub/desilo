@@ -432,6 +432,10 @@ class Report():
         cont_list = self.contributer_list.value
         self.DESI_Log.add_contributer_list(cont_list)
 
+    def add_summary(self):
+        summary = self.summary.value
+        self.DESI_Log.add_summary(summary)
+
     def image_add(self):
         """Copies image from the input location to the image folder for the nightlog.
         Then calls add_image() from nightlog.py which writes it to the html file
