@@ -61,6 +61,8 @@ class Report():
         self.nl_dir = os.environ['NL_DIR']
 
         self.your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
+        self.os_name_1 = TextInput(title ='Observing Scientist 1', placeholder = 'Ruth Bader Ginsberg')
+        self.os_name_2 = TextInput(title ='Observing Scientist 2', placeholder = "Sandra Day O'Connor")
         self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
         self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
         self.intro_txt = Div(text=' ')
@@ -78,7 +80,7 @@ class Report():
         self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
 
         self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
-        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800)
+        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=5000)
         self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
         self.exp_btn = Button(label='Add', css_classes=['add_button'])
         self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
@@ -245,15 +247,18 @@ class Report():
         self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
         exists = self.DESI_Log.check_exists()
 
+        
         your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
         if exists:
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
+
             meta_dict = self.DESI_Log.get_meta_data()
             if self.report_type == 'DQS':
                 self.DESI_Log.add_dqs_observer(your_firstname, your_lastname)
                 self.your_name.value = meta_dict['{}_1'.format(self.report_type.lower())]+' '+meta_dict['{}_last'.format(self.report_type.lower())]
             elif self.report_type == 'OS':
-                self.your_name.value = meta_dict['{}_1'.format(self.report_type.lower())]+' '+meta_dict['{}_last'.format(self.report_type.lower())]
+                self.os_name_1.value = meta_dict['{}_1_first'.format(self.report_type.lower())]+' '+meta_dict['{}_1_last'.format(self.report_type.lower())]
+                self.os_name_2.value = meta_dict['{}_2_first'.format(self.report_type.lower())]+' '+meta_dict['{}_2_last'.format(self.report_type.lower())]
 
             self.current_header()
             #if self.location == 'nersc':
@@ -296,7 +301,8 @@ class Report():
 
         LO_firstname, LO_lastname = self.LO.value.split(' ')[0], ' '.join(self.LO.value.split(' ')[1:])
         OA_firstname, OA_lastname = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
-        your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
+        os_1_firstname, os_1_lastname = self.os_name_1.value.split(' ')[0], ' '.join(self.os_name_1.value.split(' ')[1:])
+        os_2_firstname, os_2_lastname = self.os_name_2.value.split(' ')[0], ' '.join(self.os_name_2.value.split(' ')[1:])
 
         eph = sky_calendar()
         time_sunset = self.get_strftime(eph['sunset'])
@@ -309,7 +315,7 @@ class Report():
 
         self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
         self.DESI_Log.initializing()
-        self.DESI_Log.get_started_os(your_firstname,your_lastname,LO_firstname,LO_lastname,
+        self.DESI_Log.get_started_os(os_1_firstname,os_1_lastname,os_2_firstname,os_2_lastname,LO_firstname,LO_lastname,
             OA_firstname,OA_lastname,time_sunset,dusk_18_deg,dawn_18_deg,time_sunrise,time_moonrise,time_moonset,illumination)
 
         #update_weather_source_data()

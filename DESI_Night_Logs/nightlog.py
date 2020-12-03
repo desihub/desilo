@@ -176,13 +176,13 @@ class NightLog(object):
 
 
 
-    def get_started_os(self,your_firstname,your_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
+    def get_started_os(self,os_1_firstname,os_1_lastname,os_2_firstname,os_2_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
                         time_sunrise,time_moonrise,time_moonset,illumination): #,weather_conditions
         """
             Operations Scientist lists the personal present, ephemerids and weather conditions at sunset.
         """
 
-        meta_dict = {'os_1':your_firstname, 'os_last':your_lastname,'os_lo_1':LO_firstname,'os_lo_last':LO_lastname,'os_oa_1':OA_firstname,'os_oa_last':OA_lastname,
+        meta_dict = {'os_1_first':os_1_firstname, 'os_1_last':os_1_lastname,'os_2_first':os_2_firstname, 'os_2_last':os_2_lastname,'os_lo_1':LO_firstname,'os_lo_last':LO_lastname,'os_oa_1':OA_firstname,'os_oa_last':OA_lastname,
                     'os_sunset':time_sunset,'os_end18':time_18_deg_twilight_ends,'os_start18':time_18_deg_twilight_starts,'os_sunrise':time_sunrise,
                     'os_moonrise':time_moonrise,'os_moonset':time_moonset,'os_illumination':illumination,'dqs_1':None,'dqs_last':None}
 
@@ -420,7 +420,8 @@ class NightLog(object):
         file_intro=open(os.path.join(self.root_dir,'header'),'w')
 
         meta_dict = json.load(open(self.meta_json,'r'))
-        file_intro.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
+        file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_first'],meta_dict['os_1_last']))
+        file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_first'],meta_dict['os_2_last']))
         file_intro.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
         file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
         file_intro.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
@@ -445,7 +446,8 @@ class NightLog(object):
         file_nl=open(os.path.join(self.root_dir,'nightlog'),'w')
 
         meta_dict = json.load(open(self.meta_json,'r'))
-        file_nl.write("*Observer (OS)*: {} {}\n".format(meta_dict['os_1'],meta_dict['os_last']))
+        file_nl.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_first'],meta_dict['os_1_last']))
+        file_nl.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_first'],meta_dict['os_2_last']))
         file_nl.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
         file_nl.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
         file_nl.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
