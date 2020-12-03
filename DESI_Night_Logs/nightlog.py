@@ -562,7 +562,7 @@ class NightLog(object):
         file_nl.write("\n")
         if len(os.listdir(self.os_startcal_dir)) > 0:
             file_nl.write("h5. Startup and Calibrations \n")
-            self.compile_entries(self.os_startcal_dir,file_nl,'OS')
+            self.compile_entries(self.os_startcal_dir,file_nl)
         else:
             file_nl.write("\n")
  
