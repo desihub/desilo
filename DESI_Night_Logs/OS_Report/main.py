@@ -30,6 +30,9 @@ sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 from report import Report
 
+sys.stdout = open(os.environ['NL_DIR']+'/out.txt', 'a')
+print('test')
+
 class OS_Report(Report):
     def __init__(self):
         Report.__init__(self, 'OS')

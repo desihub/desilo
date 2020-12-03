@@ -29,6 +29,7 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
+
 class Report():
     def __init__(self, type):
         self.report_type = type
@@ -68,7 +69,7 @@ class Report():
         self.date_init = Select(title="Existing Night Logs")
         self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
         self.now_btn = Button(label='Now', css_classes=['now_button'], width=50)
-        days = os.listdir(self.nl_dir)
+        days = [d for d in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir, d))]
         init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
@@ -77,7 +78,7 @@ class Report():
         self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
 
         self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
-        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=3)
+        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800)
         self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
         self.exp_btn = Button(label='Add', css_classes=['add_button'])
         self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
@@ -278,6 +279,9 @@ class Report():
                     for line in f:
                         cont_txt += line
                     self.contributer_list.value = cont_txt
+                if os.path.exists(self.DESI_Log.weather_file):
+                    data = pd.read_csv(self.DESI_Log.weather_file)[['time','desc','temp','wind','humidity']]
+                    self.weather_source.data = data
             self.current_nl()
 
         else:
@@ -403,6 +407,7 @@ class Report():
                                 columns = ['time','desc','temp','wind','humidity'])
         old_data = pd.DataFrame(self.weather_source.data)[['time','desc','temp','wind','humidity']]
         data = pd.concat([old_data, new_data])
+        data.drop_duplicates(subset=['time'], keep='last',inplace=True)
         self.weather_source.data = data
         self.DESI_Log.add_weather_os(data)
         self.clear_input([self.weather_time, self.weather_desc, self.weather_temp, self.weather_wind, self.weather_humidity])
