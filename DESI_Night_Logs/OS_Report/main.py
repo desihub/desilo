@@ -23,12 +23,16 @@ from bokeh.models.widgets.tables import DataTable, TableColumn, NumberEditor, St
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs
 from bokeh.themes import built_in_themes
+from bokeh.models import CustomJS
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 #os.environ["NL_DIR"] = "/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs"
 import nightlog as nl
 from report import Report
+
+# sys.stdout = open(os.environ['NL_DIR']+'/out.txt', 'a')
+# print('test')
 
 class OS_Report(Report):
     def __init__(self):
@@ -59,7 +63,8 @@ class OS_Report(Report):
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
         self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other Acquisition','Comment']
 
-        self.summary = TextAreaInput(rows=4, cols=4, title='End of Night Summary')
+        self.summary = TextAreaInput(rows=6, title='End of Night Summary',max_length=5000)
+
         self.summary_btn = Button(label='Add Summary', css_classes=['add_button'])
 
     def plan_tab(self):
@@ -67,14 +72,14 @@ class OS_Report(Report):
         self.plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.", css_classes=['inst-style'], width=1000)
         self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'], width=500)
         self.plan_order = TextInput(title ='Expected Order:', placeholder='1', value=None)
-        self.plan_input = TextAreaInput(placeholder="description", rows=8, cols=3, title="Describe item of the night plan:")
+        self.plan_input = TextAreaInput(placeholder="description", rows=8, cols=3, title="Describe item of the night plan:",max_length=5000)
         self.plan_btn = Button(label='Add', css_classes=['add_button'])
         self.plan_alert = Div(text=' ', css_classes=['alert-style'])
 
     def milestone_tab(self):
         self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", css_classes=['subt-style'])
         self.milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", css_classes=['inst-style'],width=1000)
-        self.milestone_input = TextAreaInput(placeholder="Description", rows=10, cols=3)
+        self.milestone_input = TextAreaInput(placeholder="Description", rows=10, cols=3, max_length=5000)
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None)
         self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', value=None)
@@ -157,7 +162,7 @@ class OS_Report(Report):
                             self.connect_txt,
                             self.line,
                             self.init_hdr,
-                            [self.your_name, self.LO, self.OA],
+                            [[self.os_name_1, self.os_name_2], self.LO, self.OA],
                             [self.init_bt],
                             self.line2,
                             self.contributer_list,
