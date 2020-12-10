@@ -28,6 +28,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+from email import encoders
+import yagmail
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
@@ -379,10 +381,10 @@ class Report():
         
         if set(list(exp_df.seeing)) == set([None]):
             sky_monitor = False
-            fig, axarr = plt.subplots(5, 1, figsize = (8,20), sharex=True)
+            fig, axarr = plt.subplots(5, 1, figsize = (8,15), sharex=True)
         else:
             sky_monitor = True
-            fig, axarr = plt.subplots(8, 1, figsize = (8,25), sharex=True)
+            fig, axarr = plt.subplots(8, 1, figsize = (8,20), sharex=True)
 
         ax = axarr.ravel()
         ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')    
@@ -422,6 +424,7 @@ class Report():
         ax[len(ax)-1].set_xlabel("Local Time (MST)")
         ax[len(ax)-1].xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M', tz=pytz.timezone("US/Arizona")))
         ax[len(ax)-1].tick_params(labelrotation=45)
+        fig.suptitle("Telemetry for obsday={}".format(self.night))
 
         plt.savefig(self.DESI_Log.telem_plots_file)
 
@@ -563,19 +566,17 @@ class Report():
             url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
             user = 'dos'
             pw = 'dosuser'
-            #elconn = ECLConnection(url, user, pw)
-            #response = elconn.post(e)
-            #elconn.close()
-            #if response[0] != 200:
-            #   raise Exception(response)
-            #   self.nl_text.text = "You cannot post to the eLog on this machine"
+            elconn = ECLConnection(url, user, pw)
+            response = elconn.post(e)
+            elconn.close()
+            if response[0] != 200:
+               raise Exception(response)
+               self.nl_text.text = "You cannot post to the eLog on this machine"
 
-            nl_text = "Night Log posted to eLog" + '</br>'
+            nl_text = "Night Log posted to eLog and emailed to collaboration" + '</br>'
             self.nl_text.text = nl_text
 
-            self.email_nightsum(user_email = ["parfa30@gmail.com","parkerf@berkeley.edu"]) #,"desi-nightlog@desi.lbl.gov"])
-            nl_text = "Night Summary emailed to collaboration" + '</br>'
-            self.nl_text.text = nl_text
+            self.email_nightsum(user_email = ["parfa30@gmail.com","satya.gontcho@gmail.com","desi-nightlog@desi.lbl.gov"])
 
     def email_nightsum(self,user_email = None):
 
@@ -585,7 +586,7 @@ class Report():
         sender = "noreply-ecl@noao.edu"
 
         # Create message container - the correct MIME type is multipart/alternative.
-        msg = MIMEMultipart('alternative')
+        msg = MIMEMultipart('html')
         msg['Subject'] = "Night Summary %s" % self.date_init.value #mjd2iso(mjd)
         msg['From'] = sender
         if len(user_email) == 1:
@@ -633,11 +634,10 @@ class Report():
         nl_html += "<h3 id='telem_plots'>Night Telemetry</h3>"
         nl_html += '\n'
         
-        if os.path.exists(self.DESI_Log.telem_plots_file):
-            nl_html.write('<img src="telem_plots.png" style="width:300px;height:300px;">'.format(img_filen))
-            nl_html += '\n'
+        #if os.path.exists(self.DESI_Log.telem_plots_file):
+        #    nl_html += '<img src="{}">'.format(self.DESI_Log.telem_plots_file)
+        #    nl_html += '\n'
 
-        print('here')
         Html_file = open(os.path.join(self.DESI_Log.root_dir,'nightlog.html'),"w")
         Html_file.write(nl_html)
         Html_file.close()
@@ -649,7 +649,7 @@ class Report():
         # Attach parts into message container.
         # According to RFC 2046, the last part of a multipart message, in this case
         # the HTML message, is best and preferred.
-        msg.attach(part1)
+        #msg.attach(part1)
         msg.attach(part2)
 
         # Add images
@@ -663,11 +663,14 @@ class Report():
         if os.path.exists(self.DESI_Log.telem_plots_file):
             fp = open(self.DESI_Log.telem_plots_file, 'rb')
             msgImage = MIMEImage(fp.read())
+            encoders.encode_base64(msgImage)
             fp.close()
-            msgImage.add_header('Content-ID', '<telem_plots.png>'.format(i))
             msg.attach(msgImage)
-
+        
+        text = msg.as_string()
         # Send the message via local SMTP server.
+        #yag = yagmail.SMTP(sender)
+        #yag.send("parfa30@gmail.com",nl_html,self.DESI_Log.telem_plots_file)
         s = smtplib.SMTP('localhost')
-        s.send_message(msg)
+        s.sendmail(sender, user_email, text)
         s.quit()
