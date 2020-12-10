@@ -63,9 +63,6 @@ class OS_Report(Report):
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
         self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other Acquisition','Comment']
 
-        self.summary = TextAreaInput(rows=6, title='End of Night Summary',max_length=5000)
-
-        self.summary_btn = Button(label='Add Summary', css_classes=['add_button'])
 
     def plan_tab(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
@@ -83,8 +80,11 @@ class OS_Report(Report):
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None)
         self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', value=None)
-        self.milestone_btn = Button(label='Add', css_classes=['add_button'])
+        self.milestone_btn = Button(label='Add Milestone', css_classes=['add_button'])
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
+        self.summary = TextAreaInput(rows=6, title='End of Night Summary',max_length=5000)
+        self.summary_btn = Button(label='Add Summary', css_classes=['add_button'], width=300)
+
 
     def weather_tab(self):
         data = pd.DataFrame(columns = ['time','desc','temp','wind','humidity'])
@@ -118,7 +118,7 @@ class OS_Report(Report):
         self.exp_time_end = TextInput(title='Time End', placeholder='20:07', value=None)
         self.exp_focus_trim = TextInput(title='Trim from Focus', placeholder='54', value=None)
         self.exp_tile = TextInput(title='Tile Number', placeholder='68001', value=None)
-        self.exp_tile_type = Select(title="Tile Type", value=None, options=['QSO','LRG','ELG','BGS','MW'])
+        self.exp_tile_type = Select(title="Tile Type", value=None, options=['None','QSO','LRG','ELG','BGS','MW'])
         self.exp_input_layout = layout([])
 
     def choose_exposure(self):
