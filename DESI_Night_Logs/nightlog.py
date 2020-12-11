@@ -52,6 +52,7 @@ class NightLog(object):
         self.contributer_file = os.path.join(self.root_dir, 'contributer_file')
         self.summary_file = os.path.join(self.root_dir, 'summary_file')
         self.explist_file = os.path.join(self.root_dir, 'exposures.csv')
+        self.telem_plots_file = os.path.join(self.root_dir, 'telem_plots.png')
 
         # Set this if you want to allow for replacing lines or not
         self.replace = True
@@ -265,7 +266,7 @@ class NightLog(object):
         data_list = np.array(data_list)
         data_list[np.where(data_list == None)] = 'None'
         hdr_type, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type = data_list
-        if hdr_type in ['Focus', 'Startup', 'Calibration']:
+        if hdr_type in ['Focus', 'Startup', 'Calibration (Arcs/Twilight)']:
             the_path=os.path.join(self.os_startcal_dir,"startup_calibrations_{}".format(self.get_timestamp(exp_time)))
 
         elif hdr_type in ['Observation', 'Other Acquisition', 'Comment']:
@@ -411,7 +412,10 @@ class NightLog(object):
         file.close()
 
     def add_summary(self, summary):
-        file = open(self.summary_file, 'w')
+        if os.path.exists(self.summary_file):
+            file = open(self.summary_file, 'a')
+        else:
+            file = open(self.summary_file, 'w')
         file.write(summary)
         file.write("\n")
         file.close()

@@ -7,6 +7,10 @@ import pandas as pd
 import socket
 import psycopg2
 import subprocess
+import pytz
+
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 from bokeh.io import curdoc  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup)
@@ -24,6 +28,8 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
+from email import encoders
+import yagmail
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
@@ -365,6 +371,64 @@ class Report():
         else:
             self.exptable_alert.text = 'Cannot connect to Exposure Data Base'
 
+    def make_telem_plots(self):
+        start_utc = '{} {}'.format(int(self.night)+1, '00:00:00')
+        end_utc = '{} {}'.format(int(self.night)+1, '13:00:00')
+        tel_df  = pd.read_sql_query(f"SELECT * FROM environmentmonitor_telescope WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn)
+        exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
+        tower_df = pd.read_sql_query(f"SELECT * FROM environmentmonitor_tower WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn) 
+
+        
+        if set(list(exp_df.seeing)) == set([None]):
+            sky_monitor = False
+            fig, axarr = plt.subplots(5, 1, figsize = (8,15), sharex=True)
+        else:
+            sky_monitor = True
+            fig, axarr = plt.subplots(8, 1, figsize = (8,20), sharex=True)
+
+        ax = axarr.ravel()
+        ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')    
+        ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.truss_temp, s=5, label='truss temp')  
+        ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.air_temp, s=5, label='air temp') 
+        ax[0].set_ylabel("Temperature (C)")
+        ax[0].legend()
+        
+        ax[1].scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.humidity, s=5, label='humidity') 
+        ax[1].set_ylabel("Humidity %")
+
+        ax[2].scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.wind_speed, s=5, label='wind speed')
+        ax[2].set_ylabel("Wind Speed (mph)")
+
+        ax[3].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
+        ax[3].set_ylabel("Airmass")
+
+
+        ax[4].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
+        ax[4].set_ylabel("Exposure time (s)")
+
+
+        if sky_monitor:
+            ax[5].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
+            ax[5].set_ylabel("Seeing")
+
+            ax[6].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
+            ax[6].set_ylabel("Transparency (%)")
+
+            ax[7].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
+            ax[7].set_ylabel("Sky level (AB/arcsec^2)")
+    
+        for i in range(len(ax)):
+            ax[i].grid(True)
+
+        #X label ticks as local time
+        ax[len(ax)-1].set_xlabel("Local Time (MST)")
+        ax[len(ax)-1].xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M', tz=pytz.timezone("US/Arizona")))
+        ax[len(ax)-1].tick_params(labelrotation=45)
+        fig.suptitle("Telemetry for obsday={}".format(self.night))
+
+        plt.savefig(self.DESI_Log.telem_plots_file)
+
+                
     def exp_to_html(self):
         exp_df = pd.read_csv(self.DESI_Log.explist_file)
         exp_df = exp_df[['night','id','program','sequence','flavor','exptime']]
@@ -444,8 +508,11 @@ class Report():
         self.DESI_Log.add_contributer_list(cont_list)
 
     def add_summary(self):
+        now = datetime.now()
         summary = self.summary.value
         self.DESI_Log.add_summary(summary)
+        self.clear_input([self.summary])
+        self.milestone_alert.text = 'Summary Entered at {}'.format(self.milestone_input.value, now)
 
     def image_add(self):
         """Copies image from the input location to the image folder for the nightlog.
@@ -506,19 +573,20 @@ class Report():
                raise Exception(response)
                self.nl_text.text = "You cannot post to the eLog on this machine"
 
-            nl_text = "Night Log posted to eLog" + '</br>'
+            nl_text = "Night Log posted to eLog and emailed to collaboration" + '</br>'
             self.nl_text.text = nl_text
 
             self.email_nightsum(user_email = ["parfa30@gmail.com","satya.gontcho@gmail.com","desi-nightlog@desi.lbl.gov"])
-            nl_text = "Night Summary emailed to collaboration" + '</br>'
-            self.nl_text.text = nl_text
 
     def email_nightsum(self,user_email = None):
+
+        if self.location == 'kpno':
+            self.make_telem_plots()
 
         sender = "noreply-ecl@noao.edu"
 
         # Create message container - the correct MIME type is multipart/alternative.
-        msg = MIMEMultipart('alternative')
+        msg = MIMEMultipart('html')
         msg['Subject'] = "Night Summary %s" % self.date_init.value #mjd2iso(mjd)
         msg['From'] = sender
         if len(user_email) == 1:
@@ -556,10 +624,23 @@ class Report():
                         nl_html += '\n'
 
         # Add exposures
-        exp_list = self.exp_to_html()
-        nl_html += ("<h3 id='exposures'>Exposures</h3>")
-        for line in exp_list:
-            nl_html += line
+        if os.path.exists(self.DESI_Log.explist_file):
+            exp_list = self.exp_to_html()
+            nl_html += ("<h3 id='exposures'>Exposures</h3>")
+            for line in exp_list:
+                nl_html += line
+
+        # Add telem plots
+        nl_html += "<h3 id='telem_plots'>Night Telemetry</h3>"
+        nl_html += '\n'
+        
+        if os.path.exists(self.DESI_Log.telem_plots_file):
+            nl_html += '<img src="{}">'.format(self.DESI_Log.telem_plots_file)
+            nl_html += '\n'
+
+        Html_file = open(os.path.join(self.DESI_Log.root_dir,'NightSummary{}'.format(self.night)),"w")
+        Html_file.write(nl_html)
+        Html_file.close()
 
         # Record the MIME types of both parts - text/plain and text/html.
         part1 = MIMEText(nl_html, 'plain')
@@ -568,7 +649,7 @@ class Report():
         # Attach parts into message container.
         # According to RFC 2046, the last part of a multipart message, in this case
         # the HTML message, is best and preferred.
-        msg.attach(part1)
+        #msg.attach(part1)
         msg.attach(part2)
 
         # Add images
@@ -579,8 +660,17 @@ class Report():
                 fp.close()
                 msgImage.add_header('Content-ID', '<image{}>'.format(i))
                 msg.attach(msgImage)
-
+        if os.path.exists(self.DESI_Log.telem_plots_file):
+            fp = open(self.DESI_Log.telem_plots_file, 'rb')
+            msgImage = MIMEImage(fp.read())
+            encoders.encode_base64(msgImage)
+            fp.close()
+            msg.attach(msgImage)
+        
+        text = msg.as_string()
         # Send the message via local SMTP server.
+        #yag = yagmail.SMTP(sender)
+        #yag.send("parfa30@gmail.com",nl_html,self.DESI_Log.telem_plots_file)
         s = smtplib.SMTP('localhost')
-        s.send_message(msg)
+        s.sendmail(sender, user_email, text)
         s.quit()
