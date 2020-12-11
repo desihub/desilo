@@ -27,7 +27,7 @@ from bokeh.models import CustomJS
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
-#os.environ["NL_DIR"] = "/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs"
+#os.environ["NL_DIR"] = "/n/home/desiobserver/parkerf/desilo/nightlogs" #"/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs"
 import nightlog as nl
 from report import Report
 
