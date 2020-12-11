@@ -28,8 +28,6 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
-from email import encoders
-import yagmail
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
@@ -663,7 +661,6 @@ class Report():
         if os.path.exists(self.DESI_Log.telem_plots_file):
             fp = open(self.DESI_Log.telem_plots_file, 'rb')
             msgImage = MIMEImage(fp.read())
-            encoders.encode_base64(msgImage)
             fp.close()
             msg.attach(msgImage)
         
