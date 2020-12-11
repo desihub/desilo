@@ -634,11 +634,11 @@ class Report():
         nl_html += "<h3 id='telem_plots'>Night Telemetry</h3>"
         nl_html += '\n'
         
-        #if os.path.exists(self.DESI_Log.telem_plots_file):
-        #    nl_html += '<img src="{}">'.format(self.DESI_Log.telem_plots_file)
-        #    nl_html += '\n'
+        if os.path.exists(self.DESI_Log.telem_plots_file):
+            nl_html += '<img src="{}">'.format(self.DESI_Log.telem_plots_file)
+            nl_html += '\n'
 
-        Html_file = open(os.path.join(self.DESI_Log.root_dir,'nightlog.html'),"w")
+        Html_file = open(os.path.join(self.DESI_Log.root_dir,'NightSummary{}'.format(self.night)),"w")
         Html_file.write(nl_html)
         Html_file.close()
 
