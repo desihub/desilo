@@ -1,5 +1,6 @@
 #Imports
 import os, sys
+import glob
 import time, sched
 from datetime import datetime
 import numpy as np
@@ -355,6 +356,7 @@ class Report():
             self.nl_alert.text = 'Last Updated on this page: {}'.format(now)
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
             self.get_exp_list()
+            self.get_seeing()
             return True
         except:
             self.nl_alert.text = 'You are not connected to a Night Log'
@@ -368,6 +370,50 @@ class Report():
             exp_df.to_csv(self.DESI_Log.explist_file, index=False)
         else:
             self.exptable_alert.text = 'Cannot connect to Exposure Data Base'
+
+    def get_seeing(self):
+        #self.seeing_df = pd.DataFrame()
+        print('here')
+        seeing = []
+        exps = []
+        exposures = pd.DataFrame(self.explist_source.data)['id']
+        for exp in list(exposures):
+            try:
+                folder = '/data/platemaker/test/{}/'.format(int(exp))
+                filen = os.path.join(folder,'qc-gfaproc-{}.?.info'.format(int(exp)))
+                f = glob.glob(filen)[-1]
+
+                try:
+                    lines = open(f,'r').readlines()
+                    line = lines[5].strip()
+                    x0 = line.find('=')
+                    x1 = line.find(',')
+                    s = float(line[x0+1:x1])
+                except:
+                    s = np.nan
+
+                seeing.append(s)
+                exps.append(exp)
+            except:
+                pass
+            
+        print('here2')
+        print(seeing)
+        print(exps)
+        self.seeing_df = pd.DataFrame()
+        self.seeing_df['Seeing'] = seeing
+        self.seeing_df['Exps'] = exps
+        print(self.seeing_df.head())
+        print(os.path.join(self.DESI_Log.root_dir,'seeing.csv'))
+        self.seeing_df.to_csv(os.path.join(self.DESI_Log.root_dir,'seeing.csv'),index=False)
+        plt.plot(self.seeing_df.Exps, self.seeing_df.Seeing,'o')
+        plt.xlabel("Exposure")
+        plt.ylabel("Seeing (arcsec)")
+        plt.savefig(os.path.join(self.DESI_Log.root_dir,'seeing.png'))
+
+
+
+
 
     def make_telem_plots(self):
         start_utc = '{} {}'.format(int(self.night)+1, '00:00:00')
