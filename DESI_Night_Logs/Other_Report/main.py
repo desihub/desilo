@@ -65,8 +65,9 @@ class Other_Report(Report):
         self.get_prob_layout()
         self.get_img_layout()
         self.get_nl_layout()
+        self.get_plots_layout()
 
-        self.layout = Tabs(tabs=[intro_tab, comment_tab, self.prob_tab, self.img_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
+        self.layout = Tabs(tabs=[intro_tab, comment_tab, self.prob_tab, self.img_tab, self.plot_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
 
 
     def run(self):

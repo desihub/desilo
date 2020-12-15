@@ -224,9 +224,10 @@ class OS_Report(Report):
         self.get_prob_layout()
         self.get_checklist_layout()
         self.get_img_layout()
+        self.get_plots_layout()
         self.check_tab.title = 'OS Checklist'
 
-        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.img_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.img_tab, self.plot_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
     def run(self):
         self.plan_tab()

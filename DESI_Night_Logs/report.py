@@ -19,6 +19,7 @@ from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs
 from bokeh.models.widgets.tables import DataTable, TableColumn
+from bokeh.plotting import figure
 from astropy.time import TimezoneInfo
 import astropy.units.si as u
 
@@ -122,6 +123,8 @@ class Report():
         self.img_btn = Button(label='Add', css_classes=['add_button'])
         self.img_alert = Div(text=" ",width=1000)
 
+        self.plot_subtitle = Div(text="Telemtry Plots", css_classes=['subt-style'])
+
         self.DESI_Log = None
 
     def clear_input(self, items):
@@ -167,6 +170,35 @@ class Report():
                             self.prob_alert], width=1000)
 
         self.prob_tab = Panel(child=prob_layout, title="Problems")
+
+    def get_plots_layout(self):
+        telem_data = pd.DataFrame(columns = ['tel_time','tower_time','exp_time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing'])
+        self.telem_source = ColumnDataSource(telem_data)
+
+        plot_tools = 'pan,wheel_zoom,lasso_select,reset,undo,save'
+        p1 = figure(plot_width=800, plot_height=300, x_axis_label='Local Time (MST)', y_axis_label='Temp (C)', tools=plot_tools)
+        p2 = figure(plot_width=800, plot_height=300, x_axis_label='Local Time (MST)', y_axis_label='Humidity (%)', tools=plot_tools)
+        p3 = figure(plot_width=800, plot_height=300, x_axis_label='Local Time (MST)', y_axis_label='Wind Speed (mph)', tools=plot_tools)
+        p4 = figure(plot_width=800, plot_height=300, x_axis_label='Local Time (MST)', y_axis_label='Airmass', tools=plot_tools)
+        p5 = figure(plot_width=800, plot_height=300, x_axis_label='Local Time (MST)', y_axis_label='Exptime (sec)', tools=plot_tools)
+        p6 = figure(plot_width=800, plot_height=300, x_axis_label='Local Time (MST)', y_axis_label='Seeing (arcsec)', tools=plot_tools)
+
+        p1.circle(x = 'tel_time',y='mirror_temp',source=self.telem_source, size=10, alpha=0.5)
+        p1.circle(x = 'tel_time',y='truss_temp',source=self.telem_source, size=10, alpha=0.5)
+        p1.circle(x = 'tel_time',y='air_temp',source=self.telem_source, size=10, alpha=0.5)
+
+        p2.circle(x = 'tower_time',y='humidity',source=self.telem_source, size=10, alpha=0.5)
+        p3.circle(x = 'tower_time',y='wind_speed',source=self.telem_source, size=10, alpha=0.5)
+        p4.circle(x = 'exp_time',y='airmass',source=self.telem_source, size=10, alpha=0.5)
+        p5.circle(x = 'exp_time',y='exptime',source=self.telem_source, size=10, alpha=0.5)
+
+        p6.circle(x = 'exp',y='seeing',source=self.telem_source, size=10, alpha=0.5)
+
+        plot_layout = layout([self.title,
+                        self.plot_subtitle,
+                        p1,p2,p3,p4,p5,p6], width=1000)
+        self.plot_tab = Panel(child=plot_layout, title="Telemetry Plots")
+
 
     def get_nl_layout(self):
         exp_data = pd.DataFrame(columns = ['night','id','program','sequence','flavor','exptime'])
@@ -397,22 +429,14 @@ class Report():
             except:
                 pass
             
-        print('here2')
-        print(seeing)
-        print(exps)
         self.seeing_df = pd.DataFrame()
         self.seeing_df['Seeing'] = seeing
         self.seeing_df['Exps'] = exps
-        print(self.seeing_df.head())
-        print(os.path.join(self.DESI_Log.root_dir,'seeing.csv'))
         self.seeing_df.to_csv(os.path.join(self.DESI_Log.root_dir,'seeing.csv'),index=False)
         plt.plot(self.seeing_df.Exps, self.seeing_df.Seeing,'o')
         plt.xlabel("Exposure")
         plt.ylabel("Seeing (arcsec)")
         plt.savefig(os.path.join(self.DESI_Log.root_dir,'seeing.png'))
-
-
-
 
 
     def make_telem_plots(self):
@@ -422,7 +446,25 @@ class Report():
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
         tower_df = pd.read_sql_query(f"SELECT * FROM environmentmonitor_tower WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn) 
 
+        self.get_seeing()
+        telem_data = pd.DataFrame(columns = ['tel_time','tower_time','exp_time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing'])
+        telem_data.tel_time = tel_df.time_recorded.dt.tz_convert('US/Arizona')
+        telem_data.tower_time = tower_df.time_recorded.dt.tz_convert('US/Arizona')
+        telem_data.exp_time = exp_df.date_obs.dt.tz_convert('US/Arizona')
+        telem_data.exp = self.seeing_df.Exps
+        telem_data.mirror_temp = tel_df.mirror_temp
+        telem_data.truss_temp = tel_df.truss_temp
+        telem_data.air_temp = tel_df.air_temp
+        telem_data.humidity = tower_df.humidity
+        telem_data.wind_speed = tower_df.wind_speed
+        telem_data.airmass = exp_df.airmass
+        telem_data.exptime = exp_df.exptime
+        telem_data.seeing = self.seeing_df.Seeing
+
+        self.telem_source.data = telem_data
+
         
+
         if set(list(exp_df.seeing)) == set([None]):
             sky_monitor = False
             fig, axarr = plt.subplots(5, 1, figsize = (8,15), sharex=True)
@@ -445,7 +487,6 @@ class Report():
 
         ax[3].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
         ax[3].set_ylabel("Airmass")
-
 
         ax[4].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
         ax[4].set_ylabel("Exposure time (s)")
