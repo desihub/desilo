@@ -14,11 +14,12 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from bokeh.io import curdoc  # , output_file, save
-from bokeh.models import (TextInput, ColumnDataSource, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup)
+from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup)
 from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs
 from bokeh.models.widgets.tables import DataTable, TableColumn
+from bokeh.plotting import figure
 from astropy.time import TimezoneInfo
 import astropy.units.si as u
 
@@ -34,6 +35,9 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
+os.environ['TZ'] = 'UTC-7'
+time.tzset()
+
 
 class Report():
     def __init__(self, type):
@@ -41,6 +45,7 @@ class Report():
         self.utc = TimezoneInfo()
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
         self.zones = [self.utc, self.kp_zone]
+        self.datefmt = DateFormatter(format="%m/%d/%Y %H:%M:%S")
 
         self.inst_style = {'font-size':'150%'}
         self.subt_style = {'font-size':'200%','font-style':'bold'}
@@ -122,7 +127,10 @@ class Report():
         self.img_btn = Button(label='Add', css_classes=['add_button'])
         self.img_alert = Div(text=" ",width=1000)
 
+        self.plot_subtitle = Div(text="Telemetry Plots", css_classes=['subt-style'])
+
         self.DESI_Log = None
+        self.save_telem_plots = False
 
     def clear_input(self, items):
         """
@@ -168,11 +176,41 @@ class Report():
 
         self.prob_tab = Panel(child=prob_layout, title="Problems")
 
+    def get_plots_layout(self):
+        telem_data = pd.DataFrame(columns = ['tel_time','tower_time','exp_time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing'])
+        self.telem_source = ColumnDataSource(telem_data)
+
+        plot_tools = 'pan,wheel_zoom,lasso_select,reset,undo,save'
+        p1 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Temp (C)',x_axis_type="datetime", tools=plot_tools)
+        p2 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Humidity (%)', x_axis_type="datetime",tools=plot_tools)
+        p3 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Wind Speed (mph)', x_axis_type="datetime",tools=plot_tools)
+        p4 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Airmass', x_axis_type="datetime",tools=plot_tools)
+        p5 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Exptime (sec)', x_axis_type="datetime",tools=plot_tools)
+        p6 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Seeing (arcsec)', tools=plot_tools)
+
+        p1.circle(x = 'tel_time',y='mirror_temp',source=self.telem_source,color='orange', legend_label = 'Mirror', size=10, alpha=0.5)
+        p1.circle(x = 'tel_time',y='truss_temp',source=self.telem_source, legend_label = 'Truss', size=10, alpha=0.5)
+        p1.circle(x = 'tel_time',y='air_temp',source=self.telem_source, color='green',legend_label = 'Air', size=10, alpha=0.5)
+        p1.legend.location = "top_right"
+
+        p2.circle(x = 'tower_time',y='humidity',source=self.telem_source, size=10, alpha=0.5)
+        p3.circle(x = 'tower_time',y='wind_speed',source=self.telem_source, size=10, alpha=0.5)
+        p4.circle(x = 'exp_time',y='airmass',source=self.telem_source, size=10, alpha=0.5)
+        p5.circle(x = 'exp_time',y='exptime',source=self.telem_source, size=10, alpha=0.5)
+
+        p6.circle(x = 'exp',y='seeing',source=self.telem_source, size=10, alpha=0.5)
+
+        plot_layout = layout([self.title,
+                        self.plot_subtitle,
+                        p6,p1,p2,p3,p4,p5], width=1000)
+        self.plot_tab = Panel(child=plot_layout, title="Telemetry Plots")
+
+
     def get_nl_layout(self):
-        exp_data = pd.DataFrame(columns = ['night','id','program','sequence','flavor','exptime'])
+        exp_data = pd.DataFrame(columns = ['date_obs','id','program','sequence','flavor','exptime'])
         self.explist_source = ColumnDataSource(exp_data)
 
-        columns = [TableColumn(field='night', title='Night', width=50),
+        columns = [TableColumn(field='date_obs', title='Time (UTC)', width=50, formatter=self.datefmt),
                    TableColumn(field='id', title='Exposure', width=50),
                    TableColumn(field='sequence', title='Sequence', width=100),
                    TableColumn(field='flavor', title='Flavor', width=50),
@@ -357,6 +395,7 @@ class Report():
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
             self.get_exp_list()
             self.get_seeing()
+            self.make_telem_plots()
             return True
         except:
             self.nl_alert.text = 'You are not connected to a Night Log'
@@ -365,7 +404,9 @@ class Report():
     def get_exp_list(self):
         if self.location == 'kpno':
             exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
-            self.explist_source.data = exp_df[['night','id','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False) 
+            time = exp_df.date_obs.dt.tz_convert('US/Arizona')
+            exp_df['date_obs'] = time
+            self.explist_source.data = exp_df[['date_obs','id','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False) 
             exp_df = exp_df.sort_values(by='id')
             exp_df.to_csv(self.DESI_Log.explist_file, index=False)
         else:
@@ -373,7 +414,6 @@ class Report():
 
     def get_seeing(self):
         #self.seeing_df = pd.DataFrame()
-        print('here')
         seeing = []
         exps = []
         exposures = pd.DataFrame(self.explist_source.data)['id']
@@ -397,22 +437,14 @@ class Report():
             except:
                 pass
             
-        print('here2')
-        print(seeing)
-        print(exps)
         self.seeing_df = pd.DataFrame()
         self.seeing_df['Seeing'] = seeing
         self.seeing_df['Exps'] = exps
-        print(self.seeing_df.head())
-        print(os.path.join(self.DESI_Log.root_dir,'seeing.csv'))
         self.seeing_df.to_csv(os.path.join(self.DESI_Log.root_dir,'seeing.csv'),index=False)
         plt.plot(self.seeing_df.Exps, self.seeing_df.Seeing,'o')
         plt.xlabel("Exposure")
         plt.ylabel("Seeing (arcsec)")
         plt.savefig(os.path.join(self.DESI_Log.root_dir,'seeing.png'))
-
-
-
 
 
     def make_telem_plots(self):
@@ -422,55 +454,75 @@ class Report():
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
         tower_df = pd.read_sql_query(f"SELECT * FROM environmentmonitor_tower WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn) 
 
+        #self.get_seeing()
+        telem_data = pd.DataFrame(columns = ['tel_time','tower_time','exp_time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing'])
+        telem_data.tel_time = tel_df.time_recorded.dt.tz_convert('US/Arizona')
+        telem_data.tower_time = tower_df.time_recorded.dt.tz_convert('US/Arizona')
+        telem_data.exp_time = exp_df.date_obs.dt.tz_convert('US/Arizona')
+        telem_data.exp = self.seeing_df.Exps
+        telem_data.mirror_temp = tel_df.mirror_temp
+        telem_data.truss_temp = tel_df.truss_temp
+        telem_data.air_temp = tel_df.air_temp
+        telem_data.humidity = tower_df.humidity
+        telem_data.wind_speed = tower_df.wind_speed
+        telem_data.airmass = exp_df.airmass
+        telem_data.exptime = exp_df.exptime
+        telem_data.seeing = self.seeing_df.Seeing
+
+        self.telem_source.data = telem_data
+
+        if self.save_telem_plots:
+            if set(list(exp_df.seeing)) == set([None]):
+                sky_monitor = False
+                fig, axarr = plt.subplots(6, 1, figsize = (8,15), sharex=True)
+            else:
+                sky_monitor = True
+                fig, axarr = plt.subplots(9, 1, figsize = (8,20), sharex=True)
+
+            ax = axarr.ravel()
+            ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')    
+            ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.truss_temp, s=5, label='truss temp')  
+            ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.air_temp, s=5, label='air temp') 
+            ax[0].set_ylabel("Temperature (C)")
+            ax[0].legend()
         
-        if set(list(exp_df.seeing)) == set([None]):
-            sky_monitor = False
-            fig, axarr = plt.subplots(5, 1, figsize = (8,15), sharex=True)
-        else:
-            sky_monitor = True
-            fig, axarr = plt.subplots(8, 1, figsize = (8,20), sharex=True)
+            ax[1].scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.humidity, s=5, label='humidity') 
+            ax[1].set_ylabel("Humidity %")
 
-        ax = axarr.ravel()
-        ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')    
-        ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.truss_temp, s=5, label='truss temp')  
-        ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.air_temp, s=5, label='air temp') 
-        ax[0].set_ylabel("Temperature (C)")
-        ax[0].legend()
-        
-        ax[1].scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.humidity, s=5, label='humidity') 
-        ax[1].set_ylabel("Humidity %")
+            ax[2].scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.wind_speed, s=5, label='wind speed')
+            ax[2].set_ylabel("Wind Speed (mph)")
 
-        ax[2].scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.wind_speed, s=5, label='wind speed')
-        ax[2].set_ylabel("Wind Speed (mph)")
+            ax[3].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
+            ax[3].set_ylabel("Airmass")
 
-        ax[3].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
-        ax[3].set_ylabel("Airmass")
+            ax[4].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
+            ax[4].set_ylabel("Exposure time (s)")
+
+            ax[5].scatter(telem_data.exp, telem_data.seeing, s=5, label='Seeing')
+            ax[5].set_ylabel("Seeing (arcsec)")
 
 
-        ax[4].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
-        ax[4].set_ylabel("Exposure time (s)")
+            if sky_monitor:
+                ax[6].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
+                ax[6].set_ylabel("Seeing")
 
+                ax[7].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
+                ax[7].set_ylabel("Transparency (%)")
 
-        if sky_monitor:
-            ax[5].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
-            ax[5].set_ylabel("Seeing")
-
-            ax[6].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
-            ax[6].set_ylabel("Transparency (%)")
-
-            ax[7].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
-            ax[7].set_ylabel("Sky level (AB/arcsec^2)")
+                ax[8].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
+                ax[8].set_ylabel("Sky level (AB/arcsec^2)")
     
-        for i in range(len(ax)):
-            ax[i].grid(True)
+            for i in range(len(ax)):
+                ax[i].grid(True)
 
         #X label ticks as local time
-        ax[len(ax)-1].set_xlabel("Local Time (MST)")
-        ax[len(ax)-1].xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M', tz=pytz.timezone("US/Arizona")))
-        ax[len(ax)-1].tick_params(labelrotation=45)
-        fig.suptitle("Telemetry for obsday={}".format(self.night))
+            ax[len(ax)-1].set_xlabel("Local Time (MST)")
+            ax[len(ax)-1].xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M', tz=pytz.timezone("US/Arizona")))
+            ax[len(ax)-1].tick_params(labelrotation=45)
+            fig.suptitle("Telemetry for obsday={}".format(self.night))
+            fig.tight_layout()
 
-        plt.savefig(self.DESI_Log.telem_plots_file)
+            plt.savefig(self.DESI_Log.telem_plots_file)
 
                 
     def exp_to_html(self):
@@ -616,6 +668,9 @@ class Report():
             if response[0] != 200:
                raise Exception(response)
                self.nl_text.text = "You cannot post to the eLog on this machine"
+
+            self.save_telem_plots = True
+            self.current_nl()
 
             nl_text = "Night Log posted to eLog and emailed to collaboration" + '</br>'
             self.nl_text.text = nl_text
