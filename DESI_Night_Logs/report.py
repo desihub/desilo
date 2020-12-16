@@ -35,9 +35,6 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['TZ'] = 'UTC-7'
-time.tzset()
-
 
 class Report():
     def __init__(self, type):
