@@ -38,6 +38,9 @@ import nightlog as nl
 
 class Report():
     def __init__(self, type):
+
+        self.test = True
+
         self.report_type = type
         self.utc = TimezoneInfo()
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -471,32 +474,53 @@ class Report():
         if self.save_telem_plots:
             if set(list(exp_df.seeing)) == set([None]):
                 sky_monitor = False
-                fig, axarr = plt.subplots(6, 1, figsize = (8,15), sharex=True)
+                fig = plt.figure(figsize= (8,15))
+                #fig, axarr = plt.subplots(5, 1, figsize = (8,15), sharex=True)
             else:
                 sky_monitor = True
                 fig, axarr = plt.subplots(9, 1, figsize = (8,20), sharex=True)
 
-            ax = axarr.ravel()
-            ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')    
-            ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.truss_temp, s=5, label='truss temp')  
-            ax[0].scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.air_temp, s=5, label='air temp') 
-            ax[0].set_ylabel("Temperature (C)")
-            ax[0].legend()
+            ax1 = fig.add_subplot(6,1,1)
+            ax1.scatter(telem_data.exp, telem_data.seeing, s=5, label='Seeing')
+            ax1.set_ylabel("Seeing (arcsec)")
+            ax1.grid(True)
+            ax1.set_xlabel("Exposure")
+            #ax = axarr.ravel()
+            ax2 = fig.add_subplot(6,1,2)
+            ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')    
+            ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.truss_temp, s=5, label='truss temp')  
+            ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.air_temp, s=5, label='air temp') 
+            ax2.set_ylabel("Temperature (C)")
+            ax2.legend()
+            ax2.grid(True)
+            ax2.tick_params(labelbottom=False)
         
-            ax[1].scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.humidity, s=5, label='humidity') 
-            ax[1].set_ylabel("Humidity %")
+            ax3 = fig.add_subplot(6,1,3, sharex = ax2)
+            ax3.scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.humidity, s=5, label='humidity') 
+            ax3.set_ylabel("Humidity %")
+            ax3.grid(True)
+            ax3.tick_params(labelbottom=False)
 
-            ax[2].scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.wind_speed, s=5, label='wind speed')
-            ax[2].set_ylabel("Wind Speed (mph)")
+            ax4 = fig.add_subplot(6,1,4, sharex=ax2) 
+            ax4.scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.wind_speed, s=5, label='wind speed')
+            ax4.set_ylabel("Wind Speed (mph)")
+            ax4.grid(True)
+            ax4.tick_params(labelbottom=False)
 
-            ax[3].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
-            ax[3].set_ylabel("Airmass")
+            ax5 = fig.add_subplot(6,1,5, sharex=ax2)
+            ax5.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
+            ax5.set_ylabel("Airmass")
+            ax5.grid(True)
+            ax5.tick_params(labelbottom=False)
 
-            ax[4].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
-            ax[4].set_ylabel("Exposure time (s)")
+            ax6 = fig.add_subplot(6,1,6, sharex=ax2)
+            ax6.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
+            ax6.set_ylabel("Exposure time (s)")
+            ax6.grid(True)
 
-            ax[5].scatter(telem_data.exp, telem_data.seeing, s=5, label='Seeing')
-            ax[5].set_ylabel("Seeing (arcsec)")
+            #ax1 = fig.add_subplot(6,1,6)
+            #ax1.scatter(telem_data.exp, telem_data.seeing, s=5, label='Seeing')
+            #ax1.set_ylabel("Seeing (arcsec)")
 
 
             if sky_monitor:
@@ -509,13 +533,13 @@ class Report():
                 ax[8].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
                 ax[8].set_ylabel("Sky level (AB/arcsec^2)")
     
-            for i in range(len(ax)):
-                ax[i].grid(True)
+            #for i in range(len(ax)):
+            #    ax[i].grid(True)
 
         #X label ticks as local time
-            ax[len(ax)-1].set_xlabel("Local Time (MST)")
-            ax[len(ax)-1].xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M', tz=pytz.timezone("US/Arizona")))
-            ax[len(ax)-1].tick_params(labelrotation=45)
+            ax6.set_xlabel("Local Time (MST)")
+            ax6.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M', tz=pytz.timezone("US/Arizona")))
+            ax6.tick_params(labelrotation=45)
             fig.suptitle("Telemetry for obsday={}".format(self.night))
             fig.tight_layout()
 
@@ -659,20 +683,25 @@ class Report():
             url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
             user = 'dos'
             pw = 'dosuser'
-            elconn = ECLConnection(url, user, pw)
-            response = elconn.post(e)
-            elconn.close()
-            if response[0] != 200:
-               raise Exception(response)
-               self.nl_text.text = "You cannot post to the eLog on this machine"
+            if self.test:
+                pass
+            else:
+                elconn = ECLConnection(url, user, pw)
+                response = elconn.post(e)
+                elconn.close()
+                if response[0] != 200:
+                   raise Exception(response)
+                   self.nl_text.text = "You cannot post to the eLog on this machine"
 
             self.save_telem_plots = True
             self.current_nl()
 
             nl_text = "Night Log posted to eLog and emailed to collaboration" + '</br>'
             self.nl_text.text = nl_text
-
-            self.email_nightsum(user_email = ["parfa30@gmail.com","satya.gontcho@gmail.com","desi-nightlog@desi.lbl.gov"])
+            if self.test:
+                self.email_nightsum(user_email = ["parfa30@gmail.com","parkerf@berkeley.edu"])
+            else:
+                self.email_nightsum(user_email = ["parfa30@gmail.com","satya.gontcho@gmail.com","desi-nightlog@desi.lbl.gov"])
 
     def email_nightsum(self,user_email = None):
 
