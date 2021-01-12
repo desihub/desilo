@@ -41,6 +41,7 @@ RUN \
             pandoc              \
             psycopg2            \
             pytz                \
+            matplotlib          \
             ephem 
 
 ENV PATH=/opt/anaconda3/bin:$PATH
