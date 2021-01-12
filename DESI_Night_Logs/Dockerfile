@@ -40,8 +40,6 @@ RUN \
             pandas              \
             pandoc              \
             psycopg2            \
-            subprocess          \
-            socket              \
             pytz                \
             ephem 
 
