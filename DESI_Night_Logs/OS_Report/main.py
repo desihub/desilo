@@ -38,9 +38,9 @@ class OS_Report(Report):
     def __init__(self):
         Report.__init__(self, 'OS')
 
-        self.title = Div(text="DESI Nightly Intake - Operating Scientist", css_classes=['h1-title-style'], width=1000)# width=800, style={'font-size':'24pt','font-style':'bold'})
+        self.title = Div(text="DESI Nightly Intake - Observing Scientist", css_classes=['h1-title-style'], width=1000)# width=800, style={'font-size':'24pt','font-style':'bold'})
         desc = """
-        The Operating Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log.
+        The Observing Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log.
         Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.
         """
         self.instructions = Div(text=desc+self.time_note.text, css_classes=['inst-style'], width=500)
@@ -57,8 +57,8 @@ class OS_Report(Report):
         self.connect_hdr = Div(text="Connect to Existing Night Log", css_classes=['subt-style'], width=800)
         self.init_hdr = Div(text="Initialize Tonight's Night Log", css_classes=['subt-style'], width=800)
         self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
-        self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. After completing these tasks, record at what time they were completed. Be honest please!", css_classes=['inst-style'], width=1000)
-        self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Cryostat?", "Did you do a connectivity aliveness check?","Did you check the Spectrograph Chiller?"]
+        self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things.", css_classes=['inst-style'], width=1000)
+        self.checklist.labels = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Cryostat?", "Did you check the Spectrograph Chiller?"]
 
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
         self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other Acquisition','Comment']
@@ -75,7 +75,7 @@ class OS_Report(Report):
 
     def milestone_tab(self):
         self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", css_classes=['subt-style'])
-        self.milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", css_classes=['inst-style'],width=1000)
+        self.milestone_inst = Div(text="Record any successfully (or partialy) completed task from the Night Plan that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", css_classes=['inst-style'],width=1000)
         self.milestone_input = TextAreaInput(placeholder="Description", rows=10, cols=3, max_length=5000)
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None)
@@ -83,11 +83,12 @@ class OS_Report(Report):
         self.milestone_btn = Button(label='Add Milestone', css_classes=['add_button'])
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
         self.summary = TextAreaInput(rows=6, title='End of Night Summary',max_length=5000)
+        self.summary_inst = Div(text="Provide a few lines of summary for the portion of the night you had responsibility for.", css_classes=['inst-style'],width=1000)
         self.summary_btn = Button(label='Add Summary', css_classes=['add_button'], width=300)
 
 
     def weather_tab(self):
-        data = pd.DataFrame(columns = ['time','desc','temp','wind','humidity'])
+        data = pd.DataFrame(columns = ['time','desc','temp','wind','humidity','seeing'])
         self.weather_source = ColumnDataSource(data)
 
         self.weather_subtitle = Div(text="Weather", css_classes=['subt-style'])
@@ -96,13 +97,15 @@ class OS_Report(Report):
                    TableColumn(field='desc', title='Description', width=200, editor=StringEditor()),
                    TableColumn(field='temp', title='Temperature (C)', width=100, editor=NumberEditor()),
                    TableColumn(field='wind', title='Wind Speed (mph)', width=120, editor=NumberEditor()),
-                   TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor())]
+                   TableColumn(field='humidity', title='Humidity (%)', width=100, editor=PercentEditor()),
+                   TableColumn(field='seeing', title='Seeing (arcsec)', width=100, editor=PercentEditor())]
         self.weather_inst = Div(text="Every hour include a description of the weather and any other relevant information, as well as fill in all the fields below.  Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
-        self.weather_time = TextInput(placeholder='17:00', value=None, width=100) #title='Time in Kitt Peak local time', 
+        self.weather_time = TextInput(placeholder='17:00', value=None, width=100) #title='Time in Kitt Peak local time',
         self.weather_desc = TextInput(title='Description', placeholder='description', value=None)
         self.weather_temp = TextInput(title='Temperature (C)', placeholder='50', value=None)
         self.weather_wind = TextInput(title='Wind Speed (mph)', placeholder='10', value=None)
         self.weather_humidity = TextInput(title='Humidity (%)', placeholder='5', value=None)
+        self.weather_seeing = TextInput(title='Seeing (arcsec)', placeholder='0.83', value=None)
         self.weather_table = DataTable(source=self.weather_source, columns=columns)
         self.weather_btn = Button(label='Add Weather', css_classes=['add_button'])
 
@@ -187,6 +190,7 @@ class OS_Report(Report):
                                 [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl],
                                 [self.milestone_btn],
                                 self.summary,
+                                self.summary_inst,
                                 self.summary_btn,
                                 self.milestone_alert], width=1000)
         milestone_tab = Panel(child=milestone_layout, title='Milestones')
@@ -205,9 +209,9 @@ class OS_Report(Report):
                                 self.weather_subtitle,
                                 self.weather_inst,
                                 self.time_note,
-                                [self.time_title, self.weather_time, self.now_btn], 
-                                [self.weather_desc, self.weather_temp],
-                                [self.weather_wind, self.weather_humidity, self.weather_btn],
+                                [self.time_title, self.weather_time, self.now_btn],
+                                [self.weather_desc, self.weather_temp, self.weather_humidity],
+                                [self.weather_wind, self.weather_seeing, self.weather_btn],
                                 self.weather_table], width=1000)
         weather_tab = Panel(child=weather_layout, title="Weather")
 
@@ -227,7 +231,8 @@ class OS_Report(Report):
         self.get_plots_layout()
         self.check_tab.title = 'OS Checklist'
 
-        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.img_tab, self.plot_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+# HERE FOR IMAGES       self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.img_tab, self.plot_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.plot_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
     def run(self):
         self.plan_tab()
@@ -250,10 +255,10 @@ class OS_Report(Report):
         self.img_btn.on_click(self.image_add)
         self.contributer_btn.on_click(self.add_contributer_list)
         self.summary_btn.on_click(self.add_summary)
-        
+
         self.get_layout()
 
-    
+
 OS = OS_Report()
 OS.run()
 curdoc().theme = 'dark_minimal'

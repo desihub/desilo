@@ -39,7 +39,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = False 
+        self.test = False
 
         self.report_type = type
         self.utc = TimezoneInfo()
@@ -79,7 +79,7 @@ class Report():
         self.comment_txt = Div(text=" ", css_classes=['inst-style'], width=1000)
 
         self.date_init = Select(title="Existing Night Logs")
-        self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
+        self.time_title = Paragraph(text='Time* (Kitt Peak local time)')#, align='center')
         self.now_btn = Button(label='Now', css_classes=['now_button'], width=50)
         days = [d for d in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir, d))]
         init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
@@ -91,7 +91,7 @@ class Report():
 
         self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
         self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=5000)
-        self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
+        self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*',
         self.exp_btn = Button(label='Add', css_classes=['add_button'])
         self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
@@ -106,14 +106,14 @@ class Report():
         self.exptable_alert = Div(text=" ",css_classes=['alert-style'], width=500)
 
         self.checklist = CheckboxGroup(labels=[])
-        self.check_time = TextInput(placeholder = '20:07', value=None) #title ='Time in Kitt Peak local time*', 
+        self.check_time = TextInput(placeholder = '20:07', value=None) #title ='Time in Kitt Peak local time*',
         self.check_alert = Div(text=" ", css_classes=['alert-style'])
         self.check_btn = Button(label='Submit', css_classes=['add_button'])
         self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
 
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
         self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
-        self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
+        self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*',
         self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=3, title="Problem Description*:")
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
         self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=3)
@@ -168,7 +168,7 @@ class Report():
                             self.prob_subtitle,
                             self.prob_inst,
                             self.time_note,
-                            [self.time_title, self.prob_time, self.now_btn], 
+                            [self.time_title, self.prob_time, self.now_btn],
                             self.prob_alarm,
                             [self.prob_input, self.prob_action],
                             [self.prob_btn],
@@ -290,7 +290,7 @@ class Report():
         self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
         exists = self.DESI_Log.check_exists()
 
-        
+
         your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
         if exists:
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
@@ -318,7 +318,7 @@ class Report():
                 try:
                     self.weather_source.data = new_data
                     new_data = pd.read_csv(self.DESI_Log.weather_file)
-                    new_data = new_data[['time','desc','temp','wind','humidity']]
+                    new_data = new_data[['time','desc','temp','wind','humidity','seeing']]
                 except:
                     pass
                 if os.path.exists(self.DESI_Log.contributer_file):
@@ -328,7 +328,7 @@ class Report():
                         cont_txt += line
                     self.contributer_list.value = cont_txt
                 if os.path.exists(self.DESI_Log.weather_file):
-                    data = pd.read_csv(self.DESI_Log.weather_file)[['time','desc','temp','wind','humidity']]
+                    data = pd.read_csv(self.DESI_Log.weather_file)[['time','desc','temp','wind','humidity','seeing']]
                     self.weather_source.data = data
             self.current_nl()
 
@@ -400,7 +400,7 @@ class Report():
                 return True
             except:
                 #print('Something wrong with making telemetry plots')
-                return True 
+                return True
         except:
             self.nl_alert.text = 'You are not connected to a Night Log'
             return False
@@ -410,7 +410,7 @@ class Report():
             exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
             time = exp_df.date_obs.dt.tz_convert('US/Arizona')
             exp_df['date_obs'] = time
-            self.explist_source.data = exp_df[['date_obs','id','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False) 
+            self.explist_source.data = exp_df[['date_obs','id','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False)
             exp_df = exp_df.sort_values(by='id')
             exp_df.to_csv(self.DESI_Log.explist_file, index=False)
         else:
@@ -440,7 +440,7 @@ class Report():
                 exps.append(exp)
             except:
                 pass
-            
+
         self.seeing_df = pd.DataFrame()
         self.seeing_df['Seeing'] = seeing
         self.seeing_df['Exps'] = exps
@@ -456,7 +456,7 @@ class Report():
         end_utc = '{} {}'.format(int(self.night)+1, '13:00:00')
         tel_df  = pd.read_sql_query(f"SELECT * FROM environmentmonitor_telescope WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn)
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
-        tower_df = pd.read_sql_query(f"SELECT * FROM environmentmonitor_tower WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn) 
+        tower_df = pd.read_sql_query(f"SELECT * FROM environmentmonitor_tower WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn)
 
         #self.get_seeing()
         telem_data = pd.DataFrame(columns = ['tel_time','tower_time','exp_time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing'])
@@ -491,21 +491,21 @@ class Report():
             ax1.set_xlabel("Exposure")
             #ax = axarr.ravel()
             ax2 = fig.add_subplot(6,1,2)
-            ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')    
-            ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.truss_temp, s=5, label='truss temp')  
-            ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.air_temp, s=5, label='air temp') 
+            ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')
+            ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.truss_temp, s=5, label='truss temp')
+            ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.air_temp, s=5, label='air temp')
             ax2.set_ylabel("Temperature (C)")
             ax2.legend()
             ax2.grid(True)
             ax2.tick_params(labelbottom=False)
-        
+
             ax3 = fig.add_subplot(6,1,3, sharex = ax2)
-            ax3.scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.humidity, s=5, label='humidity') 
+            ax3.scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.humidity, s=5, label='humidity')
             ax3.set_ylabel("Humidity %")
             ax3.grid(True)
             ax3.tick_params(labelbottom=False)
 
-            ax4 = fig.add_subplot(6,1,4, sharex=ax2) 
+            ax4 = fig.add_subplot(6,1,4, sharex=ax2)
             ax4.scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.wind_speed, s=5, label='wind speed')
             ax4.set_ylabel("Wind Speed (mph)")
             ax4.grid(True)
@@ -528,15 +528,15 @@ class Report():
 
 
             if sky_monitor:
-                ax[6].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
+                ax[6].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')
                 ax[6].set_ylabel("Seeing")
 
                 ax[7].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
                 ax[7].set_ylabel("Transparency (%)")
 
-                ax[8].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
+                ax[8].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')
                 ax[8].set_ylabel("Sky level (AB/arcsec^2)")
-    
+
             #for i in range(len(ax)):
             #    ax[i].grid(True)
 
@@ -549,7 +549,7 @@ class Report():
 
             plt.savefig(self.DESI_Log.telem_plots_file)
 
-                
+
     def exp_to_html(self):
         exp_df = pd.read_csv(self.DESI_Log.explist_file)
         exp_df = exp_df[['night','id','program','sequence','flavor','exptime']]
@@ -594,14 +594,17 @@ class Report():
     def weather_add(self):
         """Adds table to Night Log
         """
-        new_data = pd.DataFrame([[self.weather_time.value, self.weather_desc.value, self.weather_temp.value, self.weather_wind.value, self.weather_humidity.value]],
-                                columns = ['time','desc','temp','wind','humidity'])
-        old_data = pd.DataFrame(self.weather_source.data)[['time','desc','temp','wind','humidity']]
-        data = pd.concat([old_data, new_data])
-        data.drop_duplicates(subset=['time'], keep='last',inplace=True)
-        self.weather_source.data = data
-        self.DESI_Log.add_weather_os(data)
-        self.clear_input([self.weather_time, self.weather_desc, self.weather_temp, self.weather_wind, self.weather_humidity])
+        if self.weather_time.value not in [None, "NaN",'None'," ", ""]:
+            new_data = pd.DataFrame([[self.weather_time.value, self.weather_desc.value, self.weather_temp.value, self.weather_wind.value, self.weather_humidity.value, self.weather_seeing.value]],
+                                columns = ['time','desc','temp','wind','humidity','seeing'])
+            old_data = pd.DataFrame(self.weather_source.data)[['time','desc','temp','wind','humidity','seeing']]
+            data = pd.concat([old_data, new_data])
+            data.drop_duplicates(subset=['time'], keep='last',inplace=True)
+            self.weather_source.data = data
+            self.DESI_Log.add_weather_os(data)
+            self.clear_input([self.weather_time, self.weather_desc, self.weather_temp, self.weather_wind, self.weather_humidity, elf.weather_seeing])
+        else:
+            self.exp_alert.text = 'Could not submit entry because not all mandatory fields were filled.'.format(self.hdr_type.value)
 
     def progress_add(self):
         if self.exp_time.value not in [None, 'None'," ", ""]:
@@ -655,7 +658,7 @@ class Report():
         self.clear_input([self.img_input, self.img_comment])
 
     def time_is_now(self):
-        now = datetime.now().astimezone(tz=self.kp_zone) 
+        now = datetime.now().astimezone(tz=self.kp_zone)
         now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"))
         tab = self.layout.active
         time_input = self.time_tabs[tab]
@@ -740,7 +743,7 @@ class Report():
         nl_html = nl_html[:x]
         nl_html += "<h3 id='images'>Images</h3>"
         nl_html += '\n'
-        
+
         if os.path.exists(self.DESI_Log.image_file):
             images = os.listdir(self.DESI_Log.image_dir)
             images = [s for s in images if os.path.splitext(s)[1] != '']
@@ -765,7 +768,7 @@ class Report():
         # Add telem plots
         nl_html += "<h3 id='telem_plots'>Night Telemetry</h3>"
         nl_html += '\n'
-        
+
         if os.path.exists(self.DESI_Log.telem_plots_file):
             nl_html += '<img src="{}">'.format(self.DESI_Log.telem_plots_file)
             nl_html += '\n'
@@ -797,7 +800,7 @@ class Report():
             msgImage = MIMEImage(fp.read())
             fp.close()
             msg.attach(msgImage)
-        
+
         text = msg.as_string()
         # Send the message via local SMTP server.
         #yag = yagmail.SMTP(sender)
