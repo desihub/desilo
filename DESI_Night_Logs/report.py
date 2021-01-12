@@ -39,7 +39,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = False
+        self.test = False 
 
         self.report_type = type
         self.utc = TimezoneInfo()
@@ -395,8 +395,12 @@ class Report():
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
             self.get_exp_list()
             self.get_seeing()
-            self.make_telem_plots()
-            return True
+            try:
+                self.make_telem_plots()
+                return True
+            except:
+                #print('Something wrong with making telemetry plots')
+                return True 
         except:
             self.nl_alert.text = 'You are not connected to a Night Log'
             return False
@@ -706,7 +710,10 @@ class Report():
     def email_nightsum(self,user_email = None):
 
         if self.location == 'kpno':
-            self.make_telem_plots()
+            try:
+                self.make_telem_plots()
+            except:
+                print("Something wrong with telem plots")
 
         sender = "noreply-ecl@noao.edu"
 
