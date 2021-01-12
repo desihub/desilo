@@ -39,6 +39,10 @@ RUN \
             bokeh               \
             pandas              \
             pandoc              \
+            psycopg2            \
+            subprocess          \
+            socket              \
+            pytz                \
             ephem 
 
 ENV PATH=/opt/anaconda3/bin:$PATH
