@@ -10,6 +10,8 @@ import psycopg2
 import subprocess
 import pytz
 
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
@@ -17,7 +19,7 @@ from bokeh.io import curdoc  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup)
 from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
-from bokeh.models.widgets import Panel, Tabs
+from bokeh.models.widgets import Panel, Tabs, FileInput
 from bokeh.models.widgets.tables import DataTable, TableColumn
 from bokeh.plotting import figure
 from astropy.time import TimezoneInfo
@@ -121,8 +123,18 @@ class Report():
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
 
         self.img_subtitle = Div(text="Images", css_classes=['subt-style'])
-        self.img_inst = Div(text="Include images in the Night Log by entering the location of the images on the desi server", css_classes=['inst-style'], width=1000)
-        self.img_input = TextInput(title='image file location', placeholder='/n/home/desiobserver/image.png',value=None)
+        self.img_upinst = Div(text="Include images in the Night Log by uploading a png image from your local computer. Select file, write a comment and click Add", css_classes=['inst-style'], width=1000)
+        self.img_upinst2 = Div(text="           Choose image to include with comment:  ", css_classes=['inst-style'])
+        self.img_upload = FileInput(accept=".png")
+        self.img_upload.on_change('value', self.upload_image)
+        self.img_upload_comments = FileInput(accept=".png")
+        self.img_upload_comments.on_change('value', self.upload_image_comments)
+        self.img_upload_comments_os = FileInput(accept=".png")
+        self.img_upload_comments_os.on_change('value', self.upload_image_comments_os)
+        self.img_upload_problems = FileInput(accept=".png")
+        self.img_upload_problems.on_change('value', self.upload_image_problems)
+        self.img_inst = Div(text="Include images in the Night Log by entering the location of the images on the desi cluster", css_classes=['inst-style'], width=1000)
+        self.img_input = TextInput(title='image file location on desi cluster', placeholder='/n/home/desiobserver/image.png',value=None)
         self.img_comment = TextAreaInput(placeholder='comment about image', rows=8, cols=3, title='Image caption')
         self.img_btn = Button(label='Add', css_classes=['add_button'])
         self.img_alert = Div(text=" ",width=1000)
@@ -168,7 +180,7 @@ class Report():
                             self.prob_subtitle,
                             self.prob_inst,
                             self.time_note,
-                            [self.time_title, self.prob_time, self.now_btn], 
+                            [self.time_title, self.prob_time, self.now_btn, self.now_btn, self.img_upinst2, self.img_upload_problems], 
                             self.prob_alarm,
                             [self.prob_input, self.prob_action],
                             [self.prob_btn],
@@ -230,13 +242,14 @@ class Report():
     def get_img_layout(self):
         img_layout = layout([self.title,
                             self.img_subtitle,
+                            self.img_upinst,
+                            self.img_upload,
                             self.img_inst,
                             self.img_input,
                             self.img_comment,
                             self.img_btn,
                             self.img_alert], width=1000)
         self.img_tab = Panel(child=img_layout, title='Images')
-
 
     def short_time(self, str_time):
         """Returns %H%M in whichever time zone selected
@@ -263,7 +276,7 @@ class Report():
                 try:
                     t = datetime.strptime(date+":"+time,'%Y%m%d:%H:%M')
                 except:
-                    print("need format %H%M, %H:%M, %H:%M%p")
+                    pass #print("need format %H%M, %H:%M, %H:%M%p")
         try:
             tt = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
             return tt.strftime("%Y%m%dT%H:%M")
@@ -401,18 +414,22 @@ class Report():
             except:
                 #print('Something wrong with making telemetry plots')
                 return True 
-        except:
+        except Exception as e:
+            print('current_nl Exception: %s' % str(e))
             self.nl_alert.text = 'You are not connected to a Night Log'
             return False
 
     def get_exp_list(self):
         if self.location == 'kpno':
             exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
-            time = exp_df.date_obs.dt.tz_convert('US/Arizona')
-            exp_df['date_obs'] = time
-            self.explist_source.data = exp_df[['date_obs','id','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False) 
-            exp_df = exp_df.sort_values(by='id')
-            exp_df.to_csv(self.DESI_Log.explist_file, index=False)
+            if len(exp_df.date_obs) != 0:
+                time = exp_df.date_obs.dt.tz_convert('US/Arizona')
+                exp_df['date_obs'] = time
+                self.explist_source.data = exp_df[['date_obs','id','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False) 
+                exp_df = exp_df.sort_values(by='id')
+                exp_df.to_csv(self.DESI_Log.explist_file, index=False)
+            else:
+                self.exptable_alert.text = f'No exposures available for night {self.night}'
         else:
             self.exptable_alert.text = 'Cannot connect to Exposure Data Base'
 
@@ -445,11 +462,13 @@ class Report():
         self.seeing_df['Seeing'] = seeing
         self.seeing_df['Exps'] = exps
         self.seeing_df.to_csv(os.path.join(self.DESI_Log.root_dir,'seeing.csv'),index=False)
+        # KH added to avoid issues with X11 and Display (we only need the png)
+        figure = plt.figure()
         plt.plot(self.seeing_df.Exps, self.seeing_df.Seeing,'o')
         plt.xlabel("Exposure")
         plt.ylabel("Seeing (arcsec)")
         plt.savefig(os.path.join(self.DESI_Log.root_dir,'seeing.png'))
-
+        plt.close(figure)
 
     def make_telem_plots(self):
         start_utc = '{} {}'.format(int(self.night)+1, '00:00:00')
@@ -573,11 +592,32 @@ class Report():
     def prob_add(self):
         """Adds problem to nightlog
         """
-        if self.report_type == 'Other':
-            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value,self.report_type, self.your_name.value)
+        # Was an image uploaded?
+        if hasattr(self, 'img_upload_problems') and self.img_upload_problems.filename not in [None, '']:
+            img_data = self.img_upload_problems.value.encode('utf-8')
+            img_name = str(self.img_upload_problems.filename)
+            self.img_upload_problems.filename = None
         else:
-            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value,self.report_type)
-        self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
+            img_data = None
+            img_name = None
+        if self.report_type == 'Other':
+            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, 
+                                      self.prob_action.value,self.report_type, self.your_name.value,
+                                      img_name=img_name, img_data=img_data)
+        else:
+            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, 
+                                      self.prob_action.value,self.report_type,
+                                      img_name=img_name, img_data=img_data)
+        # Preview
+        if img_name != None:
+            # move to class initialization
+            image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{img_name}'
+            preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
+            preview += "<br>"
+            preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
+            self.prob_alert.text = preview
+        else:
+            self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
         self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
 
     def plan_add(self):
@@ -606,23 +646,53 @@ class Report():
     def progress_add(self):
         if self.exp_time.value not in [None, 'None'," ", ""]:
             data = [self.hdr_type.value, self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value,self.exp_type.value, self.exp_script.value, self.get_time(self.exp_time_end.value), self.exp_focus_trim.value, self.exp_tile.value, self.exp_tile_type.value]
-            self.DESI_Log.add_progress(data)
-            self.exp_alert.text = 'Last Input was for Observation Type *{}* at {}'.format(self.hdr_type.value, self.exp_time.value)
-
-            self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish, self.exp_type, self.exp_script,self.exp_time_end, self.exp_focus_trim, self.exp_tile, self.exp_tile_type])
-
+            # For comments allow image uploads
+            has_image = False
+            if self.exp_comment.value not in [None, ''] and hasattr(self, 'img_upload_comments_os') and self.img_upload_comments_os.filename not in [None,'']:
+                if self.img_upload_comments_os.filename not in [None, '']:
+                    img_data = self.img_upload_comments_os.value.encode('utf-8')
+                    img_name = str(self.img_upload_comments_os.filename)
+                    has_image = True
+                    self.DESI_Log.add_progress(data, img_name = img_name, img_data = img_data)
+                    # move to class initialization
+                    image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{img_name}'
+                    preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
+                    preview += "<br>"
+                    preview += "A comment was added at {}".format(self.exp_time.value)
+                    self.exp_alert.text = preview
+                    self.img_upload_comments_os.filename=None
+            if not has_image:
+                self.DESI_Log.add_progress(data)
+                self.exp_alert.text = 'Last Input was for Observation Type *{}* at {}'.format(self.hdr_type.value, self.exp_time.value)
+            self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish, self.exp_type, 
+                              self.exp_script,self.exp_time_end, self.exp_focus_trim, self.exp_tile, self.exp_tile_type])
         else:
             self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
 
     def comment_add(self):
-
         if self.your_name.value in [None,' ','']:
             self.comment_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
-            self.DESI_Log.add_comment_other(self.get_time(self.exp_time.value), self.exp_comment.value, self.your_name.value)
-            self.comment_alert.text = "A comment was added at {}".format(self.exp_time.value)
-            self.clear_input([self.exp_time, self.exp_comment])
-
+            has_image = False
+            if hasattr(self, 'img_upload_comments'):
+                if self.img_upload_comments.filename not in [None, '']:
+                    img_data = self.img_upload_comments.value.encode('utf-8')
+                    image_name = str(self.img_upload_comments.filename)
+                    has_image = True
+                    self.DESI_Log.upload_image_comments(img_data, self.get_time(self.exp_time.value), self.exp_comment.value,
+                                                        self.your_name.value, image_name)
+                    # move to class initialization
+                    image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{image_name}'
+                    preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
+                    preview += "<br>"
+                    preview += "A comment was added at {}".format(self.exp_time.value)
+                    self.comment_alert.text = preview
+                    self.img_upload_comments.filename=None
+                    self.clear_input([self.exp_time, self.exp_comment])
+            if not has_image:
+                self.DESI_Log.add_comment_other(self.get_time(self.exp_time.value), self.exp_comment.value, self.your_name.value)
+                self.comment_alert.text = "A comment was added at {}".format(self.exp_time.value)
+                self.clear_input([self.exp_time, self.exp_comment])
 
     def add_contributer_list(self):
         cont_list = self.contributer_list.value
@@ -635,12 +705,35 @@ class Report():
         self.clear_input([self.summary])
         self.milestone_alert.text = 'Summary Entered at {}'.format(self.milestone_input.value, now)
 
+    def upload_image(self, attr, old, new):
+        print(f'Local image file upload: {self.img_upload.filename}')
+
+    def upload_image_comments_os(self, attr, old, new):
+        print(f'Local image file upload (OS comments): {self.img_upload_comments_os.filename}')
+
+    def upload_image_comments(self, attr, old, new):
+        print(f'Local image file upload (Other comments): {self.img_upload_comments.filename}')
+
+    def upload_image_problems(self, attr, old, new):
+        print(f'Local image file upload (Other comments): {self.img_upload_problems.filename}')
+
     def image_add(self):
         """Copies image from the input location to the image folder for the nightlog.
         Then calls add_image() from nightlog.py which writes it to the html file
         Then gives preview of image of last image.
         """
         image_loc = self.img_input.value
+        if image_loc in [None, '']:
+            # got a local upload
+            img_data = self.img_upload.value.encode('utf-8')
+            self.DESI_Log.upload_image(img_data, self.img_comment.value, self.img_upload.filename)
+            # move to class initialization
+            image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{self.img_upload.filename}'
+            preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
+            preview += "<br>"
+            preview += "{}".format(self.img_comment.value)
+            self.img_alert.text = preview
+            return
         image_name = os.path.split(image_loc)[1]
         image_type = os.path.splitext(image_name)[1]
         bashCommand1 = "cp {} {}".format(image_loc,self.DESI_Log.image_dir)
@@ -648,6 +741,7 @@ class Report():
         results = subprocess.run(bashCommand1.split(), text=True, stdout=subprocess.PIPE, check=True)
         results = subprocess.run(bashCommand2.split(), text=True, stdout=subprocess.PIPE, check=True)
         self.DESI_Log.add_image(os.path.join(self.DESI_Log.image_dir,image_name), self.img_comment.value)
+        #KH: this is something you need to reconsider. It is bad practice to write into the source code directory
         preview = '<img src="{}_Report/static/images/tmp_img{}" style="width:300px;height:300px;">'.format(self.report_type,image_type)
         preview += "\n"
         preview += "{}".format(self.img_comment.value)
