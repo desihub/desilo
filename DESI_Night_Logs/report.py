@@ -95,7 +95,8 @@ class Report():
         self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=5000)
         self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
         self.exp_btn = Button(label='Add', css_classes=['add_button'])
-        self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
+        self.exp_load_btn = Button(label='Load', css_classes=['add_button'], width=100)
+        #self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
         self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None)
         self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None)
@@ -116,9 +117,9 @@ class Report():
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
         self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
         self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
-        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=3, title="Problem Description*:")
+        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:")
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
-        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=3)
+        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5)
         self.prob_btn = Button(label='Add', css_classes=['add_button'])
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
 
@@ -180,9 +181,10 @@ class Report():
                             self.prob_subtitle,
                             self.prob_inst,
                             self.time_note,
-                            [self.time_title, self.prob_time, self.now_btn, self.now_btn, self.img_upinst2, self.img_upload_problems], 
+                            [self.time_title, self.prob_time, self.now_btn, self.exp_load_btn], 
                             self.prob_alarm,
                             [self.prob_input, self.prob_action],
+                            [self.img_upinst2, self.img_upload_problems],
                             [self.prob_btn],
                             self.prob_alert], width=1000)
 
@@ -200,9 +202,9 @@ class Report():
         p5 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Exptime (sec)', x_axis_type="datetime",tools=plot_tools)
         p6 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Seeing (arcsec)', tools=plot_tools)
 
-        p1.circle(x = 'tel_time',y='mirror_temp',source=self.telem_source,color='orange', legend_label = 'Mirror', size=10, alpha=0.5)
-        p1.circle(x = 'tel_time',y='truss_temp',source=self.telem_source, legend_label = 'Truss', size=10, alpha=0.5)
-        p1.circle(x = 'tel_time',y='air_temp',source=self.telem_source, color='green',legend_label = 'Air', size=10, alpha=0.5)
+        p1.circle(x = 'tel_time',y='mirror_temp',source=self.telem_source,color='orange', size=10, alpha=0.5) #legend_label = 'Mirror', 
+        p1.circle(x = 'tel_time',y='truss_temp',source=self.telem_source, size=10, alpha=0.5) #legend_label = 'Truss', 
+        p1.circle(x = 'tel_time',y='air_temp',source=self.telem_source, color='green', size=10, alpha=0.5) #legend_label = 'Air',
         p1.legend.location = "top_right"
 
         p2.circle(x = 'tower_time',y='humidity',source=self.telem_source, size=10, alpha=0.5)
@@ -668,6 +670,15 @@ class Report():
                               self.exp_script,self.exp_time_end, self.exp_focus_trim, self.exp_tile, self.exp_tile_type])
         else:
             self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
+
+    def check_exposure(self):
+    	#Check if progress has been input with a given timestamp
+    	pass
+
+    def load_exposure(self):
+    	#If timestamp exists, load the info that already exists.
+    	#self.check_exposure()
+    	pass
 
     def comment_add(self):
         if self.your_name.value in [None,' ','']:

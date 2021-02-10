@@ -109,8 +109,6 @@ class OS_Report(Report):
     def exp_tab(self):
         self.exp_subtitle = Div(text="Nightly Progress", css_classes=['subt-style'])
         self.exp_inst = Div(text="Throughout the night record the progress, including comments on Calibrations and Exposures. All exposures are recorded in the eLog, so only enter information that can provide additional information.", width=800, css_classes=['inst-style'])
-        self.hdr_type = Select(title="Observation Type", value='Observation', options=self.header_options)
-        self.hdr_btn = Button(label='Select', css_classes=['add_button'])
 
         self.add_image = TextInput(title="Add Image", placeholder='Pictures/image.png', value=None)
 
@@ -118,41 +116,6 @@ class OS_Report(Report):
         self.exp_time_end = TextInput(title='Time End', placeholder='20:07', value=None)
         self.exp_focus_trim = TextInput(title='Trim from Focus', placeholder='54', value=None)
         self.exp_tile = TextInput(title='Tile Number', placeholder='68001', value=None)
-        self.exp_tile_type = Select(title="Tile Type", value=None, options=['None','QSO','LRG','ELG','BGS','MW'])
-        self.exp_input_layout = layout([])
-
-    def choose_exposure(self):
-        if self.hdr_type.value == 'Focus':
-            self.exp_input_layout = layout([
-                     [self.time_title, self.exp_time, self.now_btn],
-                     [self.exp_exposure_start, self.exp_exposure_finish],
-                     [self.exp_comment],
-                     [self.exp_script],
-                     [self.exp_focus_trim],
-                     [self.exp_btn]])
-        elif self.hdr_type.value in ['Startup','Comment']:
-            self.exp_input_layout = layout([
-                     [self.time_title, self.exp_time, self.now_btn],
-                     [self.exp_comment],
-                     [self.exp_btn]])
-        elif self.hdr_type.value == 'Calibration (Arcs/Twilight)':
-            self.exp_input_layout = layout([
-                     [self.time_title, self.exp_time, self.now_btn],
-                     [self.exp_exposure_start, self.exp_exposure_finish],
-                     [self.exp_comment],
-                     [self.exp_type],
-                     [self.exp_script],
-                     [self.exp_btn]])
-        elif self.hdr_type.value in ['Observation', 'Other Acquisition']:
-            self.exp_input_layout = layout([
-                     [self.time_title, self.exp_time, self.now_btn],
-                     [self.exp_exposure_start, self.exp_exposure_finish],
-                     [self.exp_comment],
-                     [self.exp_tile_type],
-                     [self.exp_tile],
-                     [self.exp_script],
-                     [self.exp_btn]])
-        self.exp_layout.children[6] = self.exp_input_layout
 
     def get_layout(self):
         intro_layout = layout([self.title,
@@ -196,8 +159,11 @@ class OS_Report(Report):
                                 self.exp_inst,
                                 self.time_note,
                                 self.exp_info,
-                                [self.hdr_type, self.hdr_btn],
-                                self.exp_input_layout,
+                                [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn],
+                                [self.exp_exposure_start, self.exp_exposure_finish],
+                                [self.exp_comment],
+                                [self.img_upinst2, self.img_upload_problems],
+                                [self.exp_btn],
                                 self.exp_alert], width=1000)
         exp_tab = Panel(child=self.exp_layout, title="Nightly Progress")
 
@@ -223,11 +189,10 @@ class OS_Report(Report):
 
         self.get_prob_layout()
         self.get_checklist_layout()
-        self.get_img_layout()
         self.get_plots_layout()
         self.check_tab.title = 'OS Checklist'
 
-        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, weather_tab, self.prob_tab, self.check_tab, self.img_tab, self.plot_tab, nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+        self.layout = Tabs(tabs=[intro_tab, plan_tab, milestone_tab, exp_tab, self.prob_tab, weather_tab, self.plot_tab, self.check_tab,  nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
     def run(self):
         self.plan_tab()
@@ -239,7 +204,8 @@ class OS_Report(Report):
         self.init_bt.on_click(self.initialize_log)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.progress_add)
-        self.hdr_btn.on_click(self.choose_exposure)
+        self.exp_load_btn.on_click(self.load_exposure)
+
         self.weather_btn.on_click(self.weather_add)
         self.prob_btn.on_click(self.prob_add)
         #self.nl_btn.on_click(self.current_nl)
