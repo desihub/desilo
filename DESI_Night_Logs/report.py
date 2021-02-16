@@ -56,7 +56,7 @@ class Report():
 
         self.nl_file = None
 
-        self.intro_subtitle = Div(text="Connect to Night Log",css_classes=['subt-style'])
+        self.intro_subtitle = Div(text="Connect to Night Log", css_classes=['subt-style'])
         self.time_note = Div(text="<b> Note: </b> Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time. Either enter the time or hit the <b> Now </b> button if it just occured.", css_classes=['inst-style'])
 
         hostname = socket.gethostname()
@@ -94,9 +94,8 @@ class Report():
         self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
         self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=5000)
         self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
-        self.exp_btn = Button(label='Add', css_classes=['add_button'])
-        self.exp_load_btn = Button(label='Load', css_classes=['add_button'], width=100)
-        #self.exp_type = Select(title="Exposure Type", value = None, options=['None','Zero','Focus','Dark','Arc','FVC','DESI'])
+        self.exp_btn = Button(label='Add/Update', css_classes=['add_button'])
+        self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=50)
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
         self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None)
         self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None)
@@ -106,7 +105,7 @@ class Report():
         self.nl_text = Div(text=" ", css_classes=['inst-style'], width=1000)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)
-        self.exptable_alert = Div(text=" ",css_classes=['alert-style'], width=500)
+        self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
 
         self.checklist = CheckboxGroup(labels=[])
         self.check_time = TextInput(placeholder = '20:07', value=None) #title ='Time in Kitt Peak local time*', 
@@ -117,10 +116,11 @@ class Report():
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
         self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
         self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
-        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:")
+        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:",width=400)
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
-        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5)
-        self.prob_btn = Button(label='Add', css_classes=['add_button'])
+        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5,width=400)
+        self.prob_btn = Button(label='Add/Update', css_classes=['add_button'])
+        self.prob_load_btn = Button(label='Load', css_classes=['connect_button'], width=50)
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
 
         self.img_subtitle = Div(text="Images", css_classes=['subt-style'])
@@ -142,12 +142,14 @@ class Report():
 
         self.plot_subtitle = Div(text="Telemetry Plots", css_classes=['subt-style'])
 
+        self.milestone_time = None
+        self.plan_time = None
+
         self.DESI_Log = None
         self.save_telem_plots = False
 
     def clear_input(self, items):
-        """
-        After submitting something to the log, this will clear the form.
+        """ After submitting something to the log, this will clear the form.
         """
         if isinstance(items, list):
             for item in items:
@@ -181,7 +183,8 @@ class Report():
                             self.prob_subtitle,
                             self.prob_inst,
                             self.time_note,
-                            [self.time_title, self.prob_time, self.now_btn, self.exp_load_btn], 
+                            self.exp_info,
+                            [self.time_title, self.prob_time, self.now_btn, self.prob_load_btn], 
                             self.prob_alarm,
                             [self.prob_input, self.prob_action],
                             [self.img_upinst2, self.img_upload_problems],
@@ -241,28 +244,19 @@ class Report():
                         self.exp_table], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
-    def get_img_layout(self):
-        img_layout = layout([self.title,
-                            self.img_subtitle,
-                            self.img_upinst,
-                            self.img_upload,
-                            self.img_inst,
-                            self.img_input,
-                            self.img_comment,
-                            self.img_btn,
-                            self.img_alert], width=1000)
-        self.img_tab = Panel(child=img_layout, title='Images')
-
-    def short_time(self, str_time):
+    def short_time(self, time, mode):
         """Returns %H%M in whichever time zone selected
         """
-        try:
-            t = datetime.strptime(str_time, "%Y%m%dT%H:%M")
-            zone = self.kp_zone #zones[time_select.active]
-            time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
+        if mode == 'str':
+            try:
+                t = datetime.strptime(time, "%Y%m%dT%H:%M")
+                zone = self.kp_zone #zones[time_select.active]
+                time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
+                return "{}:{}".format(str(time.hour).zfill(2), str(time.minute).zfill(2))
+            except:
+                return str_time
+        if mode == 'dt':
             return "{}:{}".format(str(time.hour).zfill(2), str(time.minute).zfill(2))
-        except:
-            return str_time
 
     def get_time(self, time):
         """Returns strptime with utc. Takes time zone selection
@@ -318,7 +312,7 @@ class Report():
                 self.os_name_1.value = meta_dict['{}_1_first'.format(self.report_type.lower())]+' '+meta_dict['{}_1_last'.format(self.report_type.lower())]
                 self.os_name_2.value = meta_dict['{}_2_first'.format(self.report_type.lower())]+' '+meta_dict['{}_2_last'.format(self.report_type.lower())]
 
-            self.current_header()
+            self.display_current_header()
             #if self.location == 'nersc':
             self.nl_file = os.path.join(self.DESI_Log.root_dir,'nightlog.html')
             # else:
@@ -378,17 +372,17 @@ class Report():
 
         #update_weather_source_data()
         self.connect_txt.text = 'Night Log is Initialized'
-        self.current_header()
+        self.DESI_Log.write_intro()
+        self.display_current_header()
         self.current_nl()
-        days = os.listdir(self.nl_dir)
+        days = [f for f in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir,f))]
         init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
 
-    def current_header(self):
-        self.DESI_Log.write_intro()
-        path = os.path.join(self.DESI_Log.root_dir,"header.html")
-        nl_file = open(path,'r')
+    def display_current_header(self):
+        path = os.path.join(self.DESI_Log.root_dir, "header.html")
+        nl_file = open(path, 'r')
         intro = ''
         for line in nl_file:
             intro =  intro + line + '\n'
@@ -584,7 +578,7 @@ class Report():
         complete = self.checklist.active
         check_time = datetime.now().strftime("%Y%m%dT%H:%M")
         if len(complete) == len(self.checklist.labels):
-            self.DESI_Log.add_to_checklist(check_time, self.check_comment.value, self.report_type)
+            self.DESI_Log.write_checklist([check_time, self.check_comment.value], self.report_type)
             self.check_alert.text = "Checklist last submitted at {}".format(check_time[-5:])
         else:
             self.check_alert.text = "Must complete all tasks before submitting checklist"
@@ -603,12 +597,12 @@ class Report():
             img_data = None
             img_name = None
         if self.report_type == 'Other':
-            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, 
-                                      self.prob_action.value,self.report_type, self.your_name.value,
+            self.DESI_Log.write_problem([self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, 
+                                      self.prob_action.value, self.your_name.value], self.report_type,
                                       img_name=img_name, img_data=img_data)
         else:
-            self.DESI_Log.add_problem(self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, 
-                                      self.prob_action.value,self.report_type,
+            self.DESI_Log.write_problem([self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, 
+                                      self.prob_action.value, None], self.report_type,
                                       img_name=img_name, img_data=img_data)
         # Preview
         if img_name != None:
@@ -622,16 +616,53 @@ class Report():
             self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
         self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
 
+    def plan_add_new(self):
+        self.plan_time = None
+        self.plan_add()
+
+    def milestone_add_new(self):
+        self.milestone_time = None
+        self.milestone_add()
+
     def plan_add(self):
-        self.DESI_Log.add_plan_os([self.plan_order.value, self.plan_input.value])
+        if self.plan_time is None:
+            ts = self.get_time(datetime.now())
+        else: 
+            ts = self.plan_time
+        self.DESI_Log.write_plan([ts, self.plan_input.value])
         self.plan_alert.text = 'Last item input: {}'.format(self.plan_input.value)
         self.clear_input([self.plan_order, self.plan_input])
+        self.plan_time = None
+
+    def plan_load(self):
+        b, item = self.DESI_Log.load_index(self.plan_order.value, 'plan')
+        if b:
+            self.plan_order.value = str(item.index[0])
+            self.plan_input.value = item['Objective'].values[0]
+            self.plan_time = item['Time'].values[0]
+        else:
+            self.plan_alert.text = "That plan item doesn't exist yet"
 
     def milestone_add(self):
-        now = datetime.now()
-        self.DESI_Log.add_milestone_os([self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value])
-        self.milestone_alert.text = 'Last Milestone Entered: {} at {}'.format(self.milestone_input.value, now)
+        if self.milestone_time is None:
+            ts = self.get_time(datetime.now())
+        else:
+            ts = self.milestone_time
+        self.DESI_Log.write_milestone([ts, self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value])
+        self.milestone_alert.text = 'Last Milestone Entered: {}'.format(self.milestone_input.value)
         self.clear_input([self.milestone_input, self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl])
+        self.milestone_time = None
+
+    def milestone_load(self):
+        b, item = self.DESI_Log.load_index(int(self.milestone_load_num.value), 'milestone')
+        if b:
+            self.milestone_input.value = item['Desc'].values[0]
+            self.milestone_exp_start.value = item['Exp_Start'].values[0]
+            self.milestone_exp_end.value = item['Exp_Stop'].values[0]
+            self.milestone_exp_excl.value = item['Exp_Excl'].values[0]
+            self.milestone_time = item['Time'].values[0]
+        else:
+            self.milestone_alert.text = "That milestone index doesn't exist yet"
 
     def weather_add(self):
         """Adds table to Night Log
@@ -642,12 +673,12 @@ class Report():
         data = pd.concat([old_data, new_data])
         data.drop_duplicates(subset=['time'], keep='last',inplace=True)
         self.weather_source.data = data
-        self.DESI_Log.add_weather_os(data)
+        self.DESI_Log.add_weather(data)
         self.clear_input([self.weather_time, self.weather_desc, self.weather_temp, self.weather_wind, self.weather_humidity])
 
     def progress_add(self):
         if self.exp_time.value not in [None, 'None'," ", ""]:
-            data = [self.hdr_type.value, self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value,self.exp_type.value, self.exp_script.value, self.get_time(self.exp_time_end.value), self.exp_focus_trim.value, self.exp_tile.value, self.exp_tile_type.value]
+            data = [self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value]
             # For comments allow image uploads
             has_image = False
             if self.exp_comment.value not in [None, ''] and hasattr(self, 'img_upload_comments_os') and self.img_upload_comments_os.filename not in [None,'']:
@@ -655,7 +686,7 @@ class Report():
                     img_data = self.img_upload_comments_os.value.encode('utf-8')
                     img_name = str(self.img_upload_comments_os.filename)
                     has_image = True
-                    self.DESI_Log.add_progress(data, img_name = img_name, img_data = img_data)
+                    self.DESI_Log.write_os_exp(data, img_name = img_name, img_data = img_data)
                     # move to class initialization
                     image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{img_name}'
                     preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
@@ -664,21 +695,33 @@ class Report():
                     self.exp_alert.text = preview
                     self.img_upload_comments_os.filename=None
             if not has_image:
-                self.DESI_Log.add_progress(data)
-                self.exp_alert.text = 'Last Input was for Observation Type *{}* at {}'.format(self.hdr_type.value, self.exp_time.value)
-            self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish, self.exp_type, 
-                              self.exp_script,self.exp_time_end, self.exp_focus_trim, self.exp_tile, self.exp_tile_type])
+                self.DESI_Log.write_os_exp(data)
+                self.exp_alert.text = 'Last Input was at {}'.format(self.exp_time.value)
+            self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish])
         else:
             self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
 
-    def check_exposure(self):
-    	#Check if progress has been input with a given timestamp
-    	pass
-
     def load_exposure(self):
-    	#If timestamp exists, load the info that already exists.
-    	#self.check_exposure()
-    	pass
+        #Check if progress has been input with a given timestamp
+        _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.exp_time.value), self.report_type, 'exposure')
+
+        if not _exists:
+            self.exp_alert.text = 'This timestamp does not yet have an input'
+        else:
+            self.exp_comment.value = item['Comment'].values[0]
+            self.exp_exposure_start.value = item['Exp_Start'].values[0]
+            self.exp_exposure_finish.value = item['Exp_End'].values[0]
+
+    def load_problem(self):
+        #Check if progress has been input with a given timestamp
+        _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.prob_time.value), self.report_type, 'problem')
+
+        if not _exists:
+            self.prob_alert.text = 'This timestamp does not yet have an input'
+        else:
+            self.prob_input.value = item['Problem'].values[0]
+            self.prob_alarm.value = item['alarm_id'].values[0]
+            self.prob_action.value = item['action'].values[0]
 
     def comment_add(self):
         if self.your_name.value in [None,' ','']:

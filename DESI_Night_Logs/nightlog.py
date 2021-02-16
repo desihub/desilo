@@ -33,19 +33,30 @@ class NightLog(object):
         self.os_dir = os.path.join(self.root_dir,"OperationsScientist")
         self.dqs_dir = os.path.join(self.root_dir,"DataQualityAssessment")
         self.other_dir = os.path.join(self.root_dir,"OtherInput")
-        self.os_startcal_dir = os.path.join(self.os_dir,'StartCal')
-        self.os_obs_dir = os.path.join(self.os_dir,'Observations')
-        self.other_obs_dir = os.path.join(self.other_dir,'Observations')
-        self.dqs_exp_dir=self.dqs_dir+'Exposures/'
-        self.os_pb_dir = os.path.join(self.os_dir,'Problem')
-        self.dqs_pb_dir = os.path.join(self.dqs_dir,'Problem')
-        self.other_pb_dir = os.path.join(self.other_dir,'Problem')
-        self.nightplan_file = os.path.join(self.os_dir,'objectives.pkl')
-        self.milestone_file = os.path.join(self.os_dir,'milestones.pkl')
-        self.os_cl = os.path.join(self.os_dir,'checklist')
-        self.dqs_cl = os.path.join(self.dqs_dir,'checklist')
-        self.exp_file_pkl = os.path.join(self.dqs_dir,'exposures.pkl')
+
+        self.os_pb = os.path.join(self.os_dir,'problems.pkl')
+        self.dqs_pb = os.path.join(self.dqs_dir,'problems.pkl')
+        self.other_pb = os.path.join(self.other_dir,'problems.pkl')
+        self.os_pb_file = os.path.join(self.os_dir,'problems')
+        self.dqs_pb_file = os.path.join(self.dqs_dir,'problems')
+        self.other_pb_file = os.path.join(self.other_dir,'problems')
+
+        self.objectives = os.path.join(self.os_dir,'objectives.pkl')
+        self.objectives_file = os.path.join(self.os_dir,'objectives')
+
+        self.milestone = os.path.join(self.os_dir,'milestones.pkl')
+        self.milestone_file = os.path.join(self.os_dir,'milestones')
+
+        self.os_cl = os.path.join(self.os_dir,'checklist.pkl')
+        self.dqs_cl = os.path.join(self.dqs_dir,'checklist.pkl')
+        self.os_cl_file = os.path.join(self.os_dir,'checklist')
+        self.dqs_cl_file = os.path.join(self.dqs_dir,'checklist')
+
+        self.os_exp = os.path.join(self.os_dir,'exposures.pkl')
+        self.os_exp_file = os.path.join(self.os_dir,'exposures')
+        self.exp_file = os.path.join(self.dqs_dir,'exposures.pkl')
         self.dqs_exp_file = os.path.join(self.dqs_dir,'exposures')
+
         self.weather_file = os.path.join(self.os_dir,'weather.csv')
         self.meta_json = os.path.join(self.root_dir,'nightlog_meta.json')
         self.image_file = os.path.join(self.image_dir, 'image_list')
@@ -55,7 +66,7 @@ class NightLog(object):
         self.explist_file = os.path.join(self.root_dir, 'exposures.csv')
         self.telem_plots_file = os.path.join(self.root_dir, 'telem_plots.png')
 
-        # Set this if you want to allow for replacing lines or not
+        # Set this if you want to allow for replacing lines with a timestamp or not
         self.replace = True
 
         self.utc = TimezoneInfo()
@@ -63,19 +74,18 @@ class NightLog(object):
 
 
     def initializing(self):
+        """ Creates the folders where all the files used to create the Night Log will be containted.
         """
-            Creates the folders where all the files used to create the Night Log will be containted.
-        """
-        for dir_ in [self.os_dir, self.dqs_dir, self.other_dir, self.os_pb_dir, self.dqs_pb_dir, 
-                    self.os_startcal_dir,self.other_pb_dir, self.os_obs_dir, self.other_obs_dir, self.image_dir]:
+        for dir_ in [self.os_dir, self.dqs_dir, self.other_dir, self.image_dir]:
             if not os.path.exists(dir_):
                 os.makedirs(dir_)
 
-        return print("Your obsday is "+self.obsday)
+        return print("Your obsday is {}".format(self.obsday))
 
 
     def check_exists(self):
-
+        """ Checks that paths have been created and the night has been initiated.
+        """
         if not os.path.exists(self.dqs_dir):
             return False
         else:
@@ -84,8 +94,7 @@ class NightLog(object):
 
 
     def get_timestamp(self,strtime):
-        """
-            Generates time stamp for the entry.
+        """ Generates time stamp for the entry.
         """
         time = self.write_time(strtime, kp_only=True)
         time = '{}{}'.format(time[0:2],time[3:])
@@ -113,70 +122,19 @@ class NightLog(object):
         except:
             return time_string
 
-
-    def new_entry_or_replace(self,the_path):
-        """
-            Check whether there is already an entry with the same time stamp, if so file gets replaced, otherwise this is a new entry.
-        """
-
+    def compile_entries(self, the_path, header, file_nl):
         if os.path.exists(the_path):
-            os.remove(the_path)
-        return open(the_path,'a')
-
-
-    def compile_entries(self,the_path,file_nl):
-        if not os.path.exists(the_path):
-            file_nl.write("\n")
-        else :
-            file_nl.write("\n")
-            file_nl.write("\n")
-            entries=sorted(glob.glob(the_path+"/*"))
-            if len(entries) > 0:
-                for e in entries:
-                    tmp_obs_e=open(e,'r')
-                    x = tmp_obs_e.read()
-                    # txt = '%color:{}{}%'.format(type_colors[report],str(x))
-                    # print(txt)
-                    file_nl.write(x)
-                    tmp_obs_e.close()
-                    file_nl.write("\n")
-                    file_nl.write("\n")
-
-    def combine_problem_entries(self, file_nl):
-        tbl = []
-        types = np.array(['OS','DQS','Other'])
-        for i,d in enumerate([self.os_pb_dir, self.dqs_pb_dir, self.other_pb_dir]):
-            if len(os.listdir(d)) > 0:
-                for f in os.listdir(d):
-                    tbl.append([types[i], f[-4:], os.path.join(d,f)])
-        df = pd.DataFrame(tbl, columns=['type','time','file'])
-        df_ = df.sort_values(by='time')
-        for i,row in df_.iterrows():
-            tmp_obs_e=open(row.file,'r')
-            x = tmp_obs_e.read()
-            file_nl.write(x)
-            tmp_obs_e.close()
+            if header is not None:
+                file_nl.write(header)
             file_nl.write("\n")
             file_nl.write("\n")
 
-    def combine_progress_entries(self, file_nl):
-        tbl = []
-        types = np.array(['OS','Other'])
-        for i,d in enumerate([self.os_obs_dir, self.other_obs_dir]):
-            if len(os.listdir(d)) > 0:
-                for f in os.listdir(d):
-                    tbl.append([types[i], f[-4:], os.path.join(d,f)])
-        df = pd.DataFrame(tbl, columns=['type','time','file'])
-        df_ = df.sort_values(by='time')
-        for i,row in df_.iterrows():
-            tmp_obs_e=open(row.file,'r')
-            x = tmp_obs_e.read()
-            file_nl.write(x)
-            tmp_obs_e.close()
-            file_nl.write("\n")
-            file_nl.write("\n")
+            f =  open(the_path, "r") 
+            for line in f:
+                file_nl.write(line)
+                file_nl.write("\n")
 
-
+            f.close()
 
     def get_started_os(self,os_1_firstname,os_1_lastname,os_2_firstname,os_2_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
                         time_sunrise,time_moonrise,time_moonset,illumination): #,weather_conditions
@@ -192,7 +150,7 @@ class NightLog(object):
             json.dump(meta_dict, fp)
 
 
-    def add_dqs_observer(self,dqs_firstname, dqs_lastname):
+    def add_dqs_observer(self, dqs_firstname, dqs_lastname):
         with open(self.meta_json, 'r') as f:
             meta_dict = json.load(f)
             meta_dict['dqs_1'] = dqs_firstname
@@ -207,162 +165,104 @@ class NightLog(object):
         meta_dict = json.load(open(self.meta_json,'r'))
         return meta_dict
 
-    def add_plan_os(self, data_list):
+    def add_checklist(self, data, user):
+        """ Adds time that a checklist was completed. This cannot be edited.
         """
-            Operations Scientist lists the objectives for the night.
-        """
-        objectives = ['Order', 'Objective']
-        if not os.path.exists(self.nightplan_file):
-            df = pd.DataFrame(columns=objectives)
-            df.to_pickle(self.nightplan_file)
-        df = pd.read_pickle(self.nightplan_file)
-        data_df = pd.DataFrame([data_list], columns=objectives)
-
-        df = df.append(data_df)
-        df.to_pickle(self.nightplan_file)
-
-    def add_milestone_os(self, data_list):
-        milestones = ['Desc','Exp_Start','Exp_Stop','Exp_Excl']
-        if not os.path.exists(self.milestone_file):
-            df = pd.DataFrame(columns=milestones)
-            df.to_pickle(self.milestone_file)
-        df = pd.read_pickle(self.milestone_file)
-        data_df = pd.DataFrame([data_list], columns=milestones)
-
-        df = df.append(data_df)
-        df.to_pickle(self.milestone_file)
-
-    def milestone_seq(self, row):
-        text = "* {}".format(row['Desc'])
-        if row['Exp_Start'] not in [None, 'None', " ", ""]:
-            text += "; Exposure(s): {}".format(row['Exp_Start'])
-        if row['Exp_Stop'] not in [None, 'None', " ", ""]:   
-            text += " - {}".format(row['Exp_Stop'])
-        if row['Exp_Excl'] not in [None, 'None', " ", ""]:   
-            text += ", excluding {}".format(row['Exp_Excl'])
-        text += "\n"
-        return text
-
-
-    def add_weather_os(self, data):
-        """Operations Scientist adds information regarding the weather.
-        """
-        data.to_csv(self.weather_file)
-
-    def obs_new_item_os(self,time,header):
-        """
-            Operations Scientist adds new item on the Observing section.
-        """
-
-        the_path=os.path.join(self.os_obs_dir,"observing_{}".format(self.get_timestamp(time)))
-        file=self.new_entry_or_replace(the_path)
-        file.write("h5. "+header+"\n")
-        file.write("\n")
-        file.close()
-
-    def add_progress(self, data_list, img_name=None, img_data=None):
-        """
-        This function calls the correct functions in nightlog.py and provides an interface with the App
-        """
-        data_list = np.array(data_list)
-        data_list[np.where(data_list == None)] = 'None'
-        hdr_type, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type = data_list
-        if hdr_type in ['Focus', 'Startup', 'Calibration (Arcs/Twilight)']:
-            the_path=os.path.join(self.os_startcal_dir,"startup_calibrations_{}".format(self.get_timestamp(exp_time)))
-
-        elif hdr_type in ['Observation', 'Other Acquisition', 'Comment']:
-            the_path=os.path.join(self.os_obs_dir,"observing_{}".format(self.get_timestamp(exp_time)))
-        
-        self.progress_sequence(the_path, exp_time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type, img_name = img_name, img_data = img_data)
-
-    def progress_sequence(self, the_path, time, comment, exp_start, exp_finish, exp_type, exp_script, exp_time_end, exp_focus_trim, exp_tile, exp_tile_type, img_name = None, img_data = None):
-        file=self.new_entry_or_replace(the_path)
-        text = "- {} := ".format(self.write_time(time))
-        if exp_script not in [None, 'None', " ", ""]:
-            text += "script @{}@; ".format(exp_script)
-        if exp_start not in [None, 'None', " ", ""]:
-            text += 'exposure {}; '.format(exp_start)
-        if exp_type not in [None, 'None', " ", ""]:
-            text += '{} sequence; '.format(exp_type)
-        if exp_tile_type not in [None, 'None', " ", ""]:
-            text += '{}; '.format(exp_tile_type)
-        if exp_tile not in [None, 'None', " ", ""]:
-            text += 'tile {}; '.format(exp_tile)
-        if exp_time_end not in [None, 'None', " ", ""]:
-            text += '/n'
-            text += "- {} := ".format(self.write_time(exp_time_end))
-        if exp_finish not in [None, 'None', " ", ""]:
-            text += 'last exp. {}; '.format(exp_finish)
-        if exp_focus_trim not in [None, 'None', " ", ""]:
-            text += 'trim {}; '.format(exp_focus_trim)
-        if comment not in [None, 'None', " ", ""]:
-            text += '{}'.format(comment)
-        text += '\n'
-        file.write(text)
-        # was an image uploaded?
-        if img_name is not None and img_data is not None:
-            # if img_filen is a bytearray we have received an image in base64 string (from local upload)
-            # images are stored in the images directory
-            if isinstance(img_data, bytes):
-                self._upload_and_save_image(img_data, img_name)
-                self._write_image_tag(file, img_name)
-            else:
-                print('ERROR: invalid format for uploading image')
-        file.close()
-
-    def add_to_checklist(self, time, comment, user):
-        """
-        Adds time that a checklist was completed. This cannot be edited.
-        """
+        check_cols = ['Time','Comment']
         if user == 'OS':
             the_path = self.os_cl
         elif user == 'DQS':
             the_path = self.dqs_cl
 
+        df = self.write_pkl(data, check_columns, the_path)
+        return df        
+
+    def write_checklist(self, data, user):
+        df = self.add_checklist(data, user)
+
+        if user == 'OS':
+            the_path = self.os_cl_file
+        elif user == 'DQS':
+            the_path = self.dqs_cl_file
+
         file = open(the_path,'a')
         if not os.path.exists(the_path):
             file.write("{} checklist completed at (Local time):".format(user))
             file.write("\n\n")
-        file.write("* {} - {}".format(self.write_time(time, kp_only=True), comment))
-        file.write("\n")
-        file.write("\n")
+        for index, row in df.iterrows():
+            file.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+            file.write("\n")
+            file.write("\n")
         file.close()
 
-    def prob_seq(self, time, problem, alarm_id, action, user):
-        text = "- {} := ".format(self.write_time(time))
-        if user == 'DQS':
-            text += '*'
-        if user == 'Other':
-            text += '_'
-        if problem not in [None, 'None', " ", ""]:
-            text += "{}".format(problem)
-        if alarm_id not in [None, 'None', " ", ""]:
-            text += '; AlarmID: {}'.format(alarm_id)
-        if action not in [None, 'None', " ", ""]:
-            text += '; Action: {}'.format(action)
-        if user == 'DQS':
-            text += '*'
-        if user == 'Other':
-            text += '_'
-        return text
 
-    def add_problem(self, time, problem, alarm_id, action, user, name=None, img_name=None, img_data=None):
+
+    def add_plan(self, data):
+        """ Operations Scientist lists the objectives for the night.
         """
-            Adds details on a problem encountered.
+        objectives = ['Time', 'Objective']
+
+        df = self.write_pkl(data, objectives, self.objectives)
+        return df 
+
+    def write_plan(self, data):
+        df = self.add_plan(data)
+        file = open(self.objectives_file, 'w')
+
+        for index, row in df.iterrows():
+            file.write("{}. {}".format(index, row['Objective']))
+            file.write("\n\n")
+        file.close()
+
+    def add_milestone(self, data):
+        milestones = ['Time','Desc','Exp_Start','Exp_Stop','Exp_Excl']
+        df = self.write_pkl(data, milestones, self.milestone)
+        return df
+
+    def write_milestone(self, data):
+        df = self.add_milestone(data)
+
+        file = open(self.milestone_file,'w')
+        for index, row in df.iterrows():
+            file.write("* [{}] {}".format(index, row['Desc']))
+            if row['Exp_Start'] not in [None, 'None', " ", ""]:
+                file.write("; Exposure(s): {}".format(row['Exp_Start']))
+            if row['Exp_Stop'] not in [None, 'None', " ", ""]:   
+                file.write(" - {}".format(row['Exp_Stop']))
+            if row['Exp_Excl'] not in [None, 'None', " ", ""]:   
+                file.write(", excluding {}".format(row['Exp_Excl']))
+            file.write("\n")
+        file.close()
+
+
+    def add_weather(self, data):
+        """Operations Scientist adds information regarding the weather.
         """
-        if user == 'Other':
-            the_path = os.path.join(self.other_pb_dir,"problem_{}".format(self.get_timestamp(time)))
-            file = self.new_entry_or_replace(the_path)
-            text = self.prob_seq(time,problem,alarm_id,action, user) + ' ({})\n'.format(name)
-            file.write(text)
-        else:
-            if user == 'OS':
-                the_path=os.path.join(self.os_pb_dir,"problem_{}".format(self.get_timestamp(time)))
-            elif user == 'DQS':
-                the_path=os.path.join(self.dqs_pb_dir,"problem_{}".format(self.get_timestamp(time)))
-            file=self.new_entry_or_replace(the_path)
-            file.write(self.prob_seq(time,problem,alarm_id,action,user) + '\n')
-        # was an image uploaded?
+        data.to_csv(self.weather_file)
+
+    def write_pkl(self, data, cols, filen):
+        # order = time, index
+        if not os.path.exists(filen):
+
+            init_df = pd.DataFrame(columns=cols)
+            init_df.to_pickle(filen)
+
+        data = np.array(data)
+        data[np.where(data == None)] = 'None'
+
+        df = pd.read_pickle(filen)
+        data_df = pd.DataFrame([data], columns=cols)
+        df = df.append(data_df)
+
+        if self.replace:
+            df = df.drop_duplicates(['Time'], keep='last')
+
+        df = df.sort_values(by=['Time'])
+        df.reset_index(inplace=True, drop=True)
+        df.to_pickle(filen)
+        return df
+
+    def write_img(self, file, img_data, img_name):
         if img_name is not None and img_data is not None:
             # if img_filen is a bytearray we have received an image in base64 string (from local upload)
             # images are stored in the images directory
@@ -371,6 +271,53 @@ class NightLog(object):
                 self._write_image_tag(file, img_name)
             else:
                 print('ERROR: invalid format for uploading image')
+
+    def add_problem(self, data, user):
+        """
+            Adds details on a problem encountered.
+        """
+        prob_cols = ['Time', 'Problem', 'alarm_id', 'action', 'name']
+
+        if user == 'Other':
+            file = self.other_pb
+        elif user == 'OS':
+            file = self.os_pb
+        elif user == 'DQS':
+            file = self.dqs_pb
+
+        df = self.write_pkl(data, prob_cols, file)
+        return df
+
+
+    def write_problem(self, data, user, img_name = None, img_data = None):
+        df = self.add_problem(data, user)
+        if user == 'OS':
+            filen = self.os_pb_file
+        if user == 'DQS':
+            filen = self.dqs_pb_file
+        if user == 'Other':
+            filen = self.other_pb_file
+
+        file = open(filen, 'w')
+        for index, row in df.iterrows():  
+            file.write("- {} := ".format(self.write_time(row['Time'])))
+            if user == 'DQS':
+                file.write('*')
+            if user == 'Other':
+                file.write('_')
+            if row['Problem'] not in [None, 'None', " ", ""]:
+                file.write("{}".format(row['Problem']))
+            if row['alarm_id'] not in [None, 'None', " ", ""]:
+                file.write('; AlarmID: {}'.format(row['alarm_id']))
+            if row['action'] not in [None, 'None', " ", ""]:
+                file.write('; Action: {}'.format(row['action']))
+            if user == 'DQS':
+                file.write('*')
+            if user == 'Other':
+                file.write('_')
+            file.write('\n')
+
+        self.write_img(file, img_data, img_name)
         file.close()
 
     def add_comment_other(self, time, comment, name):
@@ -379,28 +326,17 @@ class NightLog(object):
         file.write("- {} := _{}({})_\n".format(self.write_time(time), comment, name))
         file.close()
 
-    def add_dqs_exposure(self, data):
-        self.exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
-        if not os.path.exists(self.exp_file_pkl):
-            init_df = pd.DataFrame(columns=self.exp_columns)
-            init_df.to_pickle(self.exp_file_pkl)
-
-        df = pd.read_pickle(self.exp_file_pkl)
-        data_df = pd.DataFrame([data], columns=self.exp_columns)
-        df = df.append(data_df)
-        if self.replace:
-            df = df.drop_duplicates(['Time'],keep='last')
-        df = df.sort_values(by=['Time'])
-        df.to_pickle(self.exp_file_pkl)
+    def add_dqs_exp(self, data):
+        exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
+        df = self.write_pkl(data, exp_columns, self.dqs_exp)
         return df
 
 
-    def dqs_add_exp(self,data):
-        df = self.add_dqs_exposure(data)
+    def write_dqs_exp(self, data, img_name = None, img_data = None):
+        df = self.add_dqs_exp(data)
 
-        file = open(self.dqs_exp_file,'w')
+        file = open(self.dqs_exp_file, 'w')
         for index, row in df.iterrows():
-
             if row['Exp_Last'] is not None:
                 file.write("- {}:{} := Exp. # {} - {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][3:], row['Exp_Start'], row['Exp_Last'], row['Exp_Type'],row['Quality'],row['Comm']))
             else:
@@ -409,7 +345,63 @@ class NightLog(object):
                 file.write("*observing conditions:* {} \n".format(row['Obs_Comm']))
             if row['Inst_Comm'] not in [None, " ", ""]:
                 file.write("*instrument performance:* {} \n".format(row['Inst_Comm']))
+
+        self.write_img(file, img_data, img_name)
         file.close()
+
+    def add_os_exp(self, data):
+        """
+        This function calls the correct functions in nightlog.py and provides an interface with the App
+        """
+        exp_columns = ['Time','Comment','Exp_Start','Exp_End']
+        df = self.write_pkl(data, exp_columns, self.os_exp)
+        return df 
+
+    def write_os_exp(self, data, img_name = None, img_data = None):
+        df = self.add_os_exp(data)
+        file = open(self.os_exp_file,'w')
+        for index, row in df.iterrows():
+            #Get exposure information (TODO)
+            file.write("- {} := {}\n".format(row['Time'][-5:], row['Comment']))
+
+        self.write_img(file, img_data, img_name)
+        file.close()
+
+    def load_index(self, idx, page):
+        print("hhhhh")
+        if page == 'milestone':
+            the_path = self.milestone
+        if page == 'plan':
+            the_path = self.objectives
+        df = pd.read_pickle(the_path)
+        item = df[df.index == int(idx)]
+        print(item)
+        if len(item) > 0:
+            return True, item
+        else:
+            return False, item
+
+    def load_timestamp(self, time, user, exp_type):
+        if user == 'OS':
+            _dir = self.os_dir
+        elif user == 'DQS':
+            _dir = self.dqs_dir
+        elif user == 'Other':
+            _dir == self.other_dir
+
+        if exp_type == 'exposure':
+            the_path = os.path.join(_dir, 'exposures.pkl')
+        elif exp_type == 'problem':
+            the_path = os.path.join(_dir, 'problems.pkl')
+
+        df = pd.read_pickle(the_path)
+        item = df[df.Time == time]
+
+        if len(item) > 0:
+            return True, item
+        else:
+            return False, item
+
 
     def _upload_and_save_image(self, img_data, img_name):
         import base64
@@ -516,7 +508,6 @@ class NightLog(object):
             os.system(cmd)
         except Exception as e:
             print('Exception calling pandoc (header): %s' % str(e))
-            
 
     def finish_the_night(self):
         """
@@ -524,107 +515,58 @@ class NightLog(object):
         """
         file_nl=open(os.path.join(self.root_dir,'nightlog'),'w')
 
-        meta_dict = json.load(open(self.meta_json,'r'))
-        file_nl.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_first'],meta_dict['os_1_last']))
-        file_nl.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_first'],meta_dict['os_2_last']))
-        file_nl.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
-        file_nl.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
-        file_nl.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
-        file_nl.write("*Ephemerides in local time [UTC]*:\n")
-        file_nl.write("* sunset: {}\n".format(self.write_time(meta_dict['os_sunset'])))
-        file_nl.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['os_end18'])))
-        file_nl.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['os_start18'])))
-        file_nl.write("* sunrise: {}\n".format(self.write_time(meta_dict['os_sunrise'])))
-        file_nl.write("* moonrise: {}\n".format(self.write_time(meta_dict['os_moonrise'])))
-        file_nl.write("* moonset: {}\n".format(self.write_time(meta_dict['os_moonset'])))
-        file_nl.write("* illumination: {}\n".format(meta_dict['os_illumination']))
-        #file_nl.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
+        #Write the meta_html here
+        file_intro=open(os.path.join(self.root_dir,'header'),'r')
+
+        #meta_dict = json.load(open(self.meta_json,'r'))
+        lines = file_intro.readlines()
+        for line in lines:
+            file_nl.write(line)
         file_nl.write("\n")
         file_nl.write("\n")
 
         #Contributers
-        if os.path.exists(self.contributer_file):
-            file_nl.write("h3. Contributers\n")
-            file_nl.write("\n")
-            file_nl.write("\n")
-            f =  open(self.contributer_file, "r") 
-            for line in f:
-                file_nl.write(line)
-                file_nl.write("\n")
-                file_nl.write("\n")
-            f.close()
+        self.compile_entries(self.contributer_file, "h3. Contributers\n", file_nl)
 
         #Night Summary
-        if os.path.exists(self.summary_file):
-            file_nl.write("h3. Night Summary\n")
-            file_nl.write("\n")
-            file_nl.write("\n")
-            f =  open(self.summary_file, "r") 
-            for line in f:
-                file_nl.write(line)
-                file_nl.write("\n")
-                file_nl.write("\n")
-            f.close()
+        self.compile_entries(self.summary_file, "h3. Night Summary\n", file_nl)
 
         #Plan for the night
         file_nl.write("h3. Plan for the night\n")
         file_nl.write("\n")
         file_nl.write("The detailed operations plan for today (obsday "+self.obsday+") can be found at https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan"+self.obsday+".\n")
         file_nl.write("\n")
-        if os.path.exists(self.nightplan_file):
-            file_nl.write("Main items are listed below:\n")
-            file_nl.write("\n")
-            m_entries = pd.read_pickle(self.nightplan_file)
-            for idx, row in m_entries.iterrows():
-                file_nl.write("* {}.\n".format(row['Objective']))
-                file_nl.write("\n")
-                file_nl.write("\n")
-        else:
-            file_nl.write("\n")
-
+        file_nl.write("Main items are listed below:\n")
+        self.compile_entries(self.objectives_file, None, file_nl)
 
         #Milestones/Accomplishments
-        file_nl.write("h3. Milestones and Major Progress")
         file_nl.write("\n")
-        if os.path.exists(self.milestone_file):
-            m_entries = pd.read_pickle(self.milestone_file)
-            for idx, row in m_entries.iterrows():
-                file_nl.write(self.milestone_seq(row))
-                file_nl.write("\n")
-                file_nl.write("\n")
-        else:
-            file_nl.write("\n")
+        file_nl.write("\n")
+        file_nl.write("h3. Milestones and Major Progress\n")
+        file_nl.write("\n")
+        file_nl.write("\n")
+        self.compile_entries(self.milestone_file, None, file_nl)
 
         #Problems
+        file_nl.write("\n")
+        file_nl.write("\n")
         file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
         file_nl.write("\n")
-        file_nl.write("h5. OS, *DQS*, _Other_ \n")
         file_nl.write("\n")
-        self.combine_problem_entries(file_nl)
+        file_nl.write("h5. [OS, *DQS*, _Other_] \n")
+        self.compile_entries(self.os_pb_file, None, file_nl)
+        self.compile_entries(self.dqs_pb_file, None, file_nl)
+        self.compile_entries(self.other_pb_file, None, file_nl)
 
         #Checklists
+        file_nl.write("\n")
+        file_nl.write("\n")
         file_nl.write("h3. Checklists\n")
         file_nl.write("\n")
-        if os.path.exists(self.os_cl):
-            os_cl_entries=open(self.os_cl,'r')
-            lines = os_cl_entries.readlines()
-            for line in lines:
-                file_nl.write(line)
-                file_nl.write("\n")
-                file_nl.write("\n")
-            os_cl_entries.close()
         file_nl.write("\n")
-        if os.path.exists(self.dqs_cl):
-            dqs_cl_entries=open(self.dqs_cl,'r')
-            lines = dqs_cl_entries.readlines()
-            for line in lines:
-                file_nl.write(line)
-                file_nl.write("\n")
-                file_nl.write("\n")
-            dqs_cl_entries.close()
-        file_nl.write("\n")
-        file_nl.write("\n")
-        
+        self.compile_entries(self.os_cl_file, "h5. Observing Scientist", file_nl)
+        self.compile_entries(self.dqs_cl_file, "h5. Data Quality Scientist", file_nl)
+
         #Weather
         file_nl.write("h3. Weather Summary\n")
         file_nl.write("\n")
@@ -641,24 +583,8 @@ class NightLog(object):
         file_nl.write("h3. Details on the Night Progress (local time [UTC])\n")
         file_nl.write("\n")
         file_nl.write("\n")
-        if len(os.listdir(self.os_startcal_dir)) > 0:
-            file_nl.write("h5. Startup and Calibrations \n")
-            self.compile_entries(self.os_startcal_dir,file_nl)
-        else:
-            file_nl.write("\n")
- 
-        file_nl.write("h5. Progress/Exposures (OS, _Other_) \n")
-        self.combine_progress_entries(file_nl)
-        file_nl.write("\n")
-
-        if os.path.exists(self.dqs_exp_file):
-            file_nl.write("h5. Exposure Quality (DQS)\n")
-            file_nl.write("\n")
-            file_nl.write("\n")
-            entries = open(self.dqs_exp_file,'r')
-            for x in entries:
-                file_nl.write(x)
-                file_nl.write("\n")
+        self.compile_entries(self.os_exp_file, "h5. Progress/Exposures (OS))\n", file_nl)
+        self.compile_entries(self.dqs_exp_file, "h5. Exposure Quality (DQS)\n", file_nl)
 
         #Images
         if os.path.exists(self.image_file):

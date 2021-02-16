@@ -68,19 +68,24 @@ class OS_Report(Report):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
         self.plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.", css_classes=['inst-style'], width=1000)
         self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'], width=500)
-        self.plan_order = TextInput(title ='Expected Order:', placeholder='1', value=None)
-        self.plan_input = TextAreaInput(placeholder="description", rows=8, cols=3, title="Describe item of the night plan:",max_length=5000)
-        self.plan_btn = Button(label='Add', css_classes=['add_button'])
+        self.plan_order = TextInput(title ='Plan Index (see Current NL):', placeholder='0', value=None, width=50)
+        self.plan_input = TextAreaInput(placeholder="description", rows=8, cols=3, title="Describe item of the night plan:",max_length=5000, width=800)
+        self.plan_btn = Button(label='Update', css_classes=['add_button'], width=50)
+        self.plan_new_btn = Button(label='Add New', css_classes=['add_button'])
+        self.plan_load_btn = Button(label='Load', css_classes=['connect_button'], width=50)
         self.plan_alert = Div(text=' ', css_classes=['alert-style'])
 
     def milestone_tab(self):
         self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", css_classes=['subt-style'])
         self.milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", css_classes=['inst-style'],width=1000)
-        self.milestone_input = TextAreaInput(placeholder="Description", rows=10, cols=3, max_length=5000)
+        self.milestone_input = TextAreaInput(placeholder="Description", rows=10, cols=3, max_length=5000, width=800)
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None)
         self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', value=None)
-        self.milestone_btn = Button(label='Add Milestone', css_classes=['add_button'])
+        self.milestone_btn = Button(label='Update', css_classes=['add_button'],width=50)
+        self.milestone_new_btn = Button(label='Add New Milestone', css_classes=['add_button'], width=300)
+        self.milestone_load_num = TextInput(title='Milestone Index', placeholder='0', value=None, width=100)
+        self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=50)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
         self.summary = TextAreaInput(rows=6, title='End of Night Summary',max_length=5000)
         self.summary_btn = Button(label='Add Summary', css_classes=['add_button'], width=300)
@@ -138,20 +143,22 @@ class OS_Report(Report):
                             self.plan_subtitle,
                             self.plan_inst,
                             self.plan_txt,
-                            [self.plan_order, self.plan_input],
-                            [self.plan_btn],
+                            [self.plan_input, [self.plan_order, self.plan_load_btn, self.plan_btn]],
+                            [self.plan_new_btn],
                             self.plan_alert], width=1000)
         plan_tab = Panel(child=plan_layout, title="Night Plan")
 
         milestone_layout = layout([self.title,
                                 self.milestone_subtitle,
                                 self.milestone_inst,
-                                self.milestone_input,
+                                [self.milestone_input,[self.milestone_load_num, self.milestone_load_btn, self.milestone_btn]] ,
                                 [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl],
-                                [self.milestone_btn],
+                                [self.milestone_new_btn],
+                                self.milestone_alert,
+                                self.line,
                                 self.summary,
                                 self.summary_btn,
-                                self.milestone_alert], width=1000)
+                                ], width=1000)
         milestone_tab = Panel(child=milestone_layout, title='Milestones')
 
         self.exp_layout = layout(children=[self.title,
@@ -199,12 +206,13 @@ class OS_Report(Report):
         self.milestone_tab()
         self.exp_tab()
         self.weather_tab()
-        self.time_tabs = [None, None, None, self.exp_time, self.weather_time, self.prob_time, None, None]
+        self.time_tabs = [None, None, None, self.exp_time, self.prob_time, self.weather_time, None, None, None]
         self.now_btn.on_click(self.time_is_now)
         self.init_bt.on_click(self.initialize_log)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.progress_add)
         self.exp_load_btn.on_click(self.load_exposure)
+        self.prob_load_btn.on_click(self.load_problem)
 
         self.weather_btn.on_click(self.weather_add)
         self.prob_btn.on_click(self.prob_add)
@@ -212,7 +220,11 @@ class OS_Report(Report):
         self.nl_submit_btn.on_click(self.nl_submit)
         self.check_btn.on_click(self.check_add)
         self.milestone_btn.on_click(self.milestone_add)
+        self.milestone_new_btn.on_click(self.milestone_add_new)
+        self.milestone_load_btn.on_click(self.milestone_load)
         self.plan_btn.on_click(self.plan_add)
+        self.plan_new_btn.on_click(self.plan_add_new)
+        self.plan_load_btn.on_click(self.plan_load)
         self.img_btn.on_click(self.image_add)
         self.contributer_btn.on_click(self.add_contributer_list)
         self.summary_btn.on_click(self.add_summary)
