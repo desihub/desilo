@@ -359,23 +359,26 @@ class NightLog(object):
 
     def write_os_exp(self, data, img_name = None, img_data = None):
         df = self.add_os_exp(data)
+        exp_df = pd.read_csv(self.explist_file)
         file = open(self.os_exp_file,'w')
         for index, row in df.iterrows():
-            #Get exposure information (TODO)
             file.write("- {} := {}\n".format(row['Time'][-5:], row['Comment']))
+            if row['Exp_Start'] is not None:
+                this_exp = exp_df[exp_df.id == int(row['Exp_Start'])]
+                file.write("      Exp: {}, Tile: {}, Exptime: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(this_exp['id'].values[0],
+                       this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['sequence'].values[0],
+                       this_exp['flavor'].values[0],this_exp['program'].values[0]))
 
         self.write_img(file, img_data, img_name)
         file.close()
 
     def load_index(self, idx, page):
-        print("hhhhh")
         if page == 'milestone':
             the_path = self.milestone
         if page == 'plan':
             the_path = self.objectives
         df = pd.read_pickle(the_path)
         item = df[df.index == int(idx)]
-        print(item)
         if len(item) > 0:
             return True, item
         else:

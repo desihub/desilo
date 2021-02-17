@@ -421,7 +421,7 @@ class Report():
             if len(exp_df.date_obs) != 0:
                 time = exp_df.date_obs.dt.tz_convert('US/Arizona')
                 exp_df['date_obs'] = time
-                self.explist_source.data = exp_df[['date_obs','id','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False) 
+                self.explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False) 
                 exp_df = exp_df.sort_values(by='id')
                 exp_df.to_csv(self.DESI_Log.explist_file, index=False)
             else:
@@ -804,7 +804,7 @@ class Report():
 
     def time_is_now(self):
         now = datetime.now().astimezone(tz=self.kp_zone) 
-        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"))
+        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
         tab = self.layout.active
         time_input = self.time_tabs[tab]
 
