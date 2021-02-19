@@ -82,7 +82,7 @@ class Report():
 
         self.date_init = Select(title="Existing Night Logs")
         self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
-        self.now_btn = Button(label='Now', css_classes=['now_button'], width=50)
+        self.now_btn = Button(label='Now', css_classes=['now_button'], width=75)
         days = [d for d in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir, d))]
         init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
         self.date_init.options = list(init_nl_list)
@@ -90,38 +90,7 @@ class Report():
         self.connect_txt = Div(text=' ', css_classes=['alert-style'])
 
         self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
-
-        self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
-        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=5000)
-        self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
-        self.exp_btn = Button(label='Add/Update', css_classes=['add_button'])
-        self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=50)
-        self.exp_alert = Div(text=' ', css_classes=['alert-style'])
-        self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None)
-        self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None)
-
-        self.nl_subtitle = Div(text="Current DESI Night Log: {}".format(self.nl_file), css_classes=['subt-style'])
-        self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
-        self.nl_text = Div(text=" ", css_classes=['inst-style'], width=1000)
-        self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)
-        self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
-
-        self.checklist = CheckboxGroup(labels=[])
-        self.check_time = TextInput(placeholder = '20:07', value=None) #title ='Time in Kitt Peak local time*', 
-        self.check_alert = Div(text=" ", css_classes=['alert-style'])
-        self.check_btn = Button(label='Submit', css_classes=['add_button'])
-        self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
-
-        self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
-        self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
-        self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
-        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:",width=400)
-        self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
-        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5,width=400)
-        self.prob_btn = Button(label='Add/Update', css_classes=['add_button'])
-        self.prob_load_btn = Button(label='Load', css_classes=['connect_button'], width=50)
-        self.prob_alert = Div(text=' ', css_classes=['alert-style'])
 
         self.img_subtitle = Div(text="Images", css_classes=['subt-style'])
         self.img_upinst = Div(text="Include images in the Night Log by uploading a png image from your local computer. Select file, write a comment and click Add", css_classes=['inst-style'], width=1000)
@@ -139,8 +108,6 @@ class Report():
         self.img_comment = TextAreaInput(placeholder='comment about image', rows=8, cols=3, title='Image caption')
         self.img_btn = Button(label='Add', css_classes=['add_button'])
         self.img_alert = Div(text=" ",width=1000)
-
-        self.plot_subtitle = Div(text="Telemetry Plots", css_classes=['subt-style'])
 
         self.milestone_time = None
         self.plan_time = None
@@ -169,6 +136,15 @@ class Report():
         self.intro_tab = Panel(child=intro_layout, title="Initialization")
 
     def get_checklist_layout(self):
+        
+        self.checklist = CheckboxGroup(labels=[])
+        self.check_time = TextInput(placeholder = '20:07', value=None) #title ='Time in Kitt Peak local time*', 
+        self.check_alert = Div(text=" ", css_classes=['alert-style'])
+        self.check_btn = Button(label='Submit', css_classes=['add_button'])
+        self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
+
+        if self.report_type == 'OS':
+            self.checklist.labels = self.os_checklist
         checklist_layout = layout(self.title,
                                 self.check_subtitle,
                                 self.checklist_inst,
@@ -179,6 +155,16 @@ class Report():
         self.check_tab = Panel(child=checklist_layout, title="DQS Checklist")
 
     def get_prob_layout(self):
+        self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
+        self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
+        self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
+        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:",width=400)
+        self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
+        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5,width=400)
+        self.prob_btn = Button(label='Add/Update', css_classes=['add_button'])
+        self.prob_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.prob_alert = Div(text=' ', css_classes=['alert-style'])
+
         prob_layout = layout([self.title,
                             self.prob_subtitle,
                             self.prob_inst,
@@ -193,7 +179,77 @@ class Report():
 
         self.prob_tab = Panel(child=prob_layout, title="Problems")
 
-    def get_plots_layout(self):
+
+    def get_plan_layout(self):
+        self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
+        self.plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.", css_classes=['inst-style'], width=1000)
+        self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'], width=500)
+        self.plan_order = TextInput(title ='Plan Index (see Current NL):', placeholder='0', value=None, width=75)
+        self.plan_input = TextAreaInput(placeholder="description", rows=5, cols=3, title="Describe item of the night plan:",max_length=5000, width=800)
+        self.plan_btn = Button(label='Update', css_classes=['add_button'], width=75)
+        self.plan_new_btn = Button(label='Add New', css_classes=['add_button'])
+        self.plan_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.plan_alert = Div(text=' ', css_classes=['alert-style'])
+
+        plan_layout = layout([self.title,
+                    self.plan_subtitle,
+                    self.plan_inst,
+                    self.plan_txt,
+                    [self.plan_input, [self.plan_order, self.plan_load_btn, self.plan_btn]],
+                    [self.plan_new_btn],
+                    self.plan_alert], width=1000)
+        self.plan_tab = Panel(child=plan_layout, title="Night Plan")
+
+    def get_milestone_layout(self):
+        self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", css_classes=['subt-style'])
+        self.milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", css_classes=['inst-style'],width=1000)
+        self.milestone_input = TextAreaInput(placeholder="Description", title="Describe a Milestone from the night corresponding to items in the plan", rows=5, cols=3, max_length=5000, width=800)
+        self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None, width=200)
+        self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None, width=200)
+        self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', value=None, width=200)
+        self.milestone_btn = Button(label='Update', css_classes=['add_button'],width=75)
+        self.milestone_new_btn = Button(label='Add New Milestone', css_classes=['add_button'], width=300)
+        self.milestone_load_num = TextInput(title='Milestone Index', placeholder='0', value=None, width=75)
+        self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
+        self.summary = TextAreaInput(rows=10, title='End of Night Summary',max_length=5000)
+        self.summary_btn = Button(label='Add Summary', css_classes=['add_button'], width=300)
+
+        milestone_layout = layout([self.title,
+                        self.milestone_subtitle,
+                        self.milestone_inst,
+                        [self.milestone_input,[self.milestone_load_num, self.milestone_load_btn, self.milestone_btn]] ,
+                        [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl],
+                        [self.milestone_new_btn],
+                        self.milestone_alert,
+                        self.line,
+                        self.summary,
+                        self.summary_btn,
+                        ], width=1000)
+        self.milestone_tab = Panel(child=milestone_layout, title='Milestones')
+
+
+    def get_weather_layout(self):
+        data = pd.DataFrame(columns = ['Time','desc','temp','wind','humidity','seeing','tput','skylevel'])
+        self.weather_source = ColumnDataSource(data)
+
+        self.weather_subtitle = Div(text="Observing Conditions", css_classes=['subt-style'])
+
+        obs_columns = [TableColumn(field='Time', title='Time (UTC)', width=50),
+                   TableColumn(field='desc', title='Description', width=150),
+                   TableColumn(field='temp', title='Temperature (C)', width=75),
+                   TableColumn(field='wind', title='Wind Speed (mph)', width=75),
+                   TableColumn(field='humidity', title='Humidity (%)', width=50),
+                   TableColumn(field='seeing', title='Seeing (arcsec)', width=50),
+                   TableColumn(field='tput', title='Throughput', width=50),
+                   TableColumn(field='skylevel', title='Sky Level', width=50)] #, formatter=self.datefmt
+
+        self.weather_table = DataTable(source=self.weather_source, columns=obs_columns, width=1000)
+        self.weather_inst = Div(text="Every hour include a description of the weather and any other relevant information, as well as fill in all the fields below.  Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
+        self.weather_desc = TextInput(title='Weather Description', placeholder='description', value=None, width=300)
+        self.weather_btn = Button(label='Add Weather Description', css_classes=['add_button'], width=100)
+        self.weather_alert = Div(text=' ', css_classes=['alert-style'])
+
         telem_data = pd.DataFrame(columns = ['tel_time','tower_time','exp_time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing'])
         self.telem_source = ColumnDataSource(telem_data)
 
@@ -217,31 +273,78 @@ class Report():
 
         p6.circle(x = 'exp',y='seeing',source=self.telem_source, size=10, alpha=0.5)
 
-        plot_layout = layout([self.title,
-                        self.plot_subtitle,
+        weather_layout = layout([self.title,
+                        self.weather_subtitle,
+                        self.weather_inst,
+                        self.time_note,
+                        [self.time_title], 
+                        [self.weather_desc, self.weather_btn],
+                        self.weather_alert,
+                        self.weather_table,
                         p6,p1,p2,p3,p4,p5], width=1000)
-        self.plot_tab = Panel(child=plot_layout, title="Telemetry Plots")
+        self.weather_tab = Panel(child=weather_layout, title="Observing Conditions")
+
+    def get_os_exp_layout(self):
+        self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
+        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=5000)
+        self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
+        self.exp_btn = Button(label='Add/Update', css_classes=['add_button'])
+        self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.exp_alert = Div(text=' ', css_classes=['alert-style'])
+        self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None, width=200)
+        self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None, width=200)
+
+        self.exp_subtitle = Div(text="Nightly Progress", css_classes=['subt-style'])
+        self.exp_inst = Div(text="Throughout the night record the progress, including comments on Calibrations and Exposures. All exposures are recorded in the eLog, so only enter information that can provide additional information.", width=800, css_classes=['inst-style'])
+
+        self.add_image = TextInput(title="Add Image", placeholder='Pictures/image.png', value=None)
+
+        self.exp_script = TextInput(title='Script Name', placeholder='dithering.json', value=None)
+        self.exp_time_end = TextInput(title='Time End', placeholder='20:07', value=None)
+        self.exp_focus_trim = TextInput(title='Trim from Focus', placeholder='54', value=None)
+        self.exp_tile = TextInput(title='Tile Number', placeholder='68001', value=None)
+
+        self.exp_layout = layout(children=[self.title,
+                        self.exp_subtitle,
+                        self.exp_inst,
+                        self.time_note,
+                        self.exp_info,
+                        [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn],
+                        [self.exp_exposure_start, self.exp_exposure_finish],
+                        [self.exp_comment],
+                        [self.img_upinst2, self.img_upload_problems],
+                        [self.exp_btn],
+                        self.exp_alert], width=1000)
+        self.exp_tab = Panel(child=self.exp_layout, title="Nightly Progress")
 
 
     def get_nl_layout(self):
+        self.nl_subtitle = Div(text="Current DESI Night Log: {}".format(self.nl_file), css_classes=['subt-style'])
+        self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
+        self.nl_text = Div(text=" ", css_classes=['inst-style'], width=1000)
+        self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
+        
+        self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
+
         exp_data = pd.DataFrame(columns = ['date_obs','id','program','sequence','flavor','exptime'])
         self.explist_source = ColumnDataSource(exp_data)
 
-        columns = [TableColumn(field='date_obs', title='Time (UTC)', width=50, formatter=self.datefmt),
+        exp_columns = [TableColumn(field='date_obs', title='Time (UTC)', width=50, formatter=self.datefmt),
                    TableColumn(field='id', title='Exposure', width=50),
                    TableColumn(field='sequence', title='Sequence', width=100),
                    TableColumn(field='flavor', title='Flavor', width=50),
                    TableColumn(field='exptime', title='Exptime', width=50),
                    TableColumn(field='program', title='Program', width=300)]
 
-        self.exp_table = DataTable(source=self.explist_source, columns=columns, width=1000)
+        self.exp_table = DataTable(source=self.explist_source, columns=exp_columns, width=1000)
 
         nl_layout = layout([self.title,
                         self.nl_subtitle,
                         self.nl_alert,
                         self.nl_text,
                         self.exptable_alert,
-                        self.exp_table], width=1000)
+                        self.exp_table,
+                        self.nl_submit_btn], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
     def short_time(self, time, mode):
@@ -324,21 +427,12 @@ class Report():
                 self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
                 self.LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
                 self.OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
-                try:
-                    self.weather_source.data = new_data
-                    new_data = pd.read_csv(self.DESI_Log.weather_file)
-                    new_data = new_data[['time','desc','temp','wind','humidity']]
-                except:
-                    pass
                 if os.path.exists(self.DESI_Log.contributer_file):
                     cont_txt = ''
                     f =  open(self.DESI_Log.contributer_file, "r")
                     for line in f:
                         cont_txt += line
                     self.contributer_list.value = cont_txt
-                if os.path.exists(self.DESI_Log.weather_file):
-                    data = pd.read_csv(self.DESI_Log.weather_file)[['time','desc','temp','wind','humidity']]
-                    self.weather_source.data = data
             self.current_nl()
 
         else:
@@ -403,6 +497,7 @@ class Report():
             self.nl_alert.text = 'Last Updated on this page: {}'.format(now)
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
             self.get_exp_list()
+            self.get_weather()
             self.get_seeing()
             try:
                 self.make_telem_plots()
@@ -428,6 +523,13 @@ class Report():
                 self.exptable_alert.text = f'No exposures available for night {self.night}'
         else:
             self.exptable_alert.text = 'Cannot connect to Exposure Data Base'
+
+    def get_weather(self):
+        if os.path.exists(self.DESI_Log.weather):
+            obs_df = pd.read_pickle(self.DESI_Log.weather)
+            self.weather_source.data = obs_df.sort_values(by='Time')
+        else:
+            pass
 
     def get_seeing(self):
         #self.seeing_df = pd.DataFrame()
@@ -482,6 +584,7 @@ class Report():
         telem_data.mirror_temp = tel_df.mirror_temp
         telem_data.truss_temp = tel_df.truss_temp
         telem_data.air_temp = tel_df.air_temp
+        telem_data.temp = tower_df.temperature
         telem_data.humidity = tower_df.humidity
         telem_data.wind_speed = tower_df.wind_speed
         telem_data.airmass = exp_df.airmass
@@ -509,11 +612,11 @@ class Report():
             ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')    
             ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.truss_temp, s=5, label='truss temp')  
             ax2.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.air_temp, s=5, label='air temp') 
-            ax2.set_ylabel("Temperature (C)")
+            ax2.set_ylabel("Telescop Temperature (C)")
             ax2.legend()
             ax2.grid(True)
             ax2.tick_params(labelbottom=False)
-        
+
             ax3 = fig.add_subplot(6,1,3, sharex = ax2)
             ax3.scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.humidity, s=5, label='humidity') 
             ax3.set_ylabel("Humidity %")
@@ -667,14 +770,29 @@ class Report():
     def weather_add(self):
         """Adds table to Night Log
         """
-        new_data = pd.DataFrame([[self.weather_time.value, self.weather_desc.value, self.weather_temp.value, self.weather_wind.value, self.weather_humidity.value]],
-                                columns = ['time','desc','temp','wind','humidity'])
-        old_data = pd.DataFrame(self.weather_source.data)[['time','desc','temp','wind','humidity']]
-        data = pd.concat([old_data, new_data])
-        data.drop_duplicates(subset=['time'], keep='last',inplace=True)
-        self.weather_source.data = data
-        self.DESI_Log.add_weather(data)
-        self.clear_input([self.weather_time, self.weather_desc, self.weather_temp, self.weather_wind, self.weather_humidity])
+        if self.location == 'kpno':
+            self.make_telem_plots()
+            telem_df = pd.DataFrame(self.telem_source.data)
+            this_data = telem_df.iloc[-1]
+            time = this_data.tel_time
+            desc = self.weather_desc.value
+            temp = this_data.temp
+            wind = this_data.wind
+            humidity = this_data.humidity
+            seeing = this_data.seeing
+            #tput = this_data.tput
+            #skylevel = this_data.skylevel
+            data = [time, desc, temp, wind, humidity, seeing, None, None]
+            df = self.DESI_Log.write_weather(data)
+        else:
+            now = datetime.now().astimezone(tz=self.kp_zone) 
+            time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
+            data = [time, self.weather_desc.value, None, None, None, None, None, None]
+            df = self.DESI_Log.write_weather(data)
+            self.weather_alert.text = 'Not connected to the telemetry DB. Only weather description will be recorded.'
+
+        self.clear_input([self.weather_desc])
+        self.get_weather()
 
     def progress_add(self):
         if self.exp_time.value not in [None, 'None'," ", ""]:

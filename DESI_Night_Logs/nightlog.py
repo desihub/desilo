@@ -57,7 +57,9 @@ class NightLog(object):
         self.exp_file = os.path.join(self.dqs_dir,'exposures.pkl')
         self.dqs_exp_file = os.path.join(self.dqs_dir,'exposures')
 
-        self.weather_file = os.path.join(self.os_dir,'weather.csv')
+        self.weather = os.path.join(self.os_dir,'weather.pkl')
+        self.weather_file = os.path.join(self.os_dir,'weather')
+
         self.meta_json = os.path.join(self.root_dir,'nightlog_meta.json')
         self.image_file = os.path.join(self.image_dir, 'image_list')
         self.upload_image_file = os.path.join(self.image_dir, 'upload_image_list')
@@ -196,31 +198,19 @@ class NightLog(object):
         file.close()
 
 
-
-    def add_plan(self, data):
-        """ Operations Scientist lists the objectives for the night.
-        """
-        objectives = ['Time', 'Objective']
-
-        df = self.write_pkl(data, objectives, self.objectives)
-        return df 
-
     def write_plan(self, data):
-        df = self.add_plan(data)
-        file = open(self.objectives_file, 'w')
+        objectives = ['Time', 'Objective']
+        df = self.write_pkl(data, objectives, self.objectives)
 
+        file = open(self.objectives_file, 'w')
         for index, row in df.iterrows():
-            file.write("{}. {}".format(index, row['Objective']))
+            file.write("* [{}] {}".format(index, row['Objective']))
             file.write("\n\n")
         file.close()
 
-    def add_milestone(self, data):
+    def write_milestone(self, data):
         milestones = ['Time','Desc','Exp_Start','Exp_Stop','Exp_Excl']
         df = self.write_pkl(data, milestones, self.milestone)
-        return df
-
-    def write_milestone(self, data):
-        df = self.add_milestone(data)
 
         file = open(self.milestone_file,'w')
         for index, row in df.iterrows():
@@ -235,10 +225,20 @@ class NightLog(object):
         file.close()
 
 
-    def add_weather(self, data):
+    def write_weather(self, data):
         """Operations Scientist adds information regarding the weather.
         """
-        data.to_csv(self.weather_file)
+        obs_cols = ['Time','desc','temp','wind','humidity','seeing','tput','skylevel']
+
+        df = self.write_pkl(data, obs_cols, self.weather)
+
+        file = open(self.weather_file,'w')
+        for index, row in df.iterrows():
+            file.write("- {} := {}".format(row['Time'], row['desc']))
+            file.write(f"; Temp: {row['temp']}, Wind Speed: {row['wind']}, Humidity: {row['humidity']}")
+            file.write(f", Seeing: {row['seeing']}, Tput: {row['tput']}, Sky: {row['skylevel']}")
+            file.write("\n")
+        file.close()
 
     def write_pkl(self, data, cols, filen):
         # order = time, index
@@ -326,14 +326,10 @@ class NightLog(object):
         file.write("- {} := _{}({})_\n".format(self.write_time(time), comment, name))
         file.close()
 
-    def add_dqs_exp(self, data):
-        exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
-        df = self.write_pkl(data, exp_columns, self.dqs_exp)
-        return df
-
 
     def write_dqs_exp(self, data, img_name = None, img_data = None):
-        df = self.add_dqs_exp(data)
+        exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
+        df = self.write_pkl(data, exp_columns, self.dqs_exp)
 
         file = open(self.dqs_exp_file, 'w')
         for index, row in df.iterrows():
@@ -349,25 +345,28 @@ class NightLog(object):
         self.write_img(file, img_data, img_name)
         file.close()
 
-    def add_os_exp(self, data):
-        """
-        This function calls the correct functions in nightlog.py and provides an interface with the App
-        """
-        exp_columns = ['Time','Comment','Exp_Start','Exp_End']
-        df = self.write_pkl(data, exp_columns, self.os_exp)
-        return df 
 
     def write_os_exp(self, data, img_name = None, img_data = None):
-        df = self.add_os_exp(data)
-        exp_df = pd.read_csv(self.explist_file)
+        
+        if os.path.exists(self.explist_file):
+            exp_df = pd.read_csv(self.explist_file)
+
+        exp_columns = ['Time','Comment','Exp_Start','Exp_End']
+        df = self.write_pkl(data, exp_columns, self.os_exp)
         file = open(self.os_exp_file,'w')
         for index, row in df.iterrows():
             file.write("- {} := {}\n".format(row['Time'][-5:], row['Comment']))
             if row['Exp_Start'] is not None:
-                this_exp = exp_df[exp_df.id == int(row['Exp_Start'])]
-                file.write("      Exp: {}, Tile: {}, Exptime: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(this_exp['id'].values[0],
-                       this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['sequence'].values[0],
-                       this_exp['flavor'].values[0],this_exp['program'].values[0]))
+                try:
+                    this_exp = exp_df[exp_df.id == int(row['Exp_Start'])]
+                    file.write("Exp: {}, Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(this_exp['id'].values[0],
+                           this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
+                           this_exp['flavor'].values[0],this_exp['program'].values[0]))
+                except:
+                    if row['Exp_End'] is not None:
+                        file.write("Exps: {}-{}\n".format(row['Exp_Start'], row['Exp_End']))
+                    else:
+                        file.write("Exp: {}\n".format(row['Exp_Start']))
 
         self.write_img(file, img_data, img_name)
         file.close()
@@ -571,16 +570,10 @@ class NightLog(object):
         self.compile_entries(self.dqs_cl_file, "h5. Data Quality Scientist", file_nl)
 
         #Weather
-        file_nl.write("h3. Weather Summary\n")
+        self.compile_entries(self.weather_file, "h3. Observing Conditions\n", file_nl)
         file_nl.write("\n")
-        if os.path.exists(self.weather_file):
-            data = pd.read_csv(self.weather_file)
-            for index, row in data.iterrows():
-                if isinstance(row['desc'], str):
-                    file_nl.write("- {} := {}; Temp: {}, Wind: {}, Humidity: {}\n".format(str(row['time']),row['desc'],str(row['temp']),str(row['wind']),row['humidity']))
-                    file_nl.write("\n")
-                    file_nl.write("\n")
         file_nl.write("\n")
+
 
         #Nightly Progress
         file_nl.write("h3. Details on the Night Progress (local time [UTC])\n")
