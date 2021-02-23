@@ -112,7 +112,9 @@ class NightLog(object):
                 return  str(int(time) - 1200)
 
     def write_time(self, time_string, kp_only=False):
+        print(time_string)
         try:
+            print('here')
             t = datetime.strptime(time_string, "%Y%m%dT%H:%M")
             kp_time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = self.kp_zone)
             utc_time = kp_time.astimezone(self.utc)
@@ -167,20 +169,14 @@ class NightLog(object):
         meta_dict = json.load(open(self.meta_json,'r'))
         return meta_dict
 
-    def add_checklist(self, data, user):
-        """ Adds time that a checklist was completed. This cannot be edited.
-        """
+    def write_checklist(self, data, user):
         check_cols = ['Time','Comment']
         if user == 'OS':
             the_path = self.os_cl
         elif user == 'DQS':
             the_path = self.dqs_cl
 
-        df = self.write_pkl(data, check_columns, the_path)
-        return df        
-
-    def write_checklist(self, data, user):
-        df = self.add_checklist(data, user)
+        df = self.write_pkl(data, check_cols, the_path)
 
         if user == 'OS':
             the_path = self.os_cl_file
@@ -229,12 +225,13 @@ class NightLog(object):
         """Operations Scientist adds information regarding the weather.
         """
         obs_cols = ['Time','desc','temp','wind','humidity','seeing','tput','skylevel']
-
         df = self.write_pkl(data, obs_cols, self.weather)
 
         file = open(self.weather_file,'w')
         for index, row in df.iterrows():
-            file.write("- {} := {}".format(row['Time'], row['desc']))
+            print(row['Time'])
+            print(self.write_time(row['Time']))
+            file.write("- {} := {}".format(self.write_time(row['Time']), row['desc']))
             file.write(f"; Temp: {row['temp']}, Wind Speed: {row['wind']}, Humidity: {row['humidity']}")
             file.write(f", Seeing: {row['seeing']}, Tput: {row['tput']}, Sky: {row['skylevel']}")
             file.write("\n")
@@ -248,7 +245,7 @@ class NightLog(object):
             init_df.to_pickle(filen)
 
         data = np.array(data)
-        data[np.where(data == None)] = 'None'
+        #data[np.where(data == None)] = 'None'
 
         df = pd.read_pickle(filen)
         data_df = pd.DataFrame([data], columns=cols)
@@ -288,7 +285,6 @@ class NightLog(object):
         df = self.write_pkl(data, prob_cols, file)
         return df
 
-
     def write_problem(self, data, user, img_name = None, img_data = None):
         df = self.add_problem(data, user)
         if user == 'OS':
@@ -326,7 +322,6 @@ class NightLog(object):
         file.write("- {} := _{}({})_\n".format(self.write_time(time), comment, name))
         file.close()
 
-
     def write_dqs_exp(self, data, img_name = None, img_data = None):
         exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
         df = self.write_pkl(data, exp_columns, self.dqs_exp)
@@ -355,11 +350,11 @@ class NightLog(object):
         df = self.write_pkl(data, exp_columns, self.os_exp)
         file = open(self.os_exp_file,'w')
         for index, row in df.iterrows():
-            file.write("- {} := {}\n".format(row['Time'][-5:], row['Comment']))
+            file.write("- {} := {}".format(self.write_time(row['Time']), row['Comment']))
             if row['Exp_Start'] is not None:
                 try:
                     this_exp = exp_df[exp_df.id == int(row['Exp_Start'])]
-                    file.write("Exp: {}, Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(this_exp['id'].values[0],
+                    file.write("; Exp: {}, Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(this_exp['id'].values[0],
                            this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
                            this_exp['flavor'].values[0],this_exp['program'].values[0]))
                 except:
@@ -367,6 +362,8 @@ class NightLog(object):
                         file.write("Exps: {}-{}\n".format(row['Exp_Start'], row['Exp_End']))
                     else:
                         file.write("Exp: {}\n".format(row['Exp_Start']))
+            else:
+                file.write("\n")
 
         self.write_img(file, img_data, img_name)
         file.close()

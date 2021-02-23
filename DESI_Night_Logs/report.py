@@ -235,7 +235,7 @@ class Report():
 
         self.weather_subtitle = Div(text="Observing Conditions", css_classes=['subt-style'])
 
-        obs_columns = [TableColumn(field='Time', title='Time (UTC)', width=50),
+        obs_columns = [TableColumn(field='Time', title='Time (UTC)', width=50, formatter=self.datefmt),
                    TableColumn(field='desc', title='Description', width=150),
                    TableColumn(field='temp', title='Temperature (C)', width=75),
                    TableColumn(field='wind', title='Wind Speed (mph)', width=75),
@@ -246,7 +246,7 @@ class Report():
 
         self.weather_table = DataTable(source=self.weather_source, columns=obs_columns, width=1000)
         self.weather_inst = Div(text="Every hour include a description of the weather and any other relevant information, as well as fill in all the fields below.  Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
-        self.weather_desc = TextInput(title='Weather Description', placeholder='description', value=None, width=300)
+        self.weather_desc = TextInput(title='Weather Description', placeholder='description', value=None, width=500)
         self.weather_btn = Button(label='Add Weather Description', css_classes=['add_button'], width=100)
         self.weather_alert = Div(text=' ', css_classes=['alert-style'])
 
@@ -389,17 +389,20 @@ class Report():
         dt = datetime.combine(d,time)
         return dt.strftime("%Y%m%dT%H:%M")
 
-    def connect_log(self):
-        """
-        Initialize Night Log with Input Date
-        """
+    def get_night(self):
         try:
             date = datetime.strptime(self.date_init.value, '%Y%m%d')
         except:
             date = datetime.now()
-
         self.night = str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
         self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
+
+    def connect_log(self):
+        """
+        Initialize Night Log with Input Date
+        """
+
+        self.get_night()
         exists = self.DESI_Log.check_exists()
 
         
@@ -423,7 +426,7 @@ class Report():
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
             if self.report_type == 'OS':
-                plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}{}{}".format(date.year,str(date.month).zfill(2),str(date.day).zfill(2))
+                plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}".format(self.night)
                 self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
                 self.LO.value = meta_dict['os_lo_1']+' '+meta_dict['os_lo_last']
                 self.OA.value = meta_dict['os_oa_1']+' '+meta_dict['os_oa_last']
@@ -444,7 +447,7 @@ class Report():
         """
 
         date = datetime.now()
-
+        self.get_night()
         LO_firstname, LO_lastname = self.LO.value.split(' ')[0], ' '.join(self.LO.value.split(' ')[1:])
         OA_firstname, OA_lastname = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
         os_1_firstname, os_1_lastname = self.os_name_1.value.split(' ')[0], ' '.join(self.os_name_1.value.split(' ')[1:])
@@ -459,7 +462,6 @@ class Report():
         dusk_18_deg = self.get_strftime(eph['dusk_astronomical'])
         dawn_18_deg = self.get_strftime(eph['dawn_astronomical'])
 
-        self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
         self.DESI_Log.initializing()
         self.DESI_Log.get_started_os(os_1_firstname,os_1_lastname,os_2_firstname,os_2_lastname,LO_firstname,LO_lastname,
             OA_firstname,OA_lastname,time_sunset,dusk_18_deg,dawn_18_deg,time_sunrise,time_moonrise,time_moonset,illumination)
@@ -569,14 +571,14 @@ class Report():
         plt.close(figure)
 
     def make_telem_plots(self):
-        start_utc = '{} {}'.format(int(self.night)+1, '00:00:00')
+        start_utc = '{} {}'.format(int(self.night), '13:00:00')
         end_utc = '{} {}'.format(int(self.night)+1, '13:00:00')
         tel_df  = pd.read_sql_query(f"SELECT * FROM environmentmonitor_telescope WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn)
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
         tower_df = pd.read_sql_query(f"SELECT * FROM environmentmonitor_tower WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn) 
 
         #self.get_seeing()
-        telem_data = pd.DataFrame(columns = ['tel_time','tower_time','exp_time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing'])
+        telem_data = pd.DataFrame(columns = ['tel_time','tower_time','exp_time','exp','mirror_temp','truss_temp','air_temp','temp','humidity','wind_speed','airmass','exptime','seeing'])
         telem_data.tel_time = tel_df.time_recorded.dt.tz_convert('US/Arizona')
         telem_data.tower_time = tower_df.time_recorded.dt.tz_convert('US/Arizona')
         telem_data.exp_time = exp_df.date_obs.dt.tz_convert('US/Arizona')
@@ -777,7 +779,7 @@ class Report():
             time = this_data.tel_time
             desc = self.weather_desc.value
             temp = this_data.temp
-            wind = this_data.wind
+            wind = this_data.wind_speed
             humidity = this_data.humidity
             seeing = this_data.seeing
             #tput = this_data.tput
