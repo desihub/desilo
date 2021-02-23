@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from bokeh.io import curdoc  # , output_file, save
-from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup)
+from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup, DateFormatter)
 from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs, FileInput
@@ -48,6 +48,7 @@ class Report():
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
         self.zones = [self.utc, self.kp_zone]
         self.datefmt = DateFormatter(format="%m/%d/%Y %H:%M:%S")
+        self.timefmt = DateFormatter(format="%m/%d %H:%M")
 
         self.inst_style = {'font-size':'150%'}
         self.subt_style = {'font-size':'200%','font-style':'bold'}
@@ -235,14 +236,14 @@ class Report():
 
         self.weather_subtitle = Div(text="Observing Conditions", css_classes=['subt-style'])
 
-        obs_columns = [TableColumn(field='Time', title='Time (UTC)', width=50, formatter=self.datefmt),
+        obs_columns = [TableColumn(field='Time', title='Time (UTC)', width=50, formatter=self.timefmt),
                    TableColumn(field='desc', title='Description', width=150),
                    TableColumn(field='temp', title='Temperature (C)', width=75),
                    TableColumn(field='wind', title='Wind Speed (mph)', width=75),
                    TableColumn(field='humidity', title='Humidity (%)', width=50),
                    TableColumn(field='seeing', title='Seeing (arcsec)', width=50),
                    TableColumn(field='tput', title='Throughput', width=50),
-                   TableColumn(field='skylevel', title='Sky Level', width=50)] #, formatter=self.datefmt
+                   TableColumn(field='skylevel', title='Sky Level', width=50)] #, 
 
         self.weather_table = DataTable(source=self.weather_source, columns=obs_columns, width=1000)
         self.weather_inst = Div(text="Every hour include a description of the weather and any other relevant information, as well as fill in all the fields below.  Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
@@ -364,7 +365,7 @@ class Report():
     def get_time(self, time):
         """Returns strptime with utc. Takes time zone selection
         """
-        date = self.date_init.value
+        date = self.night
         zone = self.kp_zone #zones[time_select.active]
         try:
             t = datetime.strptime(date+":"+time,'%Y%m%d:%H%M')
@@ -375,7 +376,8 @@ class Report():
                 try:
                     t = datetime.strptime(date+":"+time,'%Y%m%d:%H:%M')
                 except:
-                    pass #print("need format %H%M, %H:%M, %H:%M%p")
+                    print("need format %H%M, %H:%M, %H:%M%p")
+
         try:
             tt = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
             return tt.strftime("%Y%m%dT%H:%M")
@@ -389,10 +391,13 @@ class Report():
         dt = datetime.combine(d,time)
         return dt.strftime("%Y%m%dT%H:%M")
 
-    def get_night(self):
-        try:
-            date = datetime.strptime(self.date_init.value, '%Y%m%d')
-        except:
+    def get_night(self, mode='connect'):
+        if mode == 'connect':
+            try:
+                date = datetime.strptime(self.date_init.value, '%Y%m%d')
+            except:
+                date = datetime.now()
+        elif mode == 'init':
             date = datetime.now()
         self.night = str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
         self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
@@ -402,7 +407,7 @@ class Report():
         Initialize Night Log with Input Date
         """
 
-        self.get_night()
+        self.get_night('connect')
         exists = self.DESI_Log.check_exists()
 
         
@@ -447,7 +452,7 @@ class Report():
         """
 
         date = datetime.now()
-        self.get_night()
+        self.get_night('init')
         LO_firstname, LO_lastname = self.LO.value.split(' ')[0], ' '.join(self.LO.value.split(' ')[1:])
         OA_firstname, OA_lastname = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
         os_1_firstname, os_1_lastname = self.os_name_1.value.split(' ')[0], ' '.join(self.os_name_1.value.split(' ')[1:])
@@ -529,6 +534,8 @@ class Report():
     def get_weather(self):
         if os.path.exists(self.DESI_Log.weather):
             obs_df = pd.read_pickle(self.DESI_Log.weather)
+            t = [datetime.strptime(tt, "%Y%m%dT%H:%M") for tt in obs_df['Time']]
+            obs_df['Time'] = t
             self.weather_source.data = obs_df.sort_values(by='Time')
         else:
             pass
@@ -772,11 +779,13 @@ class Report():
     def weather_add(self):
         """Adds table to Night Log
         """
+        now = datetime.now().astimezone(tz=self.kp_zone) 
+        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
+        time = self.get_time(now_time) #self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
         if self.location == 'kpno':
             self.make_telem_plots()
             telem_df = pd.DataFrame(self.telem_source.data)
             this_data = telem_df.iloc[-1]
-            time = this_data.tel_time
             desc = self.weather_desc.value
             temp = this_data.temp
             wind = this_data.wind_speed
@@ -786,9 +795,9 @@ class Report():
             #skylevel = this_data.skylevel
             data = [time, desc, temp, wind, humidity, seeing, None, None]
             df = self.DESI_Log.write_weather(data)
-        else:
-            now = datetime.now().astimezone(tz=self.kp_zone) 
-            time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
+
+        else: 
+            print(time)
             data = [time, self.weather_desc.value, None, None, None, None, None, None]
             df = self.DESI_Log.write_weather(data)
             self.weather_alert.text = 'Not connected to the telemetry DB. Only weather description will be recorded.'
@@ -877,7 +886,7 @@ class Report():
         summary = self.summary.value
         self.DESI_Log.add_summary(summary)
         self.clear_input([self.summary])
-        self.milestone_alert.text = 'Summary Entered at {}'.format(self.milestone_input.value, now)
+        self.milestone_alert.text = 'Summary Entered at {}'.format(self.short_time(now, 'dt'))
 
     def upload_image(self, attr, old, new):
         print(f'Local image file upload: {self.img_upload.filename}')
@@ -927,8 +936,10 @@ class Report():
         now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
         tab = self.layout.active
         time_input = self.time_tabs[tab]
-
-        time_input.value = now_time
+        try:
+            time_input.value = now_time
+        except:
+            return time_input
 
     def nl_submit(self):
 

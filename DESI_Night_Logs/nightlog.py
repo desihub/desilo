@@ -112,9 +112,8 @@ class NightLog(object):
                 return  str(int(time) - 1200)
 
     def write_time(self, time_string, kp_only=False):
-        print(time_string)
+        print('write_time',time_string)
         try:
-            print('here')
             t = datetime.strptime(time_string, "%Y%m%dT%H:%M")
             kp_time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = self.kp_zone)
             utc_time = kp_time.astimezone(self.utc)
@@ -229,8 +228,6 @@ class NightLog(object):
 
         file = open(self.weather_file,'w')
         for index, row in df.iterrows():
-            print(row['Time'])
-            print(self.write_time(row['Time']))
             file.write("- {} := {}".format(self.write_time(row['Time']), row['desc']))
             file.write(f"; Temp: {row['temp']}, Wind Speed: {row['wind']}, Humidity: {row['humidity']}")
             file.write(f", Seeing: {row['seeing']}, Tput: {row['tput']}, Sky: {row['skylevel']}")
@@ -359,9 +356,9 @@ class NightLog(object):
                            this_exp['flavor'].values[0],this_exp['program'].values[0]))
                 except:
                     if row['Exp_End'] is not None:
-                        file.write("Exps: {}-{}\n".format(row['Exp_Start'], row['Exp_End']))
+                        file.write("; Exps: {}-{}\n".format(row['Exp_Start'], row['Exp_End']))
                     else:
-                        file.write("Exp: {}\n".format(row['Exp_Start']))
+                        file.write("; Exp: {}\n".format(row['Exp_Start']))
             else:
                 file.write("\n")
 
