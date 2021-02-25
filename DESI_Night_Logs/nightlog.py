@@ -54,8 +54,10 @@ class NightLog(object):
 
         self.os_exp = os.path.join(self.os_dir,'exposures.pkl')
         self.os_exp_file = os.path.join(self.os_dir,'exposures')
-        self.exp_file = os.path.join(self.dqs_dir,'exposures.pkl')
+        self.dqs_exp = os.path.join(self.dqs_dir,'exposures.pkl')
         self.dqs_exp_file = os.path.join(self.dqs_dir,'exposures')
+        self.other_exp = os.path.join(self.other_dir,'exposures.pkl')
+        self.other_exp_file = os.path.join(self.other_dir,'exposures')
 
         self.weather = os.path.join(self.os_dir,'weather.pkl')
         self.weather_file = os.path.join(self.os_dir,'weather')
@@ -84,7 +86,6 @@ class NightLog(object):
 
         return print("Your obsday is {}".format(self.obsday))
 
-
     def check_exists(self):
         """ Checks that paths have been created and the night has been initiated.
         """
@@ -93,7 +94,6 @@ class NightLog(object):
         else:
             #Get data from get_started_os and return that
             return True
-
 
     def get_timestamp(self,strtime):
         """ Generates time stamp for the entry.
@@ -112,7 +112,6 @@ class NightLog(object):
                 return  str(int(time) - 1200)
 
     def write_time(self, time_string, kp_only=False):
-        print('write_time',time_string)
         try:
             t = datetime.strptime(time_string, "%Y%m%dT%H:%M")
             kp_time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = self.kp_zone)
@@ -168,72 +167,6 @@ class NightLog(object):
         meta_dict = json.load(open(self.meta_json,'r'))
         return meta_dict
 
-    def write_checklist(self, data, user):
-        check_cols = ['Time','Comment']
-        if user == 'OS':
-            the_path = self.os_cl
-        elif user == 'DQS':
-            the_path = self.dqs_cl
-
-        df = self.write_pkl(data, check_cols, the_path)
-
-        if user == 'OS':
-            the_path = self.os_cl_file
-        elif user == 'DQS':
-            the_path = self.dqs_cl_file
-
-        file = open(the_path,'a')
-        if not os.path.exists(the_path):
-            file.write("{} checklist completed at (Local time):".format(user))
-            file.write("\n\n")
-        for index, row in df.iterrows():
-            file.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
-            file.write("\n")
-            file.write("\n")
-        file.close()
-
-
-    def write_plan(self, data):
-        objectives = ['Time', 'Objective']
-        df = self.write_pkl(data, objectives, self.objectives)
-
-        file = open(self.objectives_file, 'w')
-        for index, row in df.iterrows():
-            file.write("* [{}] {}".format(index, row['Objective']))
-            file.write("\n\n")
-        file.close()
-
-    def write_milestone(self, data):
-        milestones = ['Time','Desc','Exp_Start','Exp_Stop','Exp_Excl']
-        df = self.write_pkl(data, milestones, self.milestone)
-
-        file = open(self.milestone_file,'w')
-        for index, row in df.iterrows():
-            file.write("* [{}] {}".format(index, row['Desc']))
-            if row['Exp_Start'] not in [None, 'None', " ", ""]:
-                file.write("; Exposure(s): {}".format(row['Exp_Start']))
-            if row['Exp_Stop'] not in [None, 'None', " ", ""]:   
-                file.write(" - {}".format(row['Exp_Stop']))
-            if row['Exp_Excl'] not in [None, 'None', " ", ""]:   
-                file.write(", excluding {}".format(row['Exp_Excl']))
-            file.write("\n")
-        file.close()
-
-
-    def write_weather(self, data):
-        """Operations Scientist adds information regarding the weather.
-        """
-        obs_cols = ['Time','desc','temp','wind','humidity','seeing','tput','skylevel']
-        df = self.write_pkl(data, obs_cols, self.weather)
-
-        file = open(self.weather_file,'w')
-        for index, row in df.iterrows():
-            file.write("- {} := {}".format(self.write_time(row['Time']), row['desc']))
-            file.write(f"; Temp: {row['temp']}, Wind Speed: {row['wind']}, Humidity: {row['humidity']}")
-            file.write(f", Seeing: {row['seeing']}, Tput: {row['tput']}, Sky: {row['skylevel']}")
-            file.write("\n")
-        file.close()
-
     def write_pkl(self, data, cols, filen):
         # order = time, index
         if not os.path.exists(filen):
@@ -266,30 +199,83 @@ class NightLog(object):
             else:
                 print('ERROR: invalid format for uploading image')
 
-    def add_problem(self, data, user):
-        """
-            Adds details on a problem encountered.
-        """
-        prob_cols = ['Time', 'Problem', 'alarm_id', 'action', 'name']
-
-        if user == 'Other':
-            file = self.other_pb
-        elif user == 'OS':
-            file = self.os_pb
+    def write_checklist(self, data, user):
+        check_cols = ['Time','Comment']
+        if user == 'OS':
+            the_path = self.os_cl
         elif user == 'DQS':
-            file = self.dqs_pb
+            the_path = self.dqs_cl
 
-        df = self.write_pkl(data, prob_cols, file)
-        return df
+        df = self.write_pkl(data, check_cols, the_path)
+
+        if user == 'OS':
+            the_path = self.os_cl_file
+        elif user == 'DQS':
+            the_path = self.dqs_cl_file
+
+        file = open(the_path,'a')
+        if not os.path.exists(the_path):
+            file.write("{} checklist completed at (Local time):".format(user))
+            file.write("\n\n")
+        for index, row in df.iterrows():
+            file.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+            file.write("\n")
+            file.write("\n")
+        file.close()
+
+    def write_plan(self, data):
+        objectives = ['Time', 'Objective']
+        df = self.write_pkl(data, objectives, self.objectives)
+
+        file = open(self.objectives_file, 'w')
+        for index, row in df.iterrows():
+            file.write("* [{}] {}".format(index, row['Objective']))
+            file.write("\n\n")
+        file.close()
+
+    def write_milestone(self, data):
+        milestones = ['Time','Desc','Exp_Start','Exp_Stop','Exp_Excl']
+        df = self.write_pkl(data, milestones, self.milestone)
+
+        file = open(self.milestone_file,'w')
+        for index, row in df.iterrows():
+            file.write("* [{}] {}".format(index, row['Desc']))
+            if row['Exp_Start'] not in [None, 'None', " ", ""]:
+                file.write("; Exposure(s): {}".format(row['Exp_Start']))
+            if row['Exp_Stop'] not in [None, 'None', " ", ""]:   
+                file.write(" - {}".format(row['Exp_Stop']))
+            if row['Exp_Excl'] not in [None, 'None', " ", ""]:   
+                file.write(", excluding {}".format(row['Exp_Excl']))
+            file.write("\n")
+        file.close()
+
+    def write_weather(self, data):
+        """Operations Scientist adds information regarding the weather.
+        """
+        obs_cols = ['Time','desc','temp','wind','humidity','seeing','tput','skylevel']
+        df = self.write_pkl(data, obs_cols, self.weather)
+
+        file = open(self.weather_file,'w')
+        for index, row in df.iterrows():
+            file.write("- {} := {}".format(self.write_time(row['Time']), row['desc']))
+            file.write(f"; Temp: {row['temp']}, Wind Speed: {row['wind']}, Humidity: {row['humidity']}")
+            file.write(f", Seeing: {row['seeing']}, Tput: {row['tput']}, Sky: {row['skylevel']}")
+            file.write("\n")
+        file.close()
 
     def write_problem(self, data, user, img_name = None, img_data = None):
-        df = self.add_problem(data, user)
+        prob_cols = ['Time', 'Problem', 'alarm_id', 'action', 'name']
         if user == 'OS':
+            file = self.other_pb
             filen = self.os_pb_file
         if user == 'DQS':
+            file = self.os_pb
             filen = self.dqs_pb_file
         if user == 'Other':
+            file = self.dqs_pb
             filen = self.other_pb_file
+
+        df = self.write_pkl(data, prob_cols, file)
 
         file = open(filen, 'w')
         for index, row in df.iterrows():  
@@ -307,39 +293,35 @@ class NightLog(object):
             if user == 'DQS':
                 file.write('*')
             if user == 'Other':
+                file.write(' ({})'.format(row['name']))
                 file.write('_')
             file.write('\n')
 
         self.write_img(file, img_data, img_name)
         file.close()
 
-    def add_comment_other(self, time, comment, name):
-        the_path = os.path.join(self.other_obs_dir,"comment_{}".format(self.get_timestamp(time)))
-        file = self.new_entry_or_replace(the_path)
-        file.write("- {} := _{}({})_\n".format(self.write_time(time), comment, name))
-        file.close()
-
-    def write_dqs_exp(self, data, img_name = None, img_data = None):
-        exp_columns = ['Time','Exp_Start','Exp_Type','Quality','Comm','Obs_Comm','Inst_Comm','Exp_Last']
-        df = self.write_pkl(data, exp_columns, self.dqs_exp)
-
-        file = open(self.dqs_exp_file, 'w')
+    def write_other_exp(self, data, img_name = None, img_data = None):
+        exp_columns = ['Time','Comment','Exp_Start','Exp_End','Name']
+        df = self.write_pkl(data, exp_columns, self.other_exp)
+        file = open(self.other_exp_file, 'w')
         for index, row in df.iterrows():
-            if row['Exp_Last'] is not None:
-                file.write("- {}:{} := Exp. # {} - {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][3:], row['Exp_Start'], row['Exp_Last'], row['Exp_Type'],row['Quality'],row['Comm']))
-            else:
-                file.write("- {}:{} := Exp. # {}, {}, {}, {}\n".format(row['Time'][0:2], row['Time'][3:], row['Exp_Start'], row['Exp_Type'],row['Quality'],row['Comm']))
-            if row['Obs_Comm'] not in [None, " ", ""]:
-                file.write("*observing conditions:* {} \n".format(row['Obs_Comm']))
-            if row['Inst_Comm'] not in [None, " ", ""]:
-                file.write("*instrument performance:* {} \n".format(row['Inst_Comm']))
+            file.write("- {} := {} ({})\n".format(self.write_time(row['Time']), row['Comment'], row['Name']))
 
         self.write_img(file, img_data, img_name)
         file.close()
 
+    def write_dqs_exp(self, data, img_name = None, img_data = None):
 
-    def write_os_exp(self, data, img_name = None, img_data = None):
-        
+        exp_columns = ['Time','Exp_Start','Quality','Comment']
+        df = self.write_pkl(data, exp_columns, self.dqs_exp)
+        file = open(self.dqs_exp_file, 'w')
+        for index, row in df.iterrows():
+            file.write(f"- {self.write_time(row['Time'])} := Exp. {row['Exp_Start']}, {row['Quality']}, {row['Comment']}\n")
+
+        self.write_img(file, img_data, img_name)
+        file.close()
+
+    def write_os_exp(self, data, img_name = None, img_data = None):     
         if os.path.exists(self.explist_file):
             exp_df = pd.read_csv(self.explist_file)
 
@@ -377,6 +359,16 @@ class NightLog(object):
         else:
             return False, item
 
+    def load_exp(self, exp):
+        the_path = self.dqs_exp_file
+
+        df = pd.read_pickle(the_path)
+        item = df[df.Exp_Start == int(exp)]
+        if len(item) > 0:
+            return True, item
+        else:
+            return False, item
+
     def load_timestamp(self, time, user, exp_type):
         if user == 'OS':
             _dir = self.os_dir
@@ -397,7 +389,6 @@ class NightLog(object):
             return True, item
         else:
             return False, item
-
 
     def _upload_and_save_image(self, img_data, img_name):
         import base64
@@ -546,13 +537,19 @@ class NightLog(object):
         #Problems
         file_nl.write("\n")
         file_nl.write("\n")
-        file_nl.write("h3. Problems and Operations Issues (local time [UTC])\n")
+        file_nl.write("h3. Problems and Operations Issues\n")
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h5. [OS, *DQS*, _Other_] \n")
         self.compile_entries(self.os_pb_file, None, file_nl)
         self.compile_entries(self.dqs_pb_file, None, file_nl)
         self.compile_entries(self.other_pb_file, None, file_nl)
+
+        #Weather
+        file_nl.write("h3. Observing Conditions\n")
+        self.compile_entries(self.weather_file, None, file_nl)
+        file_nl.write("\n")
+        file_nl.write("\n")
 
         #Checklists
         file_nl.write("\n")
@@ -563,18 +560,14 @@ class NightLog(object):
         self.compile_entries(self.os_cl_file, "h5. Observing Scientist", file_nl)
         self.compile_entries(self.dqs_cl_file, "h5. Data Quality Scientist", file_nl)
 
-        #Weather
-        self.compile_entries(self.weather_file, "h3. Observing Conditions\n", file_nl)
-        file_nl.write("\n")
-        file_nl.write("\n")
-
 
         #Nightly Progress
-        file_nl.write("h3. Details on the Night Progress (local time [UTC])\n")
+        file_nl.write("h3. Details on the Night Progress\n")
         file_nl.write("\n")
         file_nl.write("\n")
-        self.compile_entries(self.os_exp_file, "h5. Progress/Exposures (OS))\n", file_nl)
+        self.compile_entries(self.os_exp_file, "h5. Progress/Exposures (OS)\n", file_nl)
         self.compile_entries(self.dqs_exp_file, "h5. Exposure Quality (DQS)\n", file_nl)
+        self.compile_entries(self.other_exp_file, "h5. Comments (Non-Observers)\n", file_nl)
 
         #Images
         if os.path.exists(self.image_file):

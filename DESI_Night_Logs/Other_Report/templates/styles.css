@@ -2,8 +2,7 @@
     color: black;
     width: 50px;
     font-size:12pt;
-    text-align: left;
-    background-color: darkgrey;
+    background-color: gray;
     border-color: black;
 }
 
@@ -48,7 +47,6 @@
 .bk-root .subt-style {
 	color: black;
 	text-decoration: underline;
-	text-align: center;
 	font-size:18pt;
 	font-style: bold;
 }

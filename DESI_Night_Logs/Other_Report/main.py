@@ -40,43 +40,23 @@ class Other_Report(Report):
 
     def get_layout(self):
 
-        intro_layout = layout([self.title,
-                        [self.page_logo],
-                        [self.instructions],                 
-                        self.intro_subtitle,
-
-                        [self.date_init, self.your_name],
-                        [self.connect_bt],
-                        self.connect_txt,
-                        self.nl_info,
-                        self.intro_txt], width=1000)
-        intro_tab = Panel(child=intro_layout, title="Initialization") #                        self.intro_info,
-
-        comment_layout = layout([self.title,
-                            self.comment_subtitle,
-                            self.time_note,
-                            [self.time_title, self.exp_time, self.now_btn],
-                            self.exp_comment,
-                            self.exp_btn,
-                            self.comment_alert], width=1000)
-        comment_tab = Panel(child=comment_layout, title="Comments")
-
-        #self.get_intro_layout()
+        self.get_intro_layout()
+        self.get_os_exp_layout()
         self.get_prob_layout()
-        self.get_img_layout()
+        self.get_weather_layout()
         self.get_nl_layout()
-        self.get_plots_layout()
 
-        self.layout = Tabs(tabs=[intro_tab, comment_tab, self.prob_tab, self.img_tab, self.plot_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
+        self.layout = Tabs(tabs=[self.intro_tab, self.exp_tab, self.prob_tab, self.weather_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
 
 
     def run(self):
+        self.get_layout()
         self.time_tabs = [None, self.exp_time, self.prob_time, None, None]
         self.now_btn.on_click(self.time_is_now)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.comment_add)
         self.prob_btn.on_click(self.prob_add)
-        self.get_layout()
+
 
 
 Other = Other_Report()

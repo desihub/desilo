@@ -28,7 +28,7 @@ from bokeh.plotting import figure
 
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
-os.environ["NL_DIR"] = "/n/home/desiobserver/parkerf/desilo/nightlogs" #"/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs"
+os.environ["NL_DIR"] = "/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs" #"/n/home/desiobserver/parkerf/desilo/nightlogs" #
 import nightlog as nl
 from report import Report
 
@@ -41,30 +41,27 @@ class OS_Report(Report):
 
         self.title = Div(text="DESI Nightly Intake - Observing Scientist", css_classes=['h1-title-style'], width=1000)# width=800, style={'font-size':'24pt','font-style':'bold'})
         desc = """
-        The Observing Scientist (OS) is responsible for initializing the Night Log. Connect to an existing Night Log using the date or initialize tonight's log.
-        Throughout the night, enter information about the exposures, weather, and problems. Complete the OS Checklist at least once every hour.
+        To begin, connect to an existing Night Log using the list of Existing Night Logs. If today's Night Log does not yet exist, it is the reponsibility of the Observing Scientist (OS) to initializing the Night Log. 
+        Throughout the night, enter information about the exposures, problems that occur, and observing conditions. Complete the OS Checklist at least once every hour.
         """
-        self.instructions = Div(text=desc+self.time_note.text, css_classes=['inst-style'], width=500)
-        self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
-        self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
-        self.init_bt = Button(label="Initialize Tonight's Log", css_classes=['init_button'])
-        self.LO = Select(title='Lead Observer', value='Choose One', options=self.lo_names)
-        self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names)
+        self.instructions = Div(text=desc, css_classes=['inst-style'], width=500)
+        
         self.page_logo = Div(text="<img src='OS_Report/static/logo.png'>", width=350, height=300)
+        
+        self.os_checklist = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Spectrograph Cryostat?","Did you check the FP Chiller?"]
 
+        
+    def get_layout(self):
         self.contributer_list = TextAreaInput(placeholder='Contributer names (include all)', rows=2, cols=3, title='Names of all Contributers')
         self.contributer_btn = Button(label='Update Contributer List', css_classes=['add_button'], width=300)
 
         self.connect_hdr = Div(text="Connect to Existing Night Log", css_classes=['subt-style'], width=800)
         self.init_hdr = Div(text="Initialize Tonight's Night Log", css_classes=['subt-style'], width=800)
-        self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
-        self.checklist_inst = Div(text="Every hour, the OS is expected to monitor several things. Often this requires discussion and confirmation with the LO. After completing these tasks, record at what time they were completed. Be honest please!", css_classes=['inst-style'], width=1000)
-        self.os_checklist = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Spectrograph Cryostat?","Did you check the FP Chiller?"]
 
-        self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
-        self.header_options = ['Startup','Calibration (Arcs/Twilight)','Focus','Observation','Other Acquisition','Comment']
+        self.init_bt = Button(label="Initialize Tonight's Log", css_classes=['init_button'])
+        self.LO = Select(title='Lead Observer', value='Choose One', options=self.lo_names)
+        self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names)
 
-    def get_layout(self):
         intro_layout = layout([self.title,
                             [self.page_logo, self.instructions],
                             self.connect_hdr,
@@ -95,16 +92,15 @@ class OS_Report(Report):
     def run(self):
         self.get_layout()
         self.time_tabs = [None, None, None, self.exp_time, self.prob_time, None, None, None]
+
         self.now_btn.on_click(self.time_is_now)
         self.init_bt.on_click(self.initialize_log)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.progress_add)
         self.exp_load_btn.on_click(self.load_exposure)
         self.prob_load_btn.on_click(self.load_problem)
-
         self.weather_btn.on_click(self.weather_add)
         self.prob_btn.on_click(self.prob_add)
-        #self.nl_btn.on_click(self.current_nl)
         self.nl_submit_btn.on_click(self.nl_submit)
         self.check_btn.on_click(self.check_add)
         self.milestone_btn.on_click(self.milestone_add)

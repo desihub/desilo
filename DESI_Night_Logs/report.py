@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from bokeh.io import curdoc  # , output_file, save
-from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup, DateFormatter)
+from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, RadioGroup,Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup, DateFormatter)
 from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs, FileInput
@@ -55,10 +55,14 @@ class Report():
         self.title_style = {'font-size':'250%','font-style':'bold'}
         self.alert_style = {'font-size':'150%','color':'red'}
 
+        self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
+        self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
+
         self.nl_file = None
 
         self.intro_subtitle = Div(text="Connect to Night Log", css_classes=['subt-style'])
-        self.time_note = Div(text="<b> Note: </b> Enter all times as HHMM (1818 = 18:18 = 6:18pm) in Kitt Peak local time. Either enter the time or hit the <b> Now </b> button if it just occured.", css_classes=['inst-style'])
+        self.time_note = Div(text="<b> Note: </b> Enter all times as HH:MM (18:18 = 1818 = 6:18pm) in Kitt Peak local time. Either enter the time or hit the <b> Now </b> button if it just occured.", css_classes=['inst-style'])
+        self.exp_info = Div(text="Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
 
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
@@ -125,6 +129,19 @@ class Report():
         else:
             items.value = None
 
+    def get_exposure_list(self):
+        try:
+            dir_ = self.nw_dir+'/'+self.date_init.value
+            exposures = []
+            for path, subdirs, files in os.walk(dir_): 
+                for s in subdirs: 
+                    exposures.append(s)  
+            self.exp_select.options = list(exposures)
+            self.exp_select.value = exposures[0] 
+        except:
+            self.exp_select.options = []
+            #self.exp_select.value = "None Avail."
+
     def get_intro_layout(self):
         intro_layout = layout([self.title,
                             [self.page_logo, self.instructions],
@@ -136,57 +153,18 @@ class Report():
                             self.intro_txt], width=1000)
         self.intro_tab = Panel(child=intro_layout, title="Initialization")
 
-    def get_checklist_layout(self):
-        
-        self.checklist = CheckboxGroup(labels=[])
-        self.check_time = TextInput(placeholder = '20:07', value=None) #title ='Time in Kitt Peak local time*', 
-        self.check_alert = Div(text=" ", css_classes=['alert-style'])
-        self.check_btn = Button(label='Submit', css_classes=['add_button'])
-        self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
-
-        if self.report_type == 'OS':
-            self.checklist.labels = self.os_checklist
-        checklist_layout = layout(self.title,
-                                self.check_subtitle,
-                                self.checklist_inst,
-                                self.checklist,
-                                self.check_comment,
-                                [self.check_btn],
-                                self.check_alert, width=1000)
-        self.check_tab = Panel(child=checklist_layout, title="DQS Checklist")
-
-    def get_prob_layout(self):
-        self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
-        self.prob_inst = Div(text="Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, include it, but leave blank if not. If possible, include a description of the remedy.", css_classes=['inst-style'], width=1000)
-        self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
-        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:",width=400)
-        self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
-        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5,width=400)
-        self.prob_btn = Button(label='Add/Update', css_classes=['add_button'])
-        self.prob_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
-        self.prob_alert = Div(text=' ', css_classes=['alert-style'])
-
-        prob_layout = layout([self.title,
-                            self.prob_subtitle,
-                            self.prob_inst,
-                            self.time_note,
-                            self.exp_info,
-                            [self.time_title, self.prob_time, self.now_btn, self.prob_load_btn], 
-                            self.prob_alarm,
-                            [self.prob_input, self.prob_action],
-                            [self.img_upinst2, self.img_upload_problems],
-                            [self.prob_btn],
-                            self.prob_alert], width=1000)
-
-        self.prob_tab = Panel(child=prob_layout, title="Problems")
-
-
     def get_plan_layout(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
-        self.plan_inst = Div(text="Input the major elements of the Night Plan found at the link below in the order expected for their completion.", css_classes=['inst-style'], width=1000)
+        inst = """<ul>
+        <li>Add the major elements of the night plan found at the link below in the order expected for their completion using the <b>Add/New</b> button.</li>
+        <li>You can recall submitted plans using their index, as found on the Current DESI Night Log tab.</li>
+        <li>If you'd like to modify a submitted plan, <b>Load</b> the index, make your modifications, and then press <b>Update</b></li>.
+        </ul>
+        """
+        self.plan_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
         self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'], width=500)
         self.plan_order = TextInput(title ='Plan Index (see Current NL):', placeholder='0', value=None, width=75)
-        self.plan_input = TextAreaInput(placeholder="description", rows=5, cols=3, title="Describe item of the night plan:",max_length=5000, width=800)
+        self.plan_input = TextAreaInput(placeholder="description", rows=5, cols=3, title="Enter item of the night plan:",max_length=5000, width=800)
         self.plan_btn = Button(label='Update', css_classes=['add_button'], width=75)
         self.plan_new_btn = Button(label='Add New', css_classes=['add_button'])
         self.plan_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
@@ -203,8 +181,15 @@ class Report():
 
     def get_milestone_layout(self):
         self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", css_classes=['subt-style'])
-        self.milestone_inst = Div(text="Record any major milestones or accomplishments that occur throughout a night and the exposure numbers that correspond to it. If applicable, indicate the ID of exposures to ignore in a series.", css_classes=['inst-style'],width=1000)
-        self.milestone_input = TextAreaInput(placeholder="Description", title="Describe a Milestone from the night corresponding to items in the plan", rows=5, cols=3, max_length=5000, width=800)
+        inst = """<ul>
+        <li>Record any major milestones or accomplishments that occur throughout a night. These should correspond with the major elements input on the 
+        <b>Plan</b> tab. Include exposure numbers that correspond with the accomplishment, and if applicable, indicate any exposures to ignore in a series.</li>
+        <li>If you'd like to modify a submitted milestone, <b>Load</b> the index, make your modifications, and then press <b>Update</b>.</li>
+        <li>At the end of your shift, either at the end of the night or half way through, summarize the activities of the night in the <b>End fo Night Summary</b>.</li>
+        </ul>
+        """
+        self.milestone_inst = Div(text=inst, css_classes=['inst-style'],width=1000)
+        self.milestone_input = TextAreaInput(placeholder="Description", title="Enter a Milestone:", rows=5, cols=3, max_length=5000, width=800)
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None, width=200)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None, width=200)
         self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', value=None, width=200)
@@ -229,13 +214,124 @@ class Report():
                         ], width=1000)
         self.milestone_tab = Panel(child=milestone_layout, title='Milestones')
 
+    def exp_layout(self):
+        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=5000)
+        self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
+        self.exp_btn = Button(label='Add/Update', css_classes=['add_button'])
+        self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.exp_alert = Div(text=' ', css_classes=['alert-style'])
+        self.dqs_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+
+    def get_os_exp_layout(self):
+        self.exp_layout()
+        exp_subtitle = Div(text="Nightly Progress", css_classes=['subt-style'])
+        inst="""<ul>
+        <li>Throughout the night record the progress, including comments on calibrations and exposures. 
+        All exposures are recorded in the eLog, so only enter information that can provide additional information.</li>
+        <li>If you enter an Exposure Number, the Night Log will include data from the eLog and connect it to any inputs
+        from the Data Quality Scientist.</li>
+        <li>If you'd like to modify a submitted comment, enter the time of the submission and hit the b>Load</b> button. 
+        After making your modifications, resubmit using the <b>Add/Update</b>.</li>
+        </ul>
+        """
+        exp_inst = Div(text=inst, width=800, css_classes=['inst-style'])
+        
+        self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None, width=200)
+        self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None, width=200)
+
+        self.exp_layout = layout(children=[self.title,
+                        exp_subtitle,
+                        exp_inst,
+                        self.time_note,
+                        self.exp_info,
+                        [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn],
+                        [self.exp_exposure_start, self.exp_exposure_finish],
+                        [self.exp_comment],
+                        [self.img_upinst2, self.img_upload_problems],
+                        [self.exp_btn],
+                        self.exp_alert], width=1000)
+        self.exp_tab = Panel(child=self.exp_layout, title="Nightly Progress")
+
+    def get_dqs_exp_layout(self):
+        self.exp_layout()
+        exp_subtitle = Div(text="Exposures", css_classes=['subt-style'])
+        inst = """
+        <ul>
+        <li>For each exposure, collect information about what you observe on Night Watch (quality).
+        <li>You can either select an exposure from the drop down (<b>(1) Select</b>) or enter it yourself (<b>(2) Enter</b>). Make sure to identify which you will use.</li> 
+        <li>The exposure list is updated every 30 seconds. It might take some time for the exposure to transfer to Night Watch.</li> 
+        <li>If you'd like to modify a submitted comment or quality assingment, you can recall a submission by selecting or entering the exposure number and using the <b>Load</b> button. 
+        After making your modifications, resubmit using the <b>Add/Update</b>.</li>
+        </ul>
+        """
+        exp_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
+
+        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'CCD4 has some bright columns',value=None,rows=10, cols=5,width=500,max_length=5000)
+        self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
+        
+        self.exp_select = Select(title='(1) Select Exposure',options=['None'],width=150)
+        self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', value=None, width=150)
+        self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
+        self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
+
+        self.get_exposure_list()
+        self.exp_layout = layout(self.title,
+                            exp_subtitle,
+                            exp_inst,
+                            [self.exp_option, self.dqs_load_btn],
+                            [self.exp_select, self.exp_enter],
+                            [self.quality_title, self.quality_btns],
+                            self.exp_comment,
+                            [self.exp_btn],
+                            [self.exp_alert], width=1000)
+        self.exp_tab = Panel(child=self.exp_layout, title="Exposures") 
+
+    def get_prob_layout(self):
+        self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
+        inst = """<ul>
+        <li>Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, 
+        include it, but leave blank if not. </li>
+        <li>If possible, include a description of the resolution. </li>
+        <li>If you'd like to modify or add to a submission, you can <b>Load</b> it using its timestamp. After making the modifications 
+        or additions, press the <b>Add/Update</b> button.</li>
+        </ul>
+        """
+        self.prob_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
+        self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
+        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:",width=400)
+        self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
+        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5,width=400)
+        self.prob_btn = Button(label='Add/Update', css_classes=['add_button'])
+        self.prob_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.prob_alert = Div(text=' ', css_classes=['alert-style'])
+
+        prob_layout = layout([self.title,
+                            self.prob_subtitle,
+                            self.prob_inst,
+                            self.time_note,
+                            self.exp_info,
+                            [self.time_title, self.prob_time, self.now_btn, self.prob_load_btn], 
+                            self.prob_alarm,
+                            [self.prob_input, self.prob_action],
+                            [self.img_upinst2, self.img_upload_problems],
+                            [self.prob_btn],
+                            self.prob_alert], width=1000)
+
+        self.prob_tab = Panel(child=prob_layout, title="Problems")
 
     def get_weather_layout(self):
+    
+        self.weather_subtitle = Div(text="Observing Conditions", css_classes=['subt-style'])
+        inst = """<ul>
+        <li>Every hour, as part of the OS checklist, include a description of the weather observing conditions.</li>
+        <li>Additional weather and observing condition information will be added to the table below and the Night Log when you <b>Add Weather Description</b></li>
+        <li>Below the table there are plots of the ongoing telemetry for the observing conditions. These will be added to the Night Log when submitted at the end of the night.</li> 
+        </ul>
+        """
+        self.weather_inst = Div(text=inst, width=1000, css_classes=['inst-style'])
+
         data = pd.DataFrame(columns = ['Time','desc','temp','wind','humidity','seeing','tput','skylevel'])
         self.weather_source = ColumnDataSource(data)
-
-        self.weather_subtitle = Div(text="Observing Conditions", css_classes=['subt-style'])
-
         obs_columns = [TableColumn(field='Time', title='Time (UTC)', width=50, formatter=self.timefmt),
                    TableColumn(field='desc', title='Description', width=150),
                    TableColumn(field='temp', title='Temperature (C)', width=75),
@@ -246,10 +342,6 @@ class Report():
                    TableColumn(field='skylevel', title='Sky Level', width=50)] #, 
 
         self.weather_table = DataTable(source=self.weather_source, columns=obs_columns, width=1000)
-        self.weather_inst = Div(text="Every hour include a description of the weather and any other relevant information, as well as fill in all the fields below.  Click the Update Night Log button after every hour's entry. To update a cell: double click in it, record the information, click out of the cell.", width=1000, css_classes=['inst-style'])
-        self.weather_desc = TextInput(title='Weather Description', placeholder='description', value=None, width=500)
-        self.weather_btn = Button(label='Add Weather Description', css_classes=['add_button'], width=100)
-        self.weather_alert = Div(text=' ', css_classes=['alert-style'])
 
         telem_data = pd.DataFrame(columns = ['tel_time','tower_time','exp_time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing'])
         self.telem_source = ColumnDataSource(telem_data)
@@ -271,52 +363,58 @@ class Report():
         p3.circle(x = 'tower_time',y='wind_speed',source=self.telem_source, size=10, alpha=0.5)
         p4.circle(x = 'exp_time',y='airmass',source=self.telem_source, size=10, alpha=0.5)
         p5.circle(x = 'exp_time',y='exptime',source=self.telem_source, size=10, alpha=0.5)
-
         p6.circle(x = 'exp',y='seeing',source=self.telem_source, size=10, alpha=0.5)
 
-        weather_layout = layout([self.title,
-                        self.weather_subtitle,
-                        self.weather_inst,
-                        self.time_note,
-                        [self.time_title], 
-                        [self.weather_desc, self.weather_btn],
-                        self.weather_alert,
-                        self.weather_table,
-                        p6,p1,p2,p3,p4,p5], width=1000)
+        self.weather_desc = TextInput(title='Weather Description', placeholder='description', value=None, width=500)
+        self.weather_btn = Button(label='Add Weather Description', css_classes=['add_button'], width=100)
+        self.weather_alert = Div(text=' ', css_classes=['alert-style'])
+
+        if self.report_type == 'OS':
+            weather_layout = layout([self.title,
+                            self.weather_subtitle,
+                            self.weather_inst,
+                            [self.weather_desc, self.weather_btn],
+                            self.weather_alert,
+                            self.weather_table,
+                            p6,p1,p2,p3,p4,p5], width=1000)
+        else:
+            weather_layout = layout([self.title,
+                self.weather_subtitle,
+                self.weather_table,
+                p6,p1,p2,p3,p4,p5], width=1000)
         self.weather_tab = Panel(child=weather_layout, title="Observing Conditions")
 
-    def get_os_exp_layout(self):
-        self.exp_info = Div(text="Fill In Only Relevant Data. Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
-        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=5000)
-        self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
-        self.exp_btn = Button(label='Add/Update', css_classes=['add_button'])
-        self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
-        self.exp_alert = Div(text=' ', css_classes=['alert-style'])
-        self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None, width=200)
-        self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None, width=200)
+    def get_checklist_layout(self):
+        
+        self.checklist = CheckboxGroup(labels=[])
+        inst="""
+        <ul>
+        <li>Once an hour, complete the checklist below.</li>
+        <li>In order to <b>Submit</b>, you must check each task. You do not need to include a comment.</li>
+        <li>Often, completing these tasks requires communication with the LO.</li> 
+        </ul>
+        """
+        self.checklist_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
 
-        self.exp_subtitle = Div(text="Nightly Progress", css_classes=['subt-style'])
-        self.exp_inst = Div(text="Throughout the night record the progress, including comments on Calibrations and Exposures. All exposures are recorded in the eLog, so only enter information that can provide additional information.", width=800, css_classes=['inst-style'])
-
-        self.add_image = TextInput(title="Add Image", placeholder='Pictures/image.png', value=None)
-
-        self.exp_script = TextInput(title='Script Name', placeholder='dithering.json', value=None)
-        self.exp_time_end = TextInput(title='Time End', placeholder='20:07', value=None)
-        self.exp_focus_trim = TextInput(title='Trim from Focus', placeholder='54', value=None)
-        self.exp_tile = TextInput(title='Tile Number', placeholder='68001', value=None)
-
-        self.exp_layout = layout(children=[self.title,
-                        self.exp_subtitle,
-                        self.exp_inst,
-                        self.time_note,
-                        self.exp_info,
-                        [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn],
-                        [self.exp_exposure_start, self.exp_exposure_finish],
-                        [self.exp_comment],
-                        [self.img_upinst2, self.img_upload_problems],
-                        [self.exp_btn],
-                        self.exp_alert], width=1000)
-        self.exp_tab = Panel(child=self.exp_layout, title="Nightly Progress")
+        self.check_time = TextInput(placeholder = '20:07', value=None) #title ='Time in Kitt Peak local time*', 
+        self.check_alert = Div(text=" ", css_classes=['alert-style'])
+        self.check_btn = Button(label='Submit', css_classes=['add_button'])
+        self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
+        
+        if self.report_type == 'OS':
+            self.checklist.labels = self.os_checklist
+            self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
+        elif self.report_type == 'DQS':
+            self.checklist.labels = self.dqs_checklist
+            self.check_subtitle = Div(text="DQS Checklist", css_classes=['subt-style'])
+        checklist_layout = layout(self.title,
+                                self.check_subtitle,
+                                self.checklist_inst,
+                                self.checklist,
+                                self.check_comment,
+                                [self.check_btn],
+                                self.check_alert, width=1000)
+        self.check_tab = Panel(child=checklist_layout, title="DQS Checklist")
 
 
     def get_nl_layout(self):
@@ -324,10 +422,11 @@ class Report():
         self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
         self.nl_text = Div(text=" ", css_classes=['inst-style'], width=1000)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
+        self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
         
         self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
 
-        exp_data = pd.DataFrame(columns = ['date_obs','id','program','sequence','flavor','exptime'])
+        exp_data = pd.DataFrame(columns = ['date_obs','id','program','sequence','flavor','exptime','airmass','seeing'])
         self.explist_source = ColumnDataSource(exp_data)
 
         exp_columns = [TableColumn(field='date_obs', title='Time (UTC)', width=50, formatter=self.datefmt),
@@ -335,7 +434,9 @@ class Report():
                    TableColumn(field='sequence', title='Sequence', width=100),
                    TableColumn(field='flavor', title='Flavor', width=50),
                    TableColumn(field='exptime', title='Exptime', width=50),
-                   TableColumn(field='program', title='Program', width=300)]
+                   TableColumn(field='program', title='Program', width=300)
+                   TableColumn(field='airmass', title='Airmass', width=50)
+                   TableColumn(field='seeing', title='Seeing', width=50)]
 
         self.exp_table = DataTable(source=self.explist_source, columns=exp_columns, width=1000)
 
@@ -406,7 +507,6 @@ class Report():
         """
         Initialize Night Log with Input Date
         """
-
         self.get_night('connect')
         exists = self.DESI_Log.check_exists()
 
@@ -415,11 +515,13 @@ class Report():
         if exists:
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
 
-            meta_dict = self.DESI_Log.get_meta_data()
+            
             if self.report_type == 'DQS':
                 self.DESI_Log.add_dqs_observer(your_firstname, your_lastname)
+                meta_dict = self.DESI_Log.get_meta_data()
                 self.your_name.value = meta_dict['{}_1'.format(self.report_type.lower())]+' '+meta_dict['{}_last'.format(self.report_type.lower())]
             elif self.report_type == 'OS':
+                meta_dict = self.DESI_Log.get_meta_data()
                 self.os_name_1.value = meta_dict['{}_1_first'.format(self.report_type.lower())]+' '+meta_dict['{}_1_last'.format(self.report_type.lower())]
                 self.os_name_2.value = meta_dict['{}_2_first'.format(self.report_type.lower())]+' '+meta_dict['{}_2_last'.format(self.report_type.lower())]
 
@@ -523,7 +625,7 @@ class Report():
             if len(exp_df.date_obs) != 0:
                 time = exp_df.date_obs.dt.tz_convert('US/Arizona')
                 exp_df['date_obs'] = time
-                self.explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime']].sort_values(by='id',ascending=False) 
+                self.explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
                 exp_df = exp_df.sort_values(by='id')
                 exp_df.to_csv(self.DESI_Log.explist_file, index=False)
             else:
@@ -755,6 +857,19 @@ class Report():
         else:
             self.plan_alert.text = "That plan item doesn't exist yet"
 
+    def dqs_load(self):
+        if self.exp_option.active == 0:
+             exp = self.exp_select.value
+        if self.exp_option.active == 1:
+            exp = self.exp_enter.value
+        b, item = self.DESI_Log.load_exp(exp)
+        if b:
+            self.exp_comment.value = item['Comment'].values[0]
+            qual = np.where(self.quality_list==item['Quality'].values[0])[0]
+            self.quality_btns.active = int(qual)
+        else:
+            self.exp_alert.text = "An input for that exposure doesn't exist."
+
     def milestone_add(self):
         if self.milestone_time is None:
             ts = self.get_time(datetime.now())
@@ -829,6 +944,47 @@ class Report():
             self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish])
         else:
             self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
+    
+    def comment_add(self):
+
+        if self.your_name.value in [None,' ','']:
+            self.comment_alert.text = 'You need to enter your name on first page before submitting a comment'
+        else:
+            if self.exp_time.value not in [None, 'None'," ", ""]:
+                data = [self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value, self.your_name.value]
+                has_image = False
+                if hasattr(self, 'img_upload_comments'):
+                    if self.img_upload_comments.filename not in [None, '']:
+                        img_data = self.img_upload_comments.value.encode('utf-8')
+                        img_name = str(self.img_upload_comments.filename)
+                        has_image = True
+                        self.DESI_Log.write_other_exp(data, img_name=img_name, img_data=img_data)
+                        #self.DESI_Log.upload_image_comments(img_data, self.get_time(self.exp_time.value), self.exp_comment.value,
+                        #                                    self.your_name.value, image_name)
+                        # move to class initialization
+                        image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{image_name}'
+                        preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
+                        preview += "<br>"
+                        preview += "A comment was added at {}".format(self.exp_time.value)
+                        self.exp_alert.text = preview
+                        self.img_upload_comments.filename=None
+                        self.clear_input([self.exp_time, self.exp_comment])
+                if not has_image:
+                    self.DESI_Log.write_other_exp(data)
+                    self.exp_alert.text = "A comment was added at {}".format(self.exp_time.value)
+                    self.clear_input([self.exp_time, self.exp_comment])
+
+    def exp_add(self):
+        quality = self.quality_list[self.quality_btns.active]
+        if self.exp_option.active == 0:
+            exp_val = self.exp_select.value
+        elif self.exp_option.active ==1:
+            exp_val = self.exp_enter.value
+        now = datetime.now().astimezone(tz=self.kp_zone) 
+        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), 'str')
+        self.DESI_Log.write_dqs_exp([self.get_time(now_time), exp_val, quality, self.exp_comment.value])
+        self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now_time)
+        self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
 
     def load_exposure(self):
         #Check if progress has been input with a given timestamp
@@ -852,30 +1008,7 @@ class Report():
             self.prob_alarm.value = item['alarm_id'].values[0]
             self.prob_action.value = item['action'].values[0]
 
-    def comment_add(self):
-        if self.your_name.value in [None,' ','']:
-            self.comment_alert.text = 'You need to enter your name on first page before submitting a comment'
-        else:
-            has_image = False
-            if hasattr(self, 'img_upload_comments'):
-                if self.img_upload_comments.filename not in [None, '']:
-                    img_data = self.img_upload_comments.value.encode('utf-8')
-                    image_name = str(self.img_upload_comments.filename)
-                    has_image = True
-                    self.DESI_Log.upload_image_comments(img_data, self.get_time(self.exp_time.value), self.exp_comment.value,
-                                                        self.your_name.value, image_name)
-                    # move to class initialization
-                    image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{image_name}'
-                    preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
-                    preview += "<br>"
-                    preview += "A comment was added at {}".format(self.exp_time.value)
-                    self.comment_alert.text = preview
-                    self.img_upload_comments.filename=None
-                    self.clear_input([self.exp_time, self.exp_comment])
-            if not has_image:
-                self.DESI_Log.add_comment_other(self.get_time(self.exp_time.value), self.exp_comment.value, self.your_name.value)
-                self.comment_alert.text = "A comment was added at {}".format(self.exp_time.value)
-                self.clear_input([self.exp_time, self.exp_comment])
+
 
     def add_contributer_list(self):
         cont_list = self.contributer_list.value
