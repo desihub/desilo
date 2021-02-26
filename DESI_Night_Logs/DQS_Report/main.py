@@ -1,6 +1,5 @@
 """
 Created on May 21, 2020
-
 @author: Parker Fagrelius
 
 start server with the following command from folder above this.
@@ -10,16 +9,14 @@ view at: http://localhost:5006/DQS_Report
 """
 
 import os, sys
+sys.path.append(os.getcwd())
 from datetime import datetime
 
-from bokeh.io import curdoc  # , output_file, save
-from bokeh.models import TextInput, Button, RadioButtonGroup, Select
+from bokeh.io import curdoc 
+from bokeh.models import TextInput, RadioButtonGroup
 from bokeh.models.widgets.markups import Div
-from bokeh.layouts import layout
-from bokeh.models.widgets import Panel, Tabs
+from bokeh.models.widgets import Tabs
 
-sys.path.append(os.getcwd())
-import nightlog as nl
 from report import Report
 
 
@@ -40,11 +37,7 @@ class DQS_Report(Report):
         self.quality_list = ['Bad','OK','Good','Great']
         self.quality_btns = RadioButtonGroup(labels=self.quality_list, active=2)
 
-    
-        #self.exp_option.value = '-'
-
     def get_layout(self):
-
         self.get_intro_layout()
         self.get_dqs_exp_layout()
         self.get_prob_layout()
@@ -52,23 +45,18 @@ class DQS_Report(Report):
         self.get_nl_layout()
         self.get_weather_layout()
 
-        tabs = Tabs(tabs=[self.intro_tab, self.exp_tab, self.prob_tab, self.check_tab, self.weather_tab, self.nl_tab])
-
-        self.layout = tabs
+        self.layout = Tabs(tabs=[self.intro_tab, self.exp_tab, self.prob_tab, self.check_tab, self.weather_tab, self.nl_tab])
 
     def run(self):
-
         self.get_layout()
         self.time_tabs = [None, None, self.prob_time, None, None, None]
         self.now_btn.on_click(self.time_is_now)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.exp_add)
-        #self.exp_update.on_click(self.get_exposure_list)
         self.prob_btn.on_click(self.prob_add)
         self.check_btn.on_click(self.check_add)
         self.dqs_load_btn.on_click(self.dqs_load)
-        
-        self.current_nl()
+        self.prob_load_btn.on_click(self.load_problem)
 
 
 DQS = DQS_Report()

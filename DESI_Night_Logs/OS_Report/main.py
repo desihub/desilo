@@ -11,29 +11,20 @@ view at: http://localhost:5006/OS_Report
 """
 
 import os, sys
-import time
-import pandas as pd
-import subprocess
-
-from bokeh.io import curdoc
-from bokeh.plotting import save
-from bokeh.models import TextInput, ColumnDataSource, Button, TextAreaInput, Select
-from bokeh.models.widgets.markups import Div
-from bokeh.models.widgets.tables import DataTable, TableColumn, NumberEditor, StringEditor, PercentEditor
-from bokeh.layouts import layout, column, row
-from bokeh.models.widgets import Panel, Tabs
-from bokeh.themes import built_in_themes
-from bokeh.models import CustomJS
-from bokeh.plotting import figure
-
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
-os.environ["NL_DIR"] = "/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs" #"/n/home/desiobserver/parkerf/desilo/nightlogs" #
+os.environ["NL_DIR"] = "/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs"
+
+
+from bokeh.io import curdoc
+from bokeh.models import TextInput, Button, TextAreaInput, Select
+from bokeh.models.widgets.markups import Div
+from bokeh.layouts import layout, column, row
+from bokeh.models.widgets import Panel, Tabs
+
 import nightlog as nl
 from report import Report
 
-# sys.stdout = open(os.environ['NL_DIR']+'/out.txt', 'a')
-# print('test')
 
 class OS_Report(Report):
     def __init__(self):
@@ -50,7 +41,6 @@ class OS_Report(Report):
         
         self.os_checklist = ["Did you check the weather?", "Did you check the guiding?", "Did you check the positioner temperatures?","Did you check the FXC?", "Did you check the Spectrograph Cryostat?","Did you check the FP Chiller?"]
 
-        
     def get_layout(self):
         self.contributer_list = TextAreaInput(placeholder='Contributer names (include all)', rows=2, cols=3, title='Names of all Contributers')
         self.contributer_btn = Button(label='Update Contributer List', css_classes=['add_button'], width=300)
@@ -58,7 +48,11 @@ class OS_Report(Report):
         self.connect_hdr = Div(text="Connect to Existing Night Log", css_classes=['subt-style'], width=800)
         self.init_hdr = Div(text="Initialize Tonight's Night Log", css_classes=['subt-style'], width=800)
 
-        self.init_bt = Button(label="Initialize Tonight's Log", css_classes=['init_button'])
+        self.init_btn = Button(label="Initialize Tonight's Log", css_classes=['init_button'])
+        self.os_name_1 = TextInput(title ='Observing Scientist 1', placeholder = 'Ruth Bader Ginsberg')
+        self.os_name_2 = TextInput(title ='Observing Scientist 2', placeholder = "Sandra Day O'Connor")
+        self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
+        self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
         self.LO = Select(title='Lead Observer', value='Choose One', options=self.lo_names)
         self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names)
 
@@ -70,7 +64,7 @@ class OS_Report(Report):
                             self.line,
                             self.init_hdr,
                             [[self.os_name_1, self.os_name_2], self.LO, self.OA],
-                            [self.init_bt],
+                            self.init_btn,
                             self.line2,
                             self.contributer_list,
                             self.contributer_btn,
@@ -94,7 +88,7 @@ class OS_Report(Report):
         self.time_tabs = [None, None, None, self.exp_time, self.prob_time, None, None, None]
 
         self.now_btn.on_click(self.time_is_now)
-        self.init_bt.on_click(self.initialize_log)
+        self.init_btn.on_click(self.initialize_log)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.progress_add)
         self.exp_load_btn.on_click(self.load_exposure)
@@ -109,16 +103,12 @@ class OS_Report(Report):
         self.plan_btn.on_click(self.plan_add)
         self.plan_new_btn.on_click(self.plan_add_new)
         self.plan_load_btn.on_click(self.plan_load)
-        self.img_btn.on_click(self.image_add)
+        #self.img_btn.on_click(self.image_add)
         self.contributer_btn.on_click(self.add_contributer_list)
         self.summary_btn.on_click(self.add_summary)
         
-        
-
-    
 OS = OS_Report()
 OS.run()
-curdoc().theme = 'dark_minimal'
 curdoc().title = 'DESI Night Log - Observing Scientist'
 curdoc().add_root(OS.layout)
 curdoc().add_periodic_callback(OS.current_nl, 30000)

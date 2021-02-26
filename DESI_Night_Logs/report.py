@@ -50,11 +50,6 @@ class Report():
         self.datefmt = DateFormatter(format="%m/%d/%Y %H:%M:%S")
         self.timefmt = DateFormatter(format="%m/%d %H:%M")
 
-        self.inst_style = {'font-size':'150%'}
-        self.subt_style = {'font-size':'200%','font-style':'bold'}
-        self.title_style = {'font-size':'250%','font-style':'bold'}
-        self.alert_style = {'font-size':'150%','color':'red'}
-
         self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
 
@@ -73,15 +68,13 @@ class Report():
             self.location = 'nersc'
         else:
             self.location = 'other'
+
         nw_dirs = {'nersc':'/global/cfs/cdirs/desi/spectro/nightwatch/nersc/', 'kpno':'/exposures/nightwatch/', 'other':None}
         self.nw_dir = nw_dirs[self.location]
         self.nl_dir = os.environ['NL_DIR']
 
         self.your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
-        self.os_name_1 = TextInput(title ='Observing Scientist 1', placeholder = 'Ruth Bader Ginsberg')
-        self.os_name_2 = TextInput(title ='Observing Scientist 2', placeholder = "Sandra Day O'Connor")
-        self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
-        self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
+
         self.intro_txt = Div(text=' ')
         self.comment_txt = Div(text=" ", css_classes=['inst-style'], width=1000)
 
@@ -95,22 +88,23 @@ class Report():
         self.connect_txt = Div(text=' ', css_classes=['alert-style'])
 
         self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
-        self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)
-
+        self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)        
         self.img_subtitle = Div(text="Images", css_classes=['subt-style'])
+        
         self.img_upinst = Div(text="Include images in the Night Log by uploading a png image from your local computer. Select file, write a comment and click Add", css_classes=['inst-style'], width=1000)
         self.img_upinst2 = Div(text="           Choose image to include with comment:  ", css_classes=['inst-style'])
         self.img_upload = FileInput(accept=".png")
         self.img_upload.on_change('value', self.upload_image)
-        self.img_upload_comments = FileInput(accept=".png")
-        self.img_upload_comments.on_change('value', self.upload_image_comments)
+        # self.img_upload_comments_other = FileInput(accept=".png")
+        # self.img_upload_comments_other.on_change('value', self.upload_image_comments_other)
         self.img_upload_comments_os = FileInput(accept=".png")
         self.img_upload_comments_os.on_change('value', self.upload_image_comments_os)
+        self.img_upload_comments_dqs = FileInput(accept=".png")
+        self.img_upload_comments_dqs.on_change('value', self.upload_image_comments_dqs)
         self.img_upload_problems = FileInput(accept=".png")
         self.img_upload_problems.on_change('value', self.upload_image_problems)
-        self.img_inst = Div(text="Include images in the Night Log by entering the location of the images on the desi cluster", css_classes=['inst-style'], width=1000)
-        self.img_input = TextInput(title='image file location on desi cluster', placeholder='/n/home/desiobserver/image.png',value=None)
-        self.img_comment = TextAreaInput(placeholder='comment about image', rows=8, cols=3, title='Image caption')
+
+
         self.img_btn = Button(label='Add', css_classes=['add_button'])
         self.img_alert = Div(text=" ",width=1000)
 
@@ -136,11 +130,10 @@ class Report():
             for path, subdirs, files in os.walk(dir_): 
                 for s in subdirs: 
                     exposures.append(s)  
-            self.exp_select.options = list(exposures)
+            self.exp_select.options = [int(e) for e in list(exposures)]
             self.exp_select.value = exposures[0] 
         except:
             self.exp_select.options = []
-            #self.exp_select.value = "None Avail."
 
     def get_intro_layout(self):
         intro_layout = layout([self.title,
@@ -247,7 +240,7 @@ class Report():
                         [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn],
                         [self.exp_exposure_start, self.exp_exposure_finish],
                         [self.exp_comment],
-                        [self.img_upinst2, self.img_upload_problems],
+                        [self.img_upinst2, self.img_upload_comments_os],
                         [self.exp_btn],
                         self.exp_alert], width=1000)
         self.exp_tab = Panel(child=self.exp_layout, title="Nightly Progress")
@@ -282,6 +275,7 @@ class Report():
                             [self.exp_select, self.exp_enter],
                             [self.quality_title, self.quality_btns],
                             self.exp_comment,
+                            [self.img_upinst2, self.img_upload_comments_dqs],
                             [self.exp_btn],
                             [self.exp_alert], width=1000)
         self.exp_tab = Panel(child=self.exp_layout, title="Exposures") 
@@ -434,8 +428,8 @@ class Report():
                    TableColumn(field='sequence', title='Sequence', width=100),
                    TableColumn(field='flavor', title='Flavor', width=50),
                    TableColumn(field='exptime', title='Exptime', width=50),
-                   TableColumn(field='program', title='Program', width=300)
-                   TableColumn(field='airmass', title='Airmass', width=50)
+                   TableColumn(field='program', title='Program', width=300),
+                   TableColumn(field='airmass', title='Airmass', width=50),
                    TableColumn(field='seeing', title='Seeing', width=50)]
 
         self.exp_table = DataTable(source=self.explist_source, columns=exp_columns, width=1000)
@@ -504,18 +498,15 @@ class Report():
         self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
 
     def connect_log(self):
-        """
-        Initialize Night Log with Input Date
+        """Connect to Existing Night Log with Input Date
         """
         self.get_night('connect')
         exists = self.DESI_Log.check_exists()
 
-        
         your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
         if exists:
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
 
-            
             if self.report_type == 'DQS':
                 self.DESI_Log.add_dqs_observer(your_firstname, your_lastname)
                 meta_dict = self.DESI_Log.get_meta_data()
@@ -526,10 +517,7 @@ class Report():
                 self.os_name_2.value = meta_dict['{}_2_first'.format(self.report_type.lower())]+' '+meta_dict['{}_2_last'.format(self.report_type.lower())]
 
             self.display_current_header()
-            #if self.location == 'nersc':
             self.nl_file = os.path.join(self.DESI_Log.root_dir,'nightlog.html')
-            # else:
-            #     self.nl_file = os.getcwd()+'/'+self.DESI_Log.root_dir+'nightlog.html'
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
             if self.report_type == 'OS':
@@ -549,8 +537,7 @@ class Report():
             self.connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(self.date_init.value)
 
     def initialize_log(self):
-        """
-        Initialize Night Log with Input Date
+        """ Initialize Night Log with Input Date
         """
 
         date = datetime.now()
@@ -707,7 +694,7 @@ class Report():
         if self.save_telem_plots:
             if set(list(exp_df.seeing)) == set([None]):
                 sky_monitor = False
-                fig = plt.figure(figsize= (8,15))
+                fig = plt.figure(figsize= (8, 15))
                 #fig, axarr = plt.subplots(5, 1, figsize = (8,15), sharex=True)
             else:
                 sky_monitor = True
@@ -751,25 +738,16 @@ class Report():
             ax6.set_ylabel("Exposure time (s)")
             ax6.grid(True)
 
-            #ax1 = fig.add_subplot(6,1,6)
-            #ax1.scatter(telem_data.exp, telem_data.seeing, s=5, label='Seeing')
-            #ax1.set_ylabel("Seeing (arcsec)")
-
-
             if sky_monitor:
-                ax[6].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
-                ax[6].set_ylabel("Seeing")
+                ax6.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
+                ax6.set_ylabel("Seeing")
 
-                ax[7].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
-                ax[7].set_ylabel("Transparency (%)")
+                ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
+                ax7.set_ylabel("Transparency (%)")
 
-                ax[8].scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
-                ax[8].set_ylabel("Sky level (AB/arcsec^2)")
-    
-            #for i in range(len(ax)):
-            #    ax[i].grid(True)
+                ax8.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
+                ax8.set_ylabel("Sky level (AB/arcsec^2)")
 
-        #X label ticks as local time
             ax6.set_xlabel("Local Time (MST)")
             ax6.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M', tz=pytz.timezone("US/Arizona")))
             ax6.tick_params(labelrotation=45)
@@ -799,37 +777,6 @@ class Report():
         self.clear_input(self.check_comment)
         self.checklist.active = []
 
-    def prob_add(self):
-        """Adds problem to nightlog
-        """
-        # Was an image uploaded?
-        if hasattr(self, 'img_upload_problems') and self.img_upload_problems.filename not in [None, '']:
-            img_data = self.img_upload_problems.value.encode('utf-8')
-            img_name = str(self.img_upload_problems.filename)
-            self.img_upload_problems.filename = None
-        else:
-            img_data = None
-            img_name = None
-        if self.report_type == 'Other':
-            self.DESI_Log.write_problem([self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, 
-                                      self.prob_action.value, self.your_name.value], self.report_type,
-                                      img_name=img_name, img_data=img_data)
-        else:
-            self.DESI_Log.write_problem([self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, 
-                                      self.prob_action.value, None], self.report_type,
-                                      img_name=img_name, img_data=img_data)
-        # Preview
-        if img_name != None:
-            # move to class initialization
-            image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{img_name}'
-            preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
-            preview += "<br>"
-            preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
-            self.prob_alert.text = preview
-        else:
-            self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
-        self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
-
     def plan_add_new(self):
         self.plan_time = None
         self.plan_add()
@@ -847,6 +794,146 @@ class Report():
         self.plan_alert.text = 'Last item input: {}'.format(self.plan_input.value)
         self.clear_input([self.plan_order, self.plan_input])
         self.plan_time = None
+
+    def milestone_add(self):
+        if self.milestone_time is None:
+            ts = self.get_time(datetime.now())
+        else:
+            ts = self.milestone_time
+        self.DESI_Log.write_milestone([ts, self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value])
+        self.milestone_alert.text = 'Last Milestone Entered: {}'.format(self.milestone_input.value)
+        self.clear_input([self.milestone_input, self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl])
+        self.milestone_time = None
+
+    def weather_add(self):
+        """Adds table to Night Log
+        """
+        now = datetime.now().astimezone(tz=self.kp_zone) 
+        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
+        time = self.get_time(now_time) #self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
+        if self.location == 'kpno':
+            self.make_telem_plots()
+            telem_df = pd.DataFrame(self.telem_source.data)
+            this_data = telem_df.iloc[-1]
+            desc = self.weather_desc.value
+            temp = this_data.temp
+            wind = this_data.wind_speed
+            humidity = this_data.humidity
+            seeing = this_data.seeing
+            #tput = this_data.tput
+            #skylevel = this_data.skylevel
+            data = [time, desc, temp, wind, humidity, seeing, None, None]
+            df = self.DESI_Log.write_weather(data)
+
+        else: 
+            data = [time, self.weather_desc.value, None, None, None, None, None, None]
+            df = self.DESI_Log.write_weather(data)
+            self.weather_alert.text = 'Not connected to the telemetry DB. Only weather description will be recorded.'
+
+        self.clear_input([self.weather_desc])
+        self.get_weather()
+
+    def image_uploaded(self, mode='comment'):
+        img_data = None
+        img_name = None
+
+        if mode == 'comment':         
+            if self.report_type == 'DQS':
+                if hasattr(self, 'img_upload_comments_dqs') and self.img_upload_comments_dqs.filename not in [None,'']:
+                    img_data = self.img_upload_comments_dqs.value.encode('utf-8')
+                    img_name = str(self.img_upload_comments_dqs.filename)
+            else:
+                if self.exp_comment.value not in [None, ''] and hasattr(self, 'img_upload_comments_os') and self.img_upload_comments_os.filename not in [None,'']:
+                    img_data = self.img_upload_comments_os.value.encode('utf-8')
+                    img_name = str(self.img_upload_comments_os.filename)
+
+        elif mode == 'problem':
+            if hasattr(self, 'img_upload_problems') and self.img_upload_problems.filename not in [None, '']:
+                img_data = self.img_upload_problems.value.encode('utf-8')
+                img_name = str(self.img_upload_problems.filename)
+
+        self.image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{img_name}'
+        preview = '<img src="{}" style="width:300px;height:300px;">'.format(self.image_location_on_server)
+        return img_name, img_data, preview
+       
+    def prob_add(self):
+        """Adds problem to nightlog
+        """
+        if self.report_type == 'Other':
+            name = self.your_name.value
+        else:
+            name = None
+
+        img_name, img_data, preview = self.image_uploaded('problem')
+        data = [self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name]
+        self.DESI_Log.write_problem(data, self.report_type, img_name=img_name, img_data=img_data)
+
+        # Preview
+        if img_name != None:
+            preview += "<br>"
+            preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
+            self.prob_alert.text = preview
+            self.img_upload_problems = FileInput(accept=".png")
+        else:
+            self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
+        self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+
+    def progress_add(self):
+        if self.exp_time.value not in [None, 'None'," ", ""]:
+            data = [self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value]
+            img_name, img_data, preview = self.image_uploaded('comment')
+
+            self.DESI_Log.write_os_exp(data, img_name=img_name, img_data=img_data)
+            if img_name is not None:
+                preview += "<br>"
+                preview += "A comment was added at {}".format(self.exp_time.value)
+                self.exp_alert.text = preview
+                self.img_upload_comments_os=FileInput(accept=".png")
+            else:
+                self.exp_alert.text = 'Last Input was at {}'.format(self.exp_time.value)
+            self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish])
+        else:
+            self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
+    
+    def comment_add(self):
+        if self.your_name.value in [None,' ','']:
+            self.comment_alert.text = 'You need to enter your name on first page before submitting a comment'
+        else:
+            if self.exp_time.value not in [None, 'None'," ", ""]:
+                img_name, img_data, preview = self.image_uploaded('comment')
+                data = [self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value, self.your_name.value]
+                self.DESI_Log.write_other_exp(data, img_name=img_name, img_data=img_data)
+
+                if img_name is not None:
+                    preview += "<br>"
+                    preview += "A comment was added at {}".format(self.exp_time.value)
+                    self.exp_alert.text = preview
+                    self.img_upload_comments=FileInput(accept=".png")
+                else:
+                    self.exp_alert.text = "A comment was added at {}".format(self.exp_time.value)
+                self.clear_input([self.exp_time, self.exp_comment])
+
+    def exp_add(self):
+        quality = self.quality_list[self.quality_btns.active]
+        if self.exp_option.active == 0:
+            exp_val = self.exp_select.value
+        elif self.exp_option.active ==1:
+            exp_val = self.exp_enter.value
+        now = datetime.now().astimezone(tz=self.kp_zone) 
+        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), 'str')
+
+        img_name, img_data, preview = self.image_uploaded('comment')
+        data = [self.get_time(now_time), exp_val, quality, self.exp_comment.value]
+        self.DESI_Log.write_dqs_exp(data, img_name=img_name, img_data=img_data)
+
+        if img_name is not None:
+            preview += "<br>"
+            preview += "A comment was added at {}".format(self.exp_time.value)
+            self.exp_alert.text = preview
+            self.img_upload_comments_dqs=FileInput(accept=".png")
+        else:
+            self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now_time)
+        self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
 
     def plan_load(self):
         b, item = self.DESI_Log.load_index(self.plan_order.value, 'plan')
@@ -870,16 +957,6 @@ class Report():
         else:
             self.exp_alert.text = "An input for that exposure doesn't exist."
 
-    def milestone_add(self):
-        if self.milestone_time is None:
-            ts = self.get_time(datetime.now())
-        else:
-            ts = self.milestone_time
-        self.DESI_Log.write_milestone([ts, self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value])
-        self.milestone_alert.text = 'Last Milestone Entered: {}'.format(self.milestone_input.value)
-        self.clear_input([self.milestone_input, self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl])
-        self.milestone_time = None
-
     def milestone_load(self):
         b, item = self.DESI_Log.load_index(int(self.milestone_load_num.value), 'milestone')
         if b:
@@ -890,101 +967,6 @@ class Report():
             self.milestone_time = item['Time'].values[0]
         else:
             self.milestone_alert.text = "That milestone index doesn't exist yet"
-
-    def weather_add(self):
-        """Adds table to Night Log
-        """
-        now = datetime.now().astimezone(tz=self.kp_zone) 
-        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
-        time = self.get_time(now_time) #self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
-        if self.location == 'kpno':
-            self.make_telem_plots()
-            telem_df = pd.DataFrame(self.telem_source.data)
-            this_data = telem_df.iloc[-1]
-            desc = self.weather_desc.value
-            temp = this_data.temp
-            wind = this_data.wind_speed
-            humidity = this_data.humidity
-            seeing = this_data.seeing
-            #tput = this_data.tput
-            #skylevel = this_data.skylevel
-            data = [time, desc, temp, wind, humidity, seeing, None, None]
-            df = self.DESI_Log.write_weather(data)
-
-        else: 
-            print(time)
-            data = [time, self.weather_desc.value, None, None, None, None, None, None]
-            df = self.DESI_Log.write_weather(data)
-            self.weather_alert.text = 'Not connected to the telemetry DB. Only weather description will be recorded.'
-
-        self.clear_input([self.weather_desc])
-        self.get_weather()
-
-    def progress_add(self):
-        if self.exp_time.value not in [None, 'None'," ", ""]:
-            data = [self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value]
-            # For comments allow image uploads
-            has_image = False
-            if self.exp_comment.value not in [None, ''] and hasattr(self, 'img_upload_comments_os') and self.img_upload_comments_os.filename not in [None,'']:
-                if self.img_upload_comments_os.filename not in [None, '']:
-                    img_data = self.img_upload_comments_os.value.encode('utf-8')
-                    img_name = str(self.img_upload_comments_os.filename)
-                    has_image = True
-                    self.DESI_Log.write_os_exp(data, img_name = img_name, img_data = img_data)
-                    # move to class initialization
-                    image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{img_name}'
-                    preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
-                    preview += "<br>"
-                    preview += "A comment was added at {}".format(self.exp_time.value)
-                    self.exp_alert.text = preview
-                    self.img_upload_comments_os.filename=None
-            if not has_image:
-                self.DESI_Log.write_os_exp(data)
-                self.exp_alert.text = 'Last Input was at {}'.format(self.exp_time.value)
-            self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish])
-        else:
-            self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
-    
-    def comment_add(self):
-
-        if self.your_name.value in [None,' ','']:
-            self.comment_alert.text = 'You need to enter your name on first page before submitting a comment'
-        else:
-            if self.exp_time.value not in [None, 'None'," ", ""]:
-                data = [self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value, self.your_name.value]
-                has_image = False
-                if hasattr(self, 'img_upload_comments'):
-                    if self.img_upload_comments.filename not in [None, '']:
-                        img_data = self.img_upload_comments.value.encode('utf-8')
-                        img_name = str(self.img_upload_comments.filename)
-                        has_image = True
-                        self.DESI_Log.write_other_exp(data, img_name=img_name, img_data=img_data)
-                        #self.DESI_Log.upload_image_comments(img_data, self.get_time(self.exp_time.value), self.exp_comment.value,
-                        #                                    self.your_name.value, image_name)
-                        # move to class initialization
-                        image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{image_name}'
-                        preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
-                        preview += "<br>"
-                        preview += "A comment was added at {}".format(self.exp_time.value)
-                        self.exp_alert.text = preview
-                        self.img_upload_comments.filename=None
-                        self.clear_input([self.exp_time, self.exp_comment])
-                if not has_image:
-                    self.DESI_Log.write_other_exp(data)
-                    self.exp_alert.text = "A comment was added at {}".format(self.exp_time.value)
-                    self.clear_input([self.exp_time, self.exp_comment])
-
-    def exp_add(self):
-        quality = self.quality_list[self.quality_btns.active]
-        if self.exp_option.active == 0:
-            exp_val = self.exp_select.value
-        elif self.exp_option.active ==1:
-            exp_val = self.exp_enter.value
-        now = datetime.now().astimezone(tz=self.kp_zone) 
-        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), 'str')
-        self.DESI_Log.write_dqs_exp([self.get_time(now_time), exp_val, quality, self.exp_comment.value])
-        self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now_time)
-        self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
 
     def load_exposure(self):
         #Check if progress has been input with a given timestamp
@@ -1027,42 +1009,45 @@ class Report():
     def upload_image_comments_os(self, attr, old, new):
         print(f'Local image file upload (OS comments): {self.img_upload_comments_os.filename}')
 
-    def upload_image_comments(self, attr, old, new):
-        print(f'Local image file upload (Other comments): {self.img_upload_comments.filename}')
+    def upload_image_comments_other(self, attr, old, new):
+        print(f'Local image file upload (Other comments): {self.img_upload_comments_other.filename}')
+
+    def upload_image_comments_dqs(self, attr, old, new):
+        print(f'Local image file upload (Other comments): {self.img_upload_comments_dqs.filename}')
 
     def upload_image_problems(self, attr, old, new):
         print(f'Local image file upload (Other comments): {self.img_upload_problems.filename}')
 
-    def image_add(self):
-        """Copies image from the input location to the image folder for the nightlog.
-        Then calls add_image() from nightlog.py which writes it to the html file
-        Then gives preview of image of last image.
-        """
-        image_loc = self.img_input.value
-        if image_loc in [None, '']:
-            # got a local upload
-            img_data = self.img_upload.value.encode('utf-8')
-            self.DESI_Log.upload_image(img_data, self.img_comment.value, self.img_upload.filename)
-            # move to class initialization
-            image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{self.img_upload.filename}'
-            preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
-            preview += "<br>"
-            preview += "{}".format(self.img_comment.value)
-            self.img_alert.text = preview
-            return
-        image_name = os.path.split(image_loc)[1]
-        image_type = os.path.splitext(image_name)[1]
-        bashCommand1 = "cp {} {}".format(image_loc,self.DESI_Log.image_dir)
-        bashCommand2 = "cp {} {}".format(image_loc,self.report_type+"_Report/static/images/tmp_img{}".format(image_type))
-        results = subprocess.run(bashCommand1.split(), text=True, stdout=subprocess.PIPE, check=True)
-        results = subprocess.run(bashCommand2.split(), text=True, stdout=subprocess.PIPE, check=True)
-        self.DESI_Log.add_image(os.path.join(self.DESI_Log.image_dir,image_name), self.img_comment.value)
-        #KH: this is something you need to reconsider. It is bad practice to write into the source code directory
-        preview = '<img src="{}_Report/static/images/tmp_img{}" style="width:300px;height:300px;">'.format(self.report_type,image_type)
-        preview += "\n"
-        preview += "{}".format(self.img_comment.value)
-        self.img_alert.text = preview
-        self.clear_input([self.img_input, self.img_comment])
+    # def image_add(self):
+    #     """Copies image from the input location to the image folder for the nightlog.
+    #     Then calls add_image() from nightlog.py which writes it to the html file
+    #     Then gives preview of image of last image.
+    #     """
+    #     image_loc = self.img_input.value
+    #     if image_loc in [None, '']:
+    #         # got a local upload
+    #         img_data = self.img_upload.value.encode('utf-8')
+    #         self.DESI_Log.upload_image(img_data, self.img_comment.value, self.img_upload.filename)
+    #         # move to class initialization
+    #         image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{self.img_upload.filename}'
+    #         preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
+    #         preview += "<br>"
+    #         preview += "{}".format(self.img_comment.value)
+    #         self.img_alert.text = preview
+    #         return
+    #     image_name = os.path.split(image_loc)[1]
+    #     image_type = os.path.splitext(image_name)[1]
+    #     bashCommand1 = "cp {} {}".format(image_loc,self.DESI_Log.image_dir)
+    #     bashCommand2 = "cp {} {}".format(image_loc,self.report_type+"_Report/static/images/tmp_img{}".format(image_type))
+    #     results = subprocess.run(bashCommand1.split(), text=True, stdout=subprocess.PIPE, check=True)
+    #     results = subprocess.run(bashCommand2.split(), text=True, stdout=subprocess.PIPE, check=True)
+    #     self.DESI_Log.add_image(os.path.join(self.DESI_Log.image_dir,image_name), self.img_comment.value)
+    #     #KH: this is something you need to reconsider. It is bad practice to write into the source code directory
+    #     preview = '<img src="{}_Report/static/images/tmp_img{}" style="width:300px;height:300px;">'.format(self.report_type,image_type)
+    #     preview += "\n"
+    #     preview += "{}".format(self.img_comment.value)
+    #     self.img_alert.text = preview
+    #     self.clear_input([self.img_input, self.img_comment])
 
     def time_is_now(self):
         now = datetime.now().astimezone(tz=self.kp_zone) 

@@ -167,7 +167,7 @@ class NightLog(object):
         meta_dict = json.load(open(self.meta_json,'r'))
         return meta_dict
 
-    def write_pkl(self, data, cols, filen):
+    def write_pkl(self, data, cols, filen, dqs_exp=False):
         # order = time, index
         if not os.path.exists(filen):
 
@@ -182,7 +182,10 @@ class NightLog(object):
         df = df.append(data_df)
 
         if self.replace:
-            df = df.drop_duplicates(['Time'], keep='last')
+            if dqs_exp:
+                df = df.drop_duplicates(['Exp_Start'], keep='last')
+            else:
+                df = df.drop_duplicates(['Time'], keep='last')
 
         df = df.sort_values(by=['Time'])
         df.reset_index(inplace=True, drop=True)
@@ -263,18 +266,18 @@ class NightLog(object):
             file.write("\n")
         file.close()
 
-    def write_problem(self, data, user, img_name = None, img_data = None):
-        prob_cols = ['Time', 'Problem', 'alarm_id', 'action', 'name']
+    def write_problem(self, data, user, img_name=None, img_data=None):
+        prob_cols = ['Time', 'Problem', 'alarm_id', 'action', 'name','img_name','img_data']
         if user == 'OS':
-            file = self.other_pb
+            file = self.os_pb
             filen = self.os_pb_file
         if user == 'DQS':
-            file = self.os_pb
+            file = self.dqs_pb
             filen = self.dqs_pb_file
         if user == 'Other':
-            file = self.dqs_pb
+            file = self.other_pb
             filen = self.other_pb_file
-
+        data = np.hstack([data, img_name, img_data])
         df = self.write_pkl(data, prob_cols, file)
 
         file = open(filen, 'w')
@@ -295,37 +298,56 @@ class NightLog(object):
             if user == 'Other':
                 file.write(' ({})'.format(row['name']))
                 file.write('_')
+            if row['img_name'] is not None:
+                self.write_img(file, row['img_data'], row['img_name'])
             file.write('\n')
 
-        self.write_img(file, img_data, img_name)
+        #file = self.write_img(file, img_data, img_name)
         file.close()
 
     def write_other_exp(self, data, img_name = None, img_data = None):
-        exp_columns = ['Time','Comment','Exp_Start','Exp_End','Name']
+        exp_columns = ['Time','Comment','Exp_Start','Exp_End','Name','img_name','img_data']
+        data = np.hstack([data, img_name, img_data])
         df = self.write_pkl(data, exp_columns, self.other_exp)
         file = open(self.other_exp_file, 'w')
         for index, row in df.iterrows():
             file.write("- {} := {} ({})\n".format(self.write_time(row['Time']), row['Comment'], row['Name']))
+            if row['img_name'] is not None:
+                self.write_img(file, row['img_data'], row['img_name'])
+                file.write('\n')
 
-        self.write_img(file, img_data, img_name)
         file.close()
 
     def write_dqs_exp(self, data, img_name = None, img_data = None):
 
-        exp_columns = ['Time','Exp_Start','Quality','Comment']
-        df = self.write_pkl(data, exp_columns, self.dqs_exp)
+        exp_columns = ['Time','Exp_Start','Quality','Comment','img_name','img_data']
+        data = np.hstack([data, img_name, img_data])
+        df = self.write_pkl(data, exp_columns, self.dqs_exp,dqs_exp=True)
         file = open(self.dqs_exp_file, 'w')
         for index, row in df.iterrows():
             file.write(f"- {self.write_time(row['Time'])} := Exp. {row['Exp_Start']}, {row['Quality']}, {row['Comment']}\n")
-
-        self.write_img(file, img_data, img_name)
+            if row['img_name'] is not None:
+                self.write_img(file, row['img_data'], row['img_name'])
+                file.write('\n')
         file.close()
 
-    def write_os_exp(self, data, img_name = None, img_data = None):     
+    def write_img(self, file, img_data, img_name):
+        if img_name is not None and img_data is not None:
+            # if img_filen is a bytearray we have received an image in base64 string (from local upload)
+            # images are stored in the images directory
+            if isinstance(img_data, bytes):
+                self._upload_and_save_image(img_data, img_name)
+                self._write_image_tag(file, img_name)
+            else:
+                print('ERROR: invalid format for uploading image')
+        return file
+
+    def write_os_exp(self, data, img_name=None, img_data=None):     
         if os.path.exists(self.explist_file):
             exp_df = pd.read_csv(self.explist_file)
 
-        exp_columns = ['Time','Comment','Exp_Start','Exp_End']
+        exp_columns = ['Time','Comment','Exp_Start','Exp_End','img_name','img_data']
+        data = np.hstack([data, img_name, img_data])
         df = self.write_pkl(data, exp_columns, self.os_exp)
         file = open(self.os_exp_file,'w')
         for index, row in df.iterrows():
@@ -344,7 +366,11 @@ class NightLog(object):
             else:
                 file.write("\n")
 
-        self.write_img(file, img_data, img_name)
+            if row['img_name'] is not None:
+                self.write_img(file, row['img_data'], row['img_name'])
+            else:
+                file.write("\n")
+            
         file.close()
 
     def load_index(self, idx, page):
@@ -360,22 +386,24 @@ class NightLog(object):
             return False, item
 
     def load_exp(self, exp):
-        the_path = self.dqs_exp_file
+        the_path = self.dqs_exp
 
         df = pd.read_pickle(the_path)
-        item = df[df.Exp_Start == int(exp)]
+
+        item = df[df.Exp_Start == exp]
         if len(item) > 0:
             return True, item
         else:
             return False, item
 
     def load_timestamp(self, time, user, exp_type):
+
         if user == 'OS':
             _dir = self.os_dir
         elif user == 'DQS':
             _dir = self.dqs_dir
         elif user == 'Other':
-            _dir == self.other_dir
+            _dir = self.other_dir
 
         if exp_type == 'exposure':
             the_path = os.path.join(_dir, 'exposures.pkl')
@@ -408,52 +436,52 @@ class NightLog(object):
         if isinstance(comments, str):
             img_file.write("<br>{}\n".format(comments))
 
-    def upload_image_comments(self, img_data, time, comment, your_name, uploaded_file = None):
-        # get the file for the Other Report
-        the_path = os.path.join(self.other_obs_dir,"comment_{}".format(self.get_timestamp(time)))
-        file = self.new_entry_or_replace(the_path)
-        file.write("- {} := _{}({})_\n".format(self.write_time(time), comment, your_name))
+    # def upload_image_comments(self, img_data, time, comment, your_name, uploaded_file = None):
+    #     # get the file for the Other Report
+    #     the_path = os.path.join(self.other_obs_dir,"comment_{}".format(self.get_timestamp(time)))
+    #     file = self.new_entry_or_replace(the_path)
+    #     file.write("- {} := _{}({})_\n".format(self.write_time(time), comment, your_name))
 
-        # if img_filen is a bytearray we have received an image in base64 string (from local upload)
-        # images are stored in the images directory
-        name = uploaded_file if uploaded_file is not None else 'uploaded_image.png'
-        if isinstance(img_data, bytes):
-            self._upload_and_save_image(img_data, name)
-            self._write_image_tag(file, name, comment)
-        else:
-            print('ERROR: invalid format for uploading image')
-        file.close()
+    #     # if img_filen is a bytearray we have received an image in base64 string (from local upload)
+    #     # images are stored in the images directory
+    #     name = uploaded_file if uploaded_file is not None else 'uploaded_image.png'
+    #     if isinstance(img_data, bytes):
+    #         self._upload_and_save_image(img_data, name)
+    #         self._write_image_tag(file, name, comment)
+    #     else:
+    #         print('ERROR: invalid format for uploading image')
+    #     file.close()
 
-    def upload_image(self, img_data, comment, uploaded_file = None):
-        # if img_filen is a bytearray we have received an image in base64 string (from local upload)
-        if isinstance(img_data, bytes):
-            import base64
-            # create images directory if necessary
-            if not os.path.exists(self.image_dir):
-                os.makedirs(self.image_dir)
-            name = uploaded_file if uploaded_file is not None else 'uploaded_image.png'
-            img_file = os.path.join(self.image_dir, name)
-            with open(img_file, "wb") as fh:
-                fh.write(base64.decodebytes(img_data))
-            if os.path.exists(self.upload_image_file):
-                file = open(self.upload_image_file, 'a')
-            else:
-                file = open(self.upload_image_file, 'w')
-            self._write_image_tag(file, name, comment)
-            file.close()
-        else:
-            print('ERROR: invalid format for uploading image')
+    # def upload_image(self, img_data, comment, uploaded_file = None):
+    #     # if img_filen is a bytearray we have received an image in base64 string (from local upload)
+    #     if isinstance(img_data, bytes):
+    #         import base64
+    #         # create images directory if necessary
+    #         if not os.path.exists(self.image_dir):
+    #             os.makedirs(self.image_dir)
+    #         name = uploaded_file if uploaded_file is not None else 'uploaded_image.png'
+    #         img_file = os.path.join(self.image_dir, name)
+    #         with open(img_file, "wb") as fh:
+    #             fh.write(base64.decodebytes(img_data))
+    #         if os.path.exists(self.upload_image_file):
+    #             file = open(self.upload_image_file, 'a')
+    #         else:
+    #             file = open(self.upload_image_file, 'w')
+    #         self._write_image_tag(file, name, comment)
+    #         file.close()
+    #     else:
+    #         print('ERROR: invalid format for uploading image')
 
-    def add_image(self, img_filen, comment):
-        if os.path.exists(self.image_file):
-            file = open(self.image_file, 'a')
-        else:
-            file = open(self.image_file, 'w')
-        file.write("\n")
-        file.write('<img src="{}" style="width:300px;height:300px;">'.format(img_filen))
-        file.write("\n")
-        file.write("{}".format(comment))
-        file.close()
+    # def add_image(self, img_filen, comment):
+    #     if os.path.exists(self.image_file):
+    #         file = open(self.image_file, 'a')
+    #     else:
+    #         file = open(self.image_file, 'w')
+    #     file.write("\n")
+    #     file.write('<img src="{}" style="width:300px;height:300px;">'.format(img_filen))
+    #     file.write("\n")
+    #     file.write("{}".format(comment))
+    #     file.close()
 
     def add_contributer_list(self, contributers):
         file = open(self.contributer_file, 'w')
@@ -537,15 +565,14 @@ class NightLog(object):
         #Problems
         file_nl.write("\n")
         file_nl.write("\n")
-        file_nl.write("h3. Problems and Operations Issues\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
-        file_nl.write("h5. [OS, *DQS*, _Other_] \n")
+        file_nl.write("h3. Problems and Operations Issues [OS, *DQS*, _Other_]\n")
         self.compile_entries(self.os_pb_file, None, file_nl)
         self.compile_entries(self.dqs_pb_file, None, file_nl)
         self.compile_entries(self.other_pb_file, None, file_nl)
 
         #Weather
+        file_nl.write("\n")
+        file_nl.write("\n")
         file_nl.write("h3. Observing Conditions\n")
         self.compile_entries(self.weather_file, None, file_nl)
         file_nl.write("\n")
