@@ -319,13 +319,22 @@ class NightLog(object):
         file.close()
 
     def write_dqs_exp(self, data, img_name = None, img_data = None):
+        if os.path.exists(self.explist_file):
+            exp_df = pd.read_csv(self.explist_file)
 
         exp_columns = ['Time','Exp_Start','Quality','Comment','img_name','img_data']
         data = np.hstack([data, img_name, img_data])
         df = self.write_pkl(data, exp_columns, self.dqs_exp,dqs_exp=True)
         file = open(self.dqs_exp_file, 'w')
         for index, row in df.iterrows():
-            file.write(f"- {self.write_time(row['Time'])} := Exp. {row['Exp_Start']}, {row['Quality']}, {row['Comment']}\n")
+            file.write(f"- Exp. {row['Exp_Start']} := {row['Quality']}; {row['Comment']}\n")
+            try:
+                this_exp = exp_df[exp_df.id == int(row['Exp_Start'])]
+                file.write("; Tile: {}; Exptime: {}; Airmass: {}; Sequence: {}; Flavor: {}; Program: {}\n".format(
+                       this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
+                       this_exp['flavor'].values[0],this_exp['program'].values[0]))
+            except:
+                file.write('\n')
             if row['img_name'] is not None:
                 self.write_img(file, row['img_data'], row['img_name'])
                 file.write('\n')
