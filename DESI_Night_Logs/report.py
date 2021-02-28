@@ -130,7 +130,8 @@ class Report():
             for path, subdirs, files in os.walk(dir_): 
                 for s in subdirs: 
                     exposures.append(s)  
-            self.exp_select.options = [int(e) for e in list(exposures)]
+            exposures = list([str(int(e)) for e in list(exposures)])
+            self.exp_select.options = exposures
             self.exp_select.value = exposures[0] 
         except:
             self.exp_select.options = []
@@ -916,9 +917,9 @@ class Report():
     def exp_add(self):
         quality = self.quality_list[self.quality_btns.active]
         if self.exp_option.active == 0:
-            exp_val = self.exp_select.value
+            exp_val = int(self.exp_select.value)
         elif self.exp_option.active ==1:
-            exp_val = self.exp_enter.value
+            exp_val = int(self.exp_enter.value)
         now = datetime.now().astimezone(tz=self.kp_zone) 
         now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), 'str')
 
@@ -946,9 +947,9 @@ class Report():
 
     def dqs_load(self):
         if self.exp_option.active == 0:
-             exp = self.exp_select.value
+             exp = int(self.exp_select.value)
         if self.exp_option.active == 1:
-            exp = self.exp_enter.value
+            exp = int(self.exp_enter.value)
         b, item = self.DESI_Log.load_exp(exp)
         if b:
             self.exp_comment.value = item['Comment'].values[0]
