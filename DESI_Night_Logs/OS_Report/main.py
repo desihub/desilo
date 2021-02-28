@@ -13,8 +13,7 @@ view at: http://localhost:5006/OS_Report
 import os, sys
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
-os.environ["NL_DIR"] = "/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs"
-
+#os.environ["NL_DIR"] = "/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs"
 
 from bokeh.io import curdoc
 from bokeh.models import TextInput, Button, TextAreaInput, Select
