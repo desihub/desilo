@@ -852,7 +852,7 @@ class Report():
                 img_data = self.img_upload_problems.value.encode('utf-8')
                 img_name = str(self.img_upload_problems.filename)
 
-        self.image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{img_name}'
+        self.image_location_on_server = f'{os.environ["NL_DIR"]}/{self.night}/images/{img_name}' #http://desi-www.kpno.noao.edu:8090/nightlogs
         preview = '<img src="{}" style="width:300px;height:300px;">'.format(self.image_location_on_server)
         return img_name, img_data, preview
        
