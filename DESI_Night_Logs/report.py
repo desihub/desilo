@@ -2,13 +2,15 @@
 import os, sys
 import glob
 import time, sched
-from datetime import datetime
+from datetime import datetime, timedelta
+from collections import OrderedDict
 import numpy as np
 import pandas as pd
 import socket
 import psycopg2
 import subprocess
 import pytz
+import json
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -25,7 +27,6 @@ from bokeh.plotting import figure
 from astropy.time import TimezoneInfo
 import astropy.units.si as u
 
-import ephem
 from util import sky_calendar
 
 import smtplib
@@ -44,20 +45,12 @@ class Report():
         self.test = False 
 
         self.report_type = type
-        self.utc = TimezoneInfo()
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
-        self.zones = [self.utc, self.kp_zone]
+
         self.datefmt = DateFormatter(format="%m/%d/%Y %H:%M:%S")
         self.timefmt = DateFormatter(format="%m/%d %H:%M")
 
-        self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
-        self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
 
-        self.nl_file = None
-
-        self.intro_subtitle = Div(text="Connect to Night Log", css_classes=['subt-style'])
-        self.time_note = Div(text="<b> Note: </b> Enter all times as HH:MM (18:18 = 1818 = 6:18pm) in Kitt Peak local time. Either enter the time or hit the <b> Now </b> button if it just occured.", css_classes=['inst-style'])
-        self.exp_info = Div(text="Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
 
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
@@ -71,32 +64,17 @@ class Report():
 
         nw_dirs = {'nersc':'/global/cfs/cdirs/desi/spectro/nightwatch/nersc/', 'kpno':'/exposures/nightwatch/', 'other':None}
         self.nw_dir = nw_dirs[self.location]
-        self.nl_dir = os.environ['NL_DIR']
+        self.nl_dir = os.environ['NL_DIR']     
 
-        self.your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
-
-        self.intro_txt = Div(text=' ')
-        self.comment_txt = Div(text=" ", css_classes=['inst-style'], width=1000)
-
-        self.date_init = Select(title="Existing Night Logs")
-        self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
-        self.now_btn = Button(label='Now', css_classes=['now_button'], width=75)
-        days = [d for d in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir, d))]
-        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
-        self.date_init.options = list(init_nl_list)
-        self.date_init.value = init_nl_list[0]
-        self.connect_txt = Div(text=' ', css_classes=['alert-style'])
-
-        self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
-        self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500)        
-        self.img_subtitle = Div(text="Images", css_classes=['subt-style'])
+        self.intro_subtitle = Div(text="Connect to Night Log", css_classes=['subt-style'])
+        self.time_note = Div(text="<b> Note: </b> Enter all times as HH:MM (18:18 = 1818 = 6:18pm) in Kitt Peak local time. Either enter the time or hit the <b> Now </b> button if it just occured.", css_classes=['inst-style'])
+        self.exp_info = Div(text="Mandatory fields have an asterisk*.", css_classes=['inst-style'],width=500)
         
         self.img_upinst = Div(text="Include images in the Night Log by uploading a png image from your local computer. Select file, write a comment and click Add", css_classes=['inst-style'], width=1000)
         self.img_upinst2 = Div(text="           Choose image to include with comment:  ", css_classes=['inst-style'])
         self.img_upload = FileInput(accept=".png")
         self.img_upload.on_change('value', self.upload_image)
-        # self.img_upload_comments_other = FileInput(accept=".png")
-        # self.img_upload_comments_other.on_change('value', self.upload_image_comments_other)
+
         self.img_upload_comments_os = FileInput(accept=".png")
         self.img_upload_comments_os.on_change('value', self.upload_image_comments_os)
         self.img_upload_comments_dqs = FileInput(accept=".png")
@@ -104,15 +82,13 @@ class Report():
         self.img_upload_problems = FileInput(accept=".png")
         self.img_upload_problems.on_change('value', self.upload_image_problems)
 
-
-        self.img_btn = Button(label='Add', css_classes=['add_button'])
-        self.img_alert = Div(text=" ",width=1000)
-
+        self.nl_file = None
         self.milestone_time = None
         self.plan_time = None
 
         self.DESI_Log = None
         self.save_telem_plots = False
+
 
     def clear_input(self, items):
         """ After submitting something to the log, this will clear the form.
@@ -136,7 +112,36 @@ class Report():
         except:
             self.exp_select.options = []
 
+    def update_nl_list(self):
+        days = [f for f in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir,f))]
+        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
+        self.date_init.options = list(init_nl_list)
+        self.date_init.value = init_nl_list[0]
+
     def get_intro_layout(self):
+        
+
+
+
+        self.connect_txt = Div(text=' ', css_classes=['alert-style'])
+        self.intro_txt = Div(text=' ')
+        self.comment_txt = Div(text=" ", css_classes=['inst-style'], width=1000)
+
+        self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
+        self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500) 
+
+        self.your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
+
+        self.date_init = Select(title="Existing Night Logs")
+        self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
+        self.now_btn = Button(label='Now', css_classes=['now_button'], width=75)
+
+
+        self.update_nl_list()
+
+        self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
+        self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
+
         intro_layout = layout([self.title,
                             [self.page_logo, self.instructions],
                             self.intro_subtitle,
@@ -150,9 +155,9 @@ class Report():
     def get_plan_layout(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
         inst = """<ul>
-        <li>Add the major elements of the night plan found at the link below in the order expected for their completion using the <b>Add/New</b> button.</li>
+        <li>Add the major elements of the night plan found at the link below in the order expected for their completion using the <b>Add/New</b> button. Do NOT enter an index for new items - they will be generated.</li>
         <li>You can recall submitted plans using their index, as found on the Current DESI Night Log tab.</li>
-        <li>If you'd like to modify a submitted plan, <b>Load</b> the index, make your modifications, and then press <b>Update</b></li>.
+        <li>If you'd like to modify a submitted plan item, <b>Load</b> the index (these can be found on the Current NL), make your modifications, and then press <b>Update</b>.</li>
         </ul>
         """
         self.plan_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
@@ -177,9 +182,11 @@ class Report():
         self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", css_classes=['subt-style'])
         inst = """<ul>
         <li>Record any major milestones or accomplishments that occur throughout a night. These should correspond with the major elements input on the 
-        <b>Plan</b> tab. Include exposure numbers that correspond with the accomplishment, and if applicable, indicate any exposures to ignore in a series.</li>
-        <li>If you'd like to modify a submitted milestone, <b>Load</b> the index, make your modifications, and then press <b>Update</b>.</li>
-        <li>At the end of your shift, either at the end of the night or half way through, summarize the activities of the night in the <b>End fo Night Summary</b>.</li>
+        <b>Plan</b> tab. Include exposure numbers that correspond with the accomplishment, and if applicable, indicate any exposures to ignore in a series.
+        Do NOT enter an index for new items - they will be generated.</li>
+        <li>If you'd like to modify a submitted milestone, <b>Load</b> the index (these can be found on the Current NL), make your modifications, and then press <b>Update</b>.</li>
+        <li>At the end of your shift - either at the end of the night or half way through - summarize the activities of the night in the <b>End of Night Summary</b>.</li>
+        <li>You can submit more than one End of Night Summary, but you cannot edit them once submitted.</li>
         </ul>
         """
         self.milestone_inst = Div(text=inst, css_classes=['inst-style'],width=1000)
@@ -209,7 +216,7 @@ class Report():
         self.milestone_tab = Panel(child=milestone_layout, title='Milestones')
 
     def exp_layout(self):
-        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=5000)
+        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=10000)
         self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
         self.exp_btn = Button(label='Add/Update', css_classes=['add_button'])
         self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
@@ -222,13 +229,14 @@ class Report():
         inst="""<ul>
         <li>Throughout the night record the progress, including comments on calibrations and exposures. 
         All exposures are recorded in the eLog, so only enter information that can provide additional information.</li>
-        <li>If you enter an Exposure Number, the Night Log will include data from the eLog and connect it to any inputs
-        from the Data Quality Scientist.</li>
-        <li>If you'd like to modify a submitted comment, enter the time of the submission and hit the b>Load</b> button. 
+        <li>If you enter an Exposure Number, the Night Log will include data from the eLog and combine it with any inputs
+        from the Data Quality Scientist for that exposure.</li>
+        <li>If you'd like to modify a submitted comment, enter the time of the submission and hit the <b>Load</b> button. 
+        If you forget when a comment was submitted, check the Current NL. 
         After making your modifications, resubmit using the <b>Add/Update</b>.</li>
         </ul>
         """
-        exp_inst = Div(text=inst, width=800, css_classes=['inst-style'])
+        exp_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
         
         self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None, width=200)
         self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None, width=200)
@@ -255,12 +263,12 @@ class Report():
         <li>You can either select an exposure from the drop down (<b>(1) Select</b>) or enter it yourself (<b>(2) Enter</b>). Make sure to identify which you will use.</li> 
         <li>The exposure list is updated every 30 seconds. It might take some time for the exposure to transfer to Night Watch.</li> 
         <li>If you'd like to modify a submitted comment or quality assingment, you can recall a submission by selecting or entering the exposure number and using the <b>Load</b> button. 
-        After making your modifications, resubmit using the <b>Add/Update</b>.</li>
+        After making your modifications, resubmit using the <b>Add/Update</b> button.</li>
         </ul>
         """
         exp_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
 
-        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'CCD4 has some bright columns',value=None,rows=10, cols=5,width=500,max_length=5000)
+        self.exp_comment.placeholder = 'CCD4 has some bright columns'
         self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
         
         self.exp_select = Select(title='(1) Select Exposure',options=['None'],width=150)
@@ -287,15 +295,16 @@ class Report():
         <li>Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, 
         include it, but leave blank if not. </li>
         <li>If possible, include a description of the resolution. </li>
-        <li>If you'd like to modify or add to a submission, you can <b>Load</b> it using its timestamp. After making the modifications 
+        <li>If you'd like to modify or add to a submission, you can <b>Load</b> it using its timestamp. 
+        If you forget when a comment was submitted, check the Current NL. After making the modifications 
         or additions, press the <b>Add/Update</b> button.</li>
         </ul>
         """
         self.prob_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
         self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
-        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:",width=400)
+        self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:",width=400,max_length=10000)
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
-        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5,width=400)
+        self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5,width=400,max_length=10000)
         self.prob_btn = Button(label='Add/Update', css_classes=['add_button'])
         self.prob_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
@@ -318,7 +327,7 @@ class Report():
     
         self.weather_subtitle = Div(text="Observing Conditions", css_classes=['subt-style'])
         inst = """<ul>
-        <li>Every hour, as part of the OS checklist, include a description of the weather observing conditions.</li>
+        <li>Every hour, as part of the OS checklist, include a description of the weather and observing conditions.</li>
         <li>Additional weather and observing condition information will be added to the table below and the Night Log when you <b>Add Weather Description</b></li>
         <li>Below the table there are plots of the ongoing telemetry for the observing conditions. These will be added to the Night Log when submitted at the end of the night.</li> 
         </ul>
@@ -444,19 +453,6 @@ class Report():
                         self.nl_submit_btn], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
-    def short_time(self, time, mode):
-        """Returns %H%M in whichever time zone selected
-        """
-        if mode == 'str':
-            try:
-                t = datetime.strptime(time, "%Y%m%dT%H:%M")
-                zone = self.kp_zone #zones[time_select.active]
-                time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
-                return "{}:{}".format(str(time.hour).zfill(2), str(time.minute).zfill(2))
-            except:
-                return str_time
-        if mode == 'dt':
-            return "{}:{}".format(str(time.hour).zfill(2), str(time.minute).zfill(2))
 
     def get_time(self, time):
         """Returns strptime with utc. Takes time zone selection
@@ -464,26 +460,23 @@ class Report():
         date = self.night
         zone = self.kp_zone #zones[time_select.active]
         try:
-            t = datetime.strptime(date+":"+time,'%Y%m%d:%H%M')
+            t = datetime.strptime(date+time,'%Y%m%d%H%M')
         except:
             try:
-                t = datetime.strptime(date+":"+time,'%Y%m%d:%I:%M%p')
+                t = datetime.strptime(date+time,'%Y%m%d%I%M%p')
             except:
                 try:
-                    t = datetime.strptime(date+":"+time,'%Y%m%d:%H:%M')
+                    t = datetime.strptime(date+time,'%Y%m%d%H%M')
                 except:
                     print("need format %H%M, %H:%M, %H:%M%p")
-
         try:
-            tt = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = zone)
-            return tt.strftime("%Y%m%dT%H:%M")
+            return t.strftime("%Y%m%dT%H:%M")
         except:
             return time
 
     def get_strftime(self, time):
-        date = self.date_init.value
-        year, month, day = int(date[0:4]), int(date[4:6]), int(date[6:8])
-        d = datetime(year, month, day)
+        date = self.night
+        d = datetime.strptime(date, "%Y%m%d")
         dt = datetime.combine(d,time)
         return dt.strftime("%Y%m%dT%H:%M")
 
@@ -492,11 +485,11 @@ class Report():
             try:
                 date = datetime.strptime(self.date_init.value, '%Y%m%d')
             except:
-                date = datetime.now()
+                date = datetime.now().date()
         elif mode == 'init':
-            date = datetime.now()
-        self.night = str(date.year)+str(date.month).zfill(2)+str(date.day).zfill(2)
-        self.DESI_Log=nl.NightLog(str(date.year),str(date.month).zfill(2),str(date.day).zfill(2))
+            date = datetime.now().date()
+        self.night = date.strftime("%Y%m%d")
+        self.DESI_Log = nl.NightLog(self.night)
 
     def connect_log(self):
         """Connect to Existing Night Log with Input Date
@@ -510,10 +503,10 @@ class Report():
 
             if self.report_type == 'DQS':
                 self.DESI_Log.add_dqs_observer(your_firstname, your_lastname)
-                meta_dict = self.DESI_Log.get_meta_data()
+                meta_dict = json.load(open(self.DESI_Log.meta_json,'r'))
                 self.your_name.value = meta_dict['{}_1'.format(self.report_type.lower())]+' '+meta_dict['{}_last'.format(self.report_type.lower())]
             elif self.report_type == 'OS':
-                meta_dict = self.DESI_Log.get_meta_data()
+                meta_dict = json.load(open(self.DESI_Log.meta_json,'r'))
                 self.os_name_1.value = meta_dict['{}_1_first'.format(self.report_type.lower())]+' '+meta_dict['{}_1_last'.format(self.report_type.lower())]
                 self.os_name_2.value = meta_dict['{}_2_first'.format(self.report_type.lower())]+' '+meta_dict['{}_2_last'.format(self.report_type.lower())]
 
@@ -540,36 +533,33 @@ class Report():
     def initialize_log(self):
         """ Initialize Night Log with Input Date
         """
-
-        date = datetime.now()
         self.get_night('init')
-        LO_firstname, LO_lastname = self.LO.value.split(' ')[0], ' '.join(self.LO.value.split(' ')[1:])
-        OA_firstname, OA_lastname = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
-        os_1_firstname, os_1_lastname = self.os_name_1.value.split(' ')[0], ' '.join(self.os_name_1.value.split(' ')[1:])
-        os_2_firstname, os_2_lastname = self.os_name_2.value.split(' ')[0], ' '.join(self.os_name_2.value.split(' ')[1:])
+        meta = OrderedDict()
+        meta['LO_firstname'], meta['LO_lastname'] = self.LO.value.split(' ')[0], ' '.join(self.LO.value.split(' ')[1:])
+        meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
+        meta['os_1_firstname'], meta['os_1_lastname'] = self.os_name_1.value.split(' ')[0], ' '.join(self.os_name_1.value.split(' ')[1:])
+        meta['os_2_firstname'], meta['os_2_lastname'] = self.os_name_2.value.split(' ')[0], ' '.join(self.os_name_2.value.split(' ')[1:])
 
         eph = sky_calendar()
-        time_sunset = self.get_strftime(eph['sunset'])
-        time_sunrise = self.get_strftime(eph['sunrise'])
-        time_moonrise = self.get_strftime(eph['moonrise'])
-        time_moonset = self.get_strftime(eph['moonset'])
-        illumination = eph['illumination']
-        dusk_18_deg = self.get_strftime(eph['dusk_astronomical'])
-        dawn_18_deg = self.get_strftime(eph['dawn_astronomical'])
+
+        meta['time_sunset'] = self.get_strftime(eph['sunset'])
+        meta['time_sunrise'] = self.get_strftime(eph['sunrise'])
+        meta['time_moonrise'] = self.get_strftime(eph['moonrise'])
+        meta['time_moonset'] = self.get_strftime(eph['moonset'])
+        meta['illumination'] = eph['illumination']
+        meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
+        meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
 
         self.DESI_Log.initializing()
-        self.DESI_Log.get_started_os(os_1_firstname,os_1_lastname,os_2_firstname,os_2_lastname,LO_firstname,LO_lastname,
-            OA_firstname,OA_lastname,time_sunset,dusk_18_deg,dawn_18_deg,time_sunrise,time_moonrise,time_moonset,illumination)
+        self.DESI_Log.get_started_os(meta)
 
-        #update_weather_source_data()
         self.connect_txt.text = 'Night Log is Initialized'
         self.DESI_Log.write_intro()
         self.display_current_header()
         self.current_nl()
-        days = [f for f in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir,f))]
-        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
-        self.date_init.options = list(init_nl_list)
-        self.date_init.value = init_nl_list[0]
+
+        self.update_nl_list()
+
 
     def display_current_header(self):
         path = os.path.join(self.DESI_Log.root_dir, "header.html")
@@ -668,8 +658,10 @@ class Report():
         plt.close(figure)
 
     def make_telem_plots(self):
-        start_utc = '{} {}'.format(int(self.night), '13:00:00')
-        end_utc = '{} {}'.format(int(self.night)+1, '13:00:00')
+        dt = datetime.strptime(self.night, '%Y%m%d').night()
+        start_utc = '{} {}'.format(self.night, '13:00:00')
+        dt_2 = dt + timedelta(days=1)
+        end_utc = '{} {}'.format(dt_2.strftime("%Y%m%d"), '13:00:00')
         tel_df  = pd.read_sql_query(f"SELECT * FROM environmentmonitor_telescope WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn)
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
         tower_df = pd.read_sql_query(f"SELECT * FROM environmentmonitor_tower WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn) 
@@ -809,9 +801,8 @@ class Report():
     def weather_add(self):
         """Adds table to Night Log
         """
-        now = datetime.now().astimezone(tz=self.kp_zone) 
-        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
-        time = self.get_time(now_time) #self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
+        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H%M")
+        time = self.get_time(now) 
         if self.location == 'kpno':
             self.make_telem_plots()
             telem_df = pd.DataFrame(self.telem_source.data)
@@ -920,11 +911,10 @@ class Report():
             exp_val = int(self.exp_select.value)
         elif self.exp_option.active ==1:
             exp_val = int(self.exp_enter.value)
-        now = datetime.now().astimezone(tz=self.kp_zone) 
-        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), 'str')
+        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H%M")
 
         img_name, img_data, preview = self.image_uploaded('comment')
-        data = [self.get_time(now_time), exp_val, quality, self.exp_comment.value]
+        data = [self.get_time(now), exp_val, quality, self.exp_comment.value]
         self.DESI_Log.write_dqs_exp(data, img_name=img_name, img_data=img_data)
 
         if img_name is not None:
@@ -991,18 +981,16 @@ class Report():
             self.prob_alarm.value = item['alarm_id'].values[0]
             self.prob_action.value = item['action'].values[0]
 
-
-
     def add_contributer_list(self):
         cont_list = self.contributer_list.value
         self.DESI_Log.add_contributer_list(cont_list)
 
     def add_summary(self):
-        now = datetime.now()
+        now = datetime.now().strftime("%H%M")
         summary = self.summary.value
         self.DESI_Log.add_summary(summary)
         self.clear_input([self.summary])
-        self.milestone_alert.text = 'Summary Entered at {}'.format(self.short_time(now, 'dt'))
+        self.milestone_alert.text = 'Summary Entered at {}'.format(now)
 
     def upload_image(self, attr, old, new):
         print(f'Local image file upload: {self.img_upload.filename}')
@@ -1019,44 +1007,13 @@ class Report():
     def upload_image_problems(self, attr, old, new):
         print(f'Local image file upload (Other comments): {self.img_upload_problems.filename}')
 
-    # def image_add(self):
-    #     """Copies image from the input location to the image folder for the nightlog.
-    #     Then calls add_image() from nightlog.py which writes it to the html file
-    #     Then gives preview of image of last image.
-    #     """
-    #     image_loc = self.img_input.value
-    #     if image_loc in [None, '']:
-    #         # got a local upload
-    #         img_data = self.img_upload.value.encode('utf-8')
-    #         self.DESI_Log.upload_image(img_data, self.img_comment.value, self.img_upload.filename)
-    #         # move to class initialization
-    #         image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.night}/images/{self.img_upload.filename}'
-    #         preview = '<img src="{}" style="width:300px;height:300px;">'.format(image_location_on_server)
-    #         preview += "<br>"
-    #         preview += "{}".format(self.img_comment.value)
-    #         self.img_alert.text = preview
-    #         return
-    #     image_name = os.path.split(image_loc)[1]
-    #     image_type = os.path.splitext(image_name)[1]
-    #     bashCommand1 = "cp {} {}".format(image_loc,self.DESI_Log.image_dir)
-    #     bashCommand2 = "cp {} {}".format(image_loc,self.report_type+"_Report/static/images/tmp_img{}".format(image_type))
-    #     results = subprocess.run(bashCommand1.split(), text=True, stdout=subprocess.PIPE, check=True)
-    #     results = subprocess.run(bashCommand2.split(), text=True, stdout=subprocess.PIPE, check=True)
-    #     self.DESI_Log.add_image(os.path.join(self.DESI_Log.image_dir,image_name), self.img_comment.value)
-    #     #KH: this is something you need to reconsider. It is bad practice to write into the source code directory
-    #     preview = '<img src="{}_Report/static/images/tmp_img{}" style="width:300px;height:300px;">'.format(self.report_type,image_type)
-    #     preview += "\n"
-    #     preview += "{}".format(self.img_comment.value)
-    #     self.img_alert.text = preview
-    #     self.clear_input([self.img_input, self.img_comment])
-
     def time_is_now(self):
-        now = datetime.now().astimezone(tz=self.kp_zone) 
-        now_time = self.short_time(datetime.strftime(now, "%Y%m%dT%H:%M"), mode='str')
+        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H%M")
+
         tab = self.layout.active
         time_input = self.time_tabs[tab]
         try:
-            time_input.value = now_time
+            time_input.value = now
         except:
             return time_input
 

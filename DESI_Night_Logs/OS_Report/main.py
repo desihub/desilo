@@ -47,13 +47,23 @@ class OS_Report(Report):
         self.connect_hdr = Div(text="Connect to Existing Night Log", css_classes=['subt-style'], width=800)
         self.init_hdr = Div(text="Initialize Tonight's Night Log", css_classes=['subt-style'], width=800)
 
-        self.init_btn = Button(label="Initialize Tonight's Log", css_classes=['init_button'])
+        self.init_btn = Button(label="Initialize Tonight's Log", css_classes=['init_button'], width=200)
         self.os_name_1 = TextInput(title ='Observing Scientist 1', placeholder = 'Ruth Bader Ginsberg')
         self.os_name_2 = TextInput(title ='Observing Scientist 2', placeholder = "Sandra Day O'Connor")
         self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
         self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
         self.LO = Select(title='Lead Observer', value='Choose One', options=self.lo_names)
         self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names)
+
+        self.get_intro_layout()
+        self.get_nl_layout()
+        self.get_milestone_layout()
+        self.get_plan_layout()
+        self.get_os_exp_layout()
+        self.get_prob_layout()
+        self.get_checklist_layout()
+        self.get_weather_layout()
+        self.check_tab.title = 'OS Checklist'
 
         intro_layout = layout([self.title,
                             [self.page_logo, self.instructions],
@@ -70,15 +80,6 @@ class OS_Report(Report):
                             self.nl_info,
                             self.intro_txt], width=1000)
         intro_tab = Panel(child=intro_layout, title="Initialization")
-
-        self.get_nl_layout()
-        self.get_milestone_layout()
-        self.get_plan_layout()
-        self.get_os_exp_layout()
-        self.get_prob_layout()
-        self.get_checklist_layout()
-        self.get_weather_layout()
-        self.check_tab.title = 'OS Checklist'
 
         self.layout = Tabs(tabs=[intro_tab, self.plan_tab, self.milestone_tab, self.exp_tab, self.prob_tab, self.weather_tab, self.check_tab,  self.nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 

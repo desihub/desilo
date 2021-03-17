@@ -46,6 +46,7 @@
 
 .bk-root .subt-style {
 	color: black;
+    width: 800px;
 	text-decoration: underline;
 	font-size:18pt;
 	font-style: bold;

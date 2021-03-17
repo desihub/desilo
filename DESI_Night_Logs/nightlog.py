@@ -8,7 +8,7 @@ import glob
 import json
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime,timezone
 
 from astropy.time import TimezoneInfo
 import astropy.units.si as u
@@ -23,11 +23,11 @@ class NightLog(object):
             follow live the night progress.
     """
 
-    def __init__(self,year,month,day):
+    def __init__(self, obsday):
         """
             Setup the nightlog framework for a given obsday.
         """
-        self.obsday = year+month+day
+        self.obsday = obsday #YYYYMMDD
         self.root_dir = os.path.join(os.environ['NL_DIR'],self.obsday)
         self.image_dir = os.path.join(self.root_dir,"images")
         self.os_dir = os.path.join(self.root_dir,"OperationsScientist")
@@ -95,58 +95,31 @@ class NightLog(object):
             #Get data from get_started_os and return that
             return True
 
-    def get_timestamp(self,strtime):
-        """ Generates time stamp for the entry.
-        """
-        time = self.write_time(strtime, kp_only=True)
-        time = '{}{}'.format(time[0:2],time[3:])
-        if int(time) < 1200 :
-            if len(str(int(time) + 1200))==3:
-                return "0"+str(int(time) + 1200)
-            else:
-                return str(int(time) + 1200)
-        else :
-            if len(str(int(time) - 1200))==3:
-                return  "0"+str(int(time) - 1200)
-            else:
-                return  str(int(time) - 1200)
-
     def write_time(self, time_string, kp_only=False):
         try:
-            t = datetime.strptime(time_string, "%Y%m%dT%H:%M")
-            kp_time = datetime(t.year, t.month, t.day, t.hour, t.minute, tzinfo = self.kp_zone)
-            utc_time = kp_time.astimezone(self.utc)
+            dt = datetime.strptime(time_string, "%Y%m%dT%H:%M")
+            dt_utc = dt.astimezone(tz=timezone.utc)
             if kp_only:
-                tt = "{}:{}".format(str(kp_time.hour).zfill(2), str(kp_time.minute).zfill(2))
+                tt = "{}".format(dt.strftime("%H:%M"))
             else:
-                tt = "{}:{} [{}:{}]".format(str(kp_time.hour).zfill(2), str(kp_time.minute).zfill(2), str(utc_time.hour).zfill(2), str(utc_time.minute).zfill(2))
+                tt = "{} [{}]".format(dt.strftime("%H:%M"), dt_utc.strftime("%H:%M"))
             return tt
         except:
             return time_string
 
-    def compile_entries(self, the_path, header, file_nl):
-        if os.path.exists(the_path):
-            if header is not None:
-                file_nl.write(header)
-            file_nl.write("\n")
-            file_nl.write("\n")
-
-            f =  open(the_path, "r") 
-            for line in f:
-                file_nl.write(line)
-                file_nl.write("\n")
-
-            f.close()
-
-    def get_started_os(self,os_1_firstname,os_1_lastname,os_2_firstname,os_2_lastname,LO_firstname,LO_lastname,OA_firstname,OA_lastname,time_sunset,time_18_deg_twilight_ends,time_18_deg_twilight_starts,
-                        time_sunrise,time_moonrise,time_moonset,illumination): #,weather_conditions
+    def get_started_os(self, data): #,weather_conditions
         """
             Operations Scientist lists the personal present, ephemerids and weather conditions at sunset.
         """
-
-        meta_dict = {'os_1_first':os_1_firstname, 'os_1_last':os_1_lastname,'os_2_first':os_2_firstname, 'os_2_last':os_2_lastname,'os_lo_1':LO_firstname,'os_lo_last':LO_lastname,'os_oa_1':OA_firstname,'os_oa_last':OA_lastname,
-                    'os_sunset':time_sunset,'os_end18':time_18_deg_twilight_ends,'os_start18':time_18_deg_twilight_starts,'os_sunrise':time_sunrise,
-                    'os_moonrise':time_moonrise,'os_moonset':time_moonset,'os_illumination':illumination,'dqs_1':None,'dqs_last':None}
+        items = ['LO_firstname','LO_lastname','OA_firstname','OA_lastname','os_1_firstname','os_1_lastname',
+        'os_2_firstname','os_2_lastname','time_sunset','time_sunrise','time_moonrise','time_moonset','illumination',
+        'dusk_18_deg','dawn_18_deg','dqs_1','dqs_last']
+        meta_dict = {}
+        for item in items:
+            try:
+                meta_dict[item] = data[item]
+            except:
+                meta_dict[item] = None
 
         with open(self.meta_json,'w') as fp:
             json.dump(meta_dict, fp)
@@ -162,10 +135,6 @@ class NightLog(object):
             json.dump(meta_dict, f)
 
         self.write_intro()
-
-    def get_meta_data(self):
-        meta_dict = json.load(open(self.meta_json,'r'))
-        return meta_dict
 
     def write_pkl(self, data, cols, filen, dqs_exp=False):
         # order = time, index
@@ -201,6 +170,7 @@ class NightLog(object):
                 self._write_image_tag(file, img_name)
             else:
                 print('ERROR: invalid format for uploading image')
+        return file
 
     def write_checklist(self, data, user):
         check_cols = ['Time','Comment']
@@ -340,16 +310,6 @@ class NightLog(object):
                 file.write('\n')
         file.close()
 
-    def write_img(self, file, img_data, img_name):
-        if img_name is not None and img_data is not None:
-            # if img_filen is a bytearray we have received an image in base64 string (from local upload)
-            # images are stored in the images directory
-            if isinstance(img_data, bytes):
-                self._upload_and_save_image(img_data, img_name)
-                self._write_image_tag(file, img_name)
-            else:
-                print('ERROR: invalid format for uploading image')
-        return file
 
     def write_os_exp(self, data, img_name=None, img_data=None):     
         if os.path.exists(self.explist_file):
@@ -445,53 +405,6 @@ class NightLog(object):
         if isinstance(comments, str):
             img_file.write("<br>{}\n".format(comments))
 
-    # def upload_image_comments(self, img_data, time, comment, your_name, uploaded_file = None):
-    #     # get the file for the Other Report
-    #     the_path = os.path.join(self.other_obs_dir,"comment_{}".format(self.get_timestamp(time)))
-    #     file = self.new_entry_or_replace(the_path)
-    #     file.write("- {} := _{}({})_\n".format(self.write_time(time), comment, your_name))
-
-    #     # if img_filen is a bytearray we have received an image in base64 string (from local upload)
-    #     # images are stored in the images directory
-    #     name = uploaded_file if uploaded_file is not None else 'uploaded_image.png'
-    #     if isinstance(img_data, bytes):
-    #         self._upload_and_save_image(img_data, name)
-    #         self._write_image_tag(file, name, comment)
-    #     else:
-    #         print('ERROR: invalid format for uploading image')
-    #     file.close()
-
-    # def upload_image(self, img_data, comment, uploaded_file = None):
-    #     # if img_filen is a bytearray we have received an image in base64 string (from local upload)
-    #     if isinstance(img_data, bytes):
-    #         import base64
-    #         # create images directory if necessary
-    #         if not os.path.exists(self.image_dir):
-    #             os.makedirs(self.image_dir)
-    #         name = uploaded_file if uploaded_file is not None else 'uploaded_image.png'
-    #         img_file = os.path.join(self.image_dir, name)
-    #         with open(img_file, "wb") as fh:
-    #             fh.write(base64.decodebytes(img_data))
-    #         if os.path.exists(self.upload_image_file):
-    #             file = open(self.upload_image_file, 'a')
-    #         else:
-    #             file = open(self.upload_image_file, 'w')
-    #         self._write_image_tag(file, name, comment)
-    #         file.close()
-    #     else:
-    #         print('ERROR: invalid format for uploading image')
-
-    # def add_image(self, img_filen, comment):
-    #     if os.path.exists(self.image_file):
-    #         file = open(self.image_file, 'a')
-    #     else:
-    #         file = open(self.image_file, 'w')
-    #     file.write("\n")
-    #     file.write('<img src="{}" style="width:300px;height:300px;">'.format(img_filen))
-    #     file.write("\n")
-    #     file.write("{}".format(comment))
-    #     file.close()
-
     def add_contributer_list(self, contributers):
         file = open(self.contributer_file, 'w')
         file.write(contributers)
@@ -507,23 +420,37 @@ class NightLog(object):
         file.write("\n")
         file.close()
 
+    def compile_entries(self, the_path, header, file_nl):
+        if os.path.exists(the_path):
+            if header is not None:
+                file_nl.write(header)
+            file_nl.write("\n")
+            file_nl.write("\n")
+
+            f =  open(the_path, "r") 
+            for line in f:
+                file_nl.write(line)
+                file_nl.write("\n")
+
+            f.close()
+
     def write_intro(self):
         file_intro=open(os.path.join(self.root_dir,'header'),'w')
 
         meta_dict = json.load(open(self.meta_json,'r'))
-        file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_first'],meta_dict['os_1_last']))
-        file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_first'],meta_dict['os_2_last']))
+        file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
+        file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
         file_intro.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
-        file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['os_lo_1'],meta_dict['os_lo_last']))
-        file_intro.write("*Telescope Operator*: {} {}\n".format(meta_dict['os_oa_1'],meta_dict['os_oa_last']))
+        file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['LO_firstname'],meta_dict['LO_lastname']))
+        file_intro.write("*Telescope Operator*: {} {}\n".format(meta_dict['OA_firstname'],meta_dict['OA_lastname']))
         file_intro.write("*Ephemerides in local time [UTC]*:\n")
-        file_intro.write("* sunset: {}\n".format(self.write_time(meta_dict['os_sunset'])))
-        file_intro.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['os_end18'])))
-        file_intro.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['os_start18'])))
-        file_intro.write("* sunrise: {}\n".format(self.write_time(meta_dict['os_sunrise'])))
-        file_intro.write("* moonrise: {}\n".format(self.write_time(meta_dict['os_moonrise'])))
-        file_intro.write("* moonset: {}\n".format(self.write_time(meta_dict['os_moonset'])))
-        file_intro.write("* illumination: {}\n".format(meta_dict['os_illumination']))
+        file_intro.write("* sunset: {}\n".format(self.write_time(meta_dict['time_sunset'])))
+        file_intro.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['dusk_18_deg'])))
+        file_intro.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['dawn_18_deg'])))
+        file_intro.write("* sunrise: {}\n".format(self.write_time(meta_dict['time_sunrise'])))
+        file_intro.write("* moonrise: {}\n".format(self.write_time(meta_dict['time_moonrise'])))
+        file_intro.write("* moonset: {}\n".format(self.write_time(meta_dict['time_moonset'])))
+        file_intro.write("* illumination: {}\n".format(meta_dict['illumination']))
         #file_intro.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
 
         file_intro.close()
@@ -541,8 +468,6 @@ class NightLog(object):
 
         #Write the meta_html here
         file_intro=open(os.path.join(self.root_dir,'header'),'r')
-
-        #meta_dict = json.load(open(self.meta_json,'r'))
         lines = file_intro.readlines()
         for line in lines:
             file_nl.write(line)
