@@ -53,11 +53,12 @@ class NightLog(object):
         self.dqs_cl_file = os.path.join(self.dqs_dir,'checklist')
 
         self.os_exp = os.path.join(self.os_dir,'exposures.pkl')
-        self.os_exp_file = os.path.join(self.os_dir,'exposures')
+        #self.os_exp_file = os.path.join(self.os_dir,'exposures')
         self.dqs_exp = os.path.join(self.dqs_dir,'exposures.pkl')
-        self.dqs_exp_file = os.path.join(self.dqs_dir,'exposures')
+        #self.dqs_exp_file = os.path.join(self.dqs_dir,'exposures')
         self.other_exp = os.path.join(self.other_dir,'exposures.pkl')
-        self.other_exp_file = os.path.join(self.other_dir,'exposures')
+        #self.other_exp_file = os.path.join(self.other_dir,'exposures')
+        self.exp_file = os.path.join(self.root_dir,'exposures')
 
         self.weather = os.path.join(self.os_dir,'weather.pkl')
         self.weather_file = os.path.join(self.os_dir,'weather')
@@ -279,68 +280,121 @@ class NightLog(object):
         exp_columns = ['Time','Comment','Exp_Start','Exp_End','Name','img_name','img_data']
         data = np.hstack([data, img_name, img_data])
         df = self.write_pkl(data, exp_columns, self.other_exp)
-        file = open(self.other_exp_file, 'w')
-        for index, row in df.iterrows():
-            file.write("- {} := {} ({})\n".format(self.write_time(row['Time']), row['Comment'], row['Name']))
-            if row['img_name'] is not None:
-                self.write_img(file, row['img_data'], row['img_name'])
-                file.write('\n')
+        self.write_exposure()
 
-        file.close()
 
     def write_dqs_exp(self, data, img_name = None, img_data = None):
-        if os.path.exists(self.explist_file):
-            exp_df = pd.read_csv(self.explist_file)
+
 
         exp_columns = ['Time','Exp_Start','Quality','Comment','img_name','img_data']
         data = np.hstack([data, img_name, img_data])
         df = self.write_pkl(data, exp_columns, self.dqs_exp,dqs_exp=True)
-        file = open(self.dqs_exp_file, 'w')
-        for index, row in df.iterrows():
-            file.write(f"- Exp. {row['Exp_Start']} := {row['Quality']}; {row['Comment']}\n")
-            try:
-                this_exp = exp_df[exp_df.id == int(row['Exp_Start'])]
-                file.write("; Tile: {}; Exptime: {}; Airmass: {}; Sequence: {}; Flavor: {}; Program: {}\n".format(
-                       this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
-                       this_exp['flavor'].values[0],this_exp['program'].values[0]))
-            except:
-                file.write('\n')
-            if row['img_name'] is not None:
-                self.write_img(file, row['img_data'], row['img_name'])
-                file.write('\n')
-        file.close()
+
+        self.write_exposure()
 
 
-    def write_os_exp(self, data, img_name=None, img_data=None):     
+    def check_exp_times(self, file):
+        if os.path.exists(file):
+            df = pd.read_pickle(file)
+            if os.path.exists(self.explist_file):
+                exp_df = pd.read_csv(self.explist_file)
+            for index, row in df.iterrows():
+                try:
+                    e_ = exp_df[exp_df.id == row['Exp_Start']]
+                    time = e_.date_obs.values[0]
+                    df.at[index, 'Time'] = time
+                except:
+                    pass
+            df.to_pickle(file)
+            return df
+        else:
+            return None
+
+
+    def write_exposure(self):
         if os.path.exists(self.explist_file):
             exp_df = pd.read_csv(self.explist_file)
 
-        exp_columns = ['Time','Comment','Exp_Start','Exp_End','img_name','img_data']
+        file = open(self.exp_file,'w')
+        os_df = self.check_exp_times(self.os_exp)
+        dqs_df = self.check_exp_times(self.dqs_exp)
+        if os.path.exists(self.other_exp):
+            other_df = pd.read_pickle(self.other_exp)
+        else:
+            other_df = None
+
+        times = np.unique(np.hstack([x.Time for x in [os_df, dqs_df, other_df] if x is not None]))
+
+        for time in times:
+            if os_df is not None:
+                os_ = os_df[os_df.Time == time]
+            else:
+                os_ = []
+            if dqs_df is not None:
+                dqs_ = dqs_df[dqs_df.Time == time]
+            else:
+                dqs_ = []
+            if other_df is not None:
+                other_ = other_df[other_df.Time == time]
+            else:
+                other_ = []
+
+            if len(os_) > 0:
+                if os_['Exp_Start'].values[0] is not None:
+
+                    file.write("- {} := {} {}\n".format(self.write_time(os_['Time'].values[0]), os_['Exp_Start'].values[0], os_['Comment'].values[0]))
+                    try:
+                        this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
+                        file.write("; Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(
+                                   this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
+                                   this_exp['flavor'].values[0],this_exp['program'].values[0]))
+                    except:
+                        pass
+                    if len(dqs_) > 0:
+                        file.write(f"Data Quality: {dqs_['Quality'].values[0]}; {dqs_['Comment'].values[0]}\n")
+                        if dqs_['img_name'].values[0] is not None:
+                            self.write_img(file, dqs_['img_data'].values[0], dqs_['img_name'].values[0])
+                            file.write('\n')
+                else:
+                    file.write("- {} := {}\n".format(self.write_time(os_['Time'].values[0]), os_['Comment'].values[0]))
+
+
+                if os_['img_name'].values[0] is not None:
+                    self.write_img(file, os_['img_data'].values[0], os_['img_name'].values[0])
+                    file.write('\n')
+
+            elif len(other_) > 0:
+                file.write("- {} := {} ({})\n".format(self.write_time(other_['Time'].values[0]), other_['Comment'].values[0], other_['Name'].values[0]))
+                if other_['img_name'] is not None:
+                    self.write_img(file, other_['img_data'].values[0], other_['img_name'].values[0])
+                    file.write('\n')
+
+            else:
+                try:
+                    this_exp = exp_df[exp_df.id == int(dqs_['Exp_Start'].values[0])]
+                    file.write("- {} := {} ({}), {}".format(self.write_time(dqs_['Time']), dqs_['Exp_Start'], dqs_['Quality'],dqs_['Comment']))
+                    file.write("; Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(
+                               this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
+                               this_exp['flavor'].values[0],this_exp['program'].values[0]))
+                except:
+                    file.write("- {} := {} ({}), {}".format(self.write_time(dqs_['Time'].values[0]), dqs_['Exp_Start'].values[0], dqs_['Quality'].values[0],dqs_['Comment'].values[0]))
+                if dqs_['img_name'].values[0] is not None:
+                        self.write_img(file, dqs_['img_data'].values[0], dqs_['img_name'].values[0])
+                        file.write('\n')
+
+        file.close()
+
+
+
+    def write_os_exp(self, data, img_name=None, img_data=None):     
+        
+
+        exp_columns = ['Time','Comment','Exp_Start','img_name','img_data']
         data = np.hstack([data, img_name, img_data])
         df = self.write_pkl(data, exp_columns, self.os_exp)
-        file = open(self.os_exp_file,'w')
-        for index, row in df.iterrows():
-            file.write("- {} := {}".format(self.write_time(row['Time']), row['Comment']))
-            if row['Exp_Start'] is not None:
-                try:
-                    this_exp = exp_df[exp_df.id == int(row['Exp_Start'])]
-                    file.write("; Exp: {}, Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(this_exp['id'].values[0],
-                           this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
-                           this_exp['flavor'].values[0],this_exp['program'].values[0]))
-                except:
-                    if row['Exp_End'] is not None:
-                        file.write("; Exps: {}-{}\n".format(row['Exp_Start'], row['Exp_End']))
-                    else:
-                        file.write("; Exp: {}\n".format(row['Exp_Start']))
-            else:
-                file.write("\n")
 
-            if row['img_name'] is not None:
-                self.write_img(file, row['img_data'], row['img_name'])
-            else:
-                file.write("\n")
-            
-        file.close()
+        self.write_exposure()
+
 
     def load_index(self, idx, page):
         if page == 'milestone':
@@ -526,9 +580,9 @@ class NightLog(object):
         file_nl.write("h3. Details on the Night Progress\n")
         file_nl.write("\n")
         file_nl.write("\n")
-        self.compile_entries(self.os_exp_file, "h5. Progress/Exposures (OS)\n", file_nl)
-        self.compile_entries(self.dqs_exp_file, "h5. Exposure Quality (DQS)\n", file_nl)
-        self.compile_entries(self.other_exp_file, "h5. Comments (Non-Observers)\n", file_nl)
+        self.compile_entries(self.exp_file, "h5. Progress/Exposures (OS)\n", file_nl)
+        #self.compile_entries(self.dqs_exp_file, "h5. Exposure Quality (DQS)\n", file_nl)
+        #self.compile_entries(self.other_exp_file, "h5. Comments (Non-Observers)\n", file_nl)
 
         #Images
         if os.path.exists(self.image_file):

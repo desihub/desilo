@@ -119,9 +119,6 @@ class Report():
         self.date_init.value = init_nl_list[0]
 
     def get_intro_layout(self):
-        
-
-
 
         self.connect_txt = Div(text=' ', css_classes=['alert-style'])
         self.intro_txt = Div(text=' ')
@@ -135,7 +132,6 @@ class Report():
         self.date_init = Select(title="Existing Night Logs")
         self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
         self.now_btn = Button(label='Now', css_classes=['now_button'], width=75)
-
 
         self.update_nl_list()
 
@@ -223,16 +219,29 @@ class Report():
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
         self.dqs_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
 
+        self.exp_select = Select(title='(1) Select Exposure',options=['None'],width=150)
+        self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', value=None, width=150)
+        self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
+        self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
+        self.os_exp_option = RadioButtonGroup(labels=['Time','Exposure'], active=0, width=200)
+
+        self.get_exposure_list()
+
     def get_os_exp_layout(self):
         self.exp_layout()
         exp_subtitle = Div(text="Nightly Progress", css_classes=['subt-style'])
         inst="""<ul>
         <li>Throughout the night record the progress, including comments on calibrations and exposures. 
         All exposures are recorded in the eLog, so only enter information that can provide additional information.</li>
-        <li>If you enter an Exposure Number, the Night Log will include data from the eLog and combine it with any inputs
+        <li> You can make a comment that is either associated with a <b>Time</b> or <b>Exposure</b>. Select which you will use.
+        <ul class="square">
+         <li> If you want to comment on a specific Exposure Number, the Night Log will include data from the eLog and combine it with any inputs
         from the Data Quality Scientist for that exposure.</li>
-        <li>If you'd like to modify a submitted comment, enter the time of the submission and hit the <b>Load</b> button. 
-        If you forget when a comment was submitted, check the Current NL. 
+         <li> You can either select an exposure from the drop down (<b>(1) Select</b>) or enter it yourself (<b>(2) Enter</b>). Make sure to identify which you will use.</li> 
+         </ul>
+        </li>
+        <li>If you'd like to modify a submitted comment, enter the Time of the submission and hit the <b>Load</b> button. 
+        If you forget when a comment was submitted, check the Current NL. This will be the case for submissions made by Exposure number as well.
         After making your modifications, resubmit using the <b>Add/Update</b>.</li>
         </ul>
         """
@@ -246,8 +255,10 @@ class Report():
                         exp_inst,
                         self.time_note,
                         self.exp_info,
+                        self.os_exp_option,
                         [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn],
-                        [self.exp_exposure_start, self.exp_exposure_finish],
+                        [self.exp_option],
+                        [self.exp_select, self.exp_enter],
                         [self.exp_comment],
                         [self.img_upinst2, self.img_upload_comments_os],
                         [self.exp_btn],
@@ -271,12 +282,7 @@ class Report():
         self.exp_comment.placeholder = 'CCD4 has some bright columns'
         self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
         
-        self.exp_select = Select(title='(1) Select Exposure',options=['None'],width=150)
-        self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', value=None, width=150)
-        self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
-        self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
-
-        self.get_exposure_list()
+        
         self.exp_layout = layout(self.title,
                             exp_subtitle,
                             exp_inst,
@@ -362,9 +368,9 @@ class Report():
         p7 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Transparency', tools=plot_tools, x_range = p6.x_range)
         p8 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Sky Level', tools=plot_tools, x_range=p6.x_range)
 
-        p1.circle(x = 'time',y='mirror_temp',source=self.telem_source,color='orange', size=10, alpha=0.5, legend_label = 'Mirror') 
-        p1.circle(x = 'time',y='truss_temp',source=self.telem_source, size=10, alpha=0.5, legend_label = 'Truss') 
-        p1.circle(x = 'time',y='air_temp',source=self.telem_source, color='green', size=10, alpha=0.5, legend_label = 'Air')
+        p1.circle(x = 'time',y='mirror_temp',source=self.telem_source,color='orange', size=10, alpha=0.5) #
+        p1.circle(x = 'time',y='truss_temp',source=self.telem_source, size=10, alpha=0.5, ) #legend_label = 'Truss'
+        p1.circle(x = 'time',y='air_temp',source=self.telem_source, color='green', size=10, alpha=0.5) #, legend_label = 'Air'
         p1.legend.location = "top_right"
 
         p2.circle(x = 'time',y='humidity',source=self.telem_source, size=10, alpha=0.5)
@@ -469,7 +475,7 @@ class Report():
         date = self.night
         zone = self.kp_zone #zones[time_select.active]
         try:
-            t = datetime.strptime(date+time,'%Y%m%d%H%M')
+            t = datetime.strptime(date+time,'%Y%m%d%H:%M')
         except:
             try:
                 t = datetime.strptime(date+time,'%Y%m%d%I%M%p')
@@ -608,13 +614,13 @@ class Report():
 
     def get_exp_list(self):
         if self.location == 'kpno':
-            exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
-            if len(exp_df.date_obs) != 0:
-                time = exp_df.date_obs.dt.tz_convert('US/Arizona')
-                exp_df['date_obs'] = time
-                self.explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
-                exp_df = exp_df.sort_values(by='id')
-                exp_df.to_csv(self.DESI_Log.explist_file, index=False)
+            self.exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
+            if len(self.exp_df.date_obs) != 0:
+                time = self.exp_df.date_obs.dt.tz_convert('US/Arizona')
+                self.exp_df['date_obs'] = time
+                self.explist_source.data = self.exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
+                self.exp_df = self.exp_df.sort_values(by='id')
+                self.exp_df.to_csv(self.DESI_Log.explist_file, index=False)
             else:
                 self.exptable_alert.text = f'No exposures available for night {self.night}'
         else:
@@ -904,21 +910,35 @@ class Report():
         self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
 
     def progress_add(self):
-        if self.exp_time.value not in [None, 'None'," ", ""]:
-            data = [self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value]
-            img_name, img_data, preview = self.image_uploaded('comment')
-
-            self.DESI_Log.write_os_exp(data, img_name=img_name, img_data=img_data)
-            if img_name is not None:
-                preview += "<br>"
-                preview += "A comment was added at {}".format(self.exp_time.value)
-                self.exp_alert.text = preview
-                self.img_upload_comments_os=FileInput(accept=".png")
+        if self.os_exp_option.active == 0:
+            if self.exp_time.value not in [None, 'None'," ", ""]:
+                time = self.get_time(self.exp_time.value)
+                comment = self.exp_comment.value
+                exp = None
             else:
-                self.exp_alert.text = 'Last Input was at {}'.format(self.exp_time.value)
-            self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start, self.exp_exposure_finish])
+                self.exp_alert.text = 'Fill in the time'
+                
+
+        elif self.os_exp_option.active == 1:
+            if self.exp_option.active == 0:
+                exp = int(self.exp_select.value)
+            elif self.exp_option.active ==1:
+                exp = int(self.exp_enter.value)
+            comment = self.exp_comment.value
+            time = self.get_time(datetime.now().strftime("%H:%M"))
+
+        data = [time, comment, exp]
+        img_name, img_data, preview = self.image_uploaded('comment')
+        self.DESI_Log.write_os_exp(data, img_name=img_name, img_data=img_data)
+        if img_name is not None:
+            preview += "<br>"
+            preview += "A comment was added at {}".format(datetime.now().strftime("%H:%M"))
+            self.exp_alert.text = preview
+            self.img_upload_comments_os=FileInput(accept=".png")
         else:
-            self.exp_alert.text = 'Could not submit entry for Observation Type *{}* because not all mandatory fields were filled.'.format(self.hdr_type.value)
+            self.exp_alert.text = 'Last Input was at {}'.format(datetime.now().strftime("%H:%M"))
+
+        self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
     
     def comment_add(self):
         if self.your_name.value in [None,' ','']:
@@ -956,7 +976,7 @@ class Report():
             self.exp_alert.text = preview
             self.img_upload_comments_dqs=FileInput(accept=".png")
         else:
-            self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now_time)
+            self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now)
         self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
 
     def plan_load(self):
