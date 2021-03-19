@@ -56,3 +56,4 @@ Other.run()
 curdoc().title = 'DESI Night Log - Non Observer'
 curdoc().add_root(Other.layout)
 curdoc().add_periodic_callback(Other.current_nl, 30000)
+curdoc().add_periodic_callback(Other.get_exposure_list, 30000)

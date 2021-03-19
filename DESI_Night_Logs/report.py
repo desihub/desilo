@@ -940,21 +940,36 @@ class Report():
     
     def comment_add(self):
         if self.your_name.value in [None,' ','']:
-            self.comment_alert.text = 'You need to enter your name on first page before submitting a comment'
+            self.exp_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
-            if self.exp_time.value not in [None, 'None'," ", ""]:
-                img_name, img_data, preview = self.image_uploaded('comment')
-                data = [self.get_time(self.exp_time.value), self.exp_comment.value, self.exp_exposure_start.value, self.exp_exposure_finish.value, self.your_name.value]
-                self.DESI_Log.write_other_exp(data, img_name=img_name, img_data=img_data)
-
-                if img_name is not None:
-                    preview += "<br>"
-                    preview += "A comment was added at {}".format(self.exp_time.value)
-                    self.exp_alert.text = preview
-                    self.img_upload_comments=FileInput(accept=".png")
+            if self.os_exp_option.active == 0:
+                if self.exp_time.value not in [None, 'None'," ", ""]:
+                    time = self.get_time(self.exp_time.value)
+                    comment = self.exp_comment.value
+                    exp = None
                 else:
-                    self.exp_alert.text = "A comment was added at {}".format(self.exp_time.value)
-                self.clear_input([self.exp_time, self.exp_comment])
+                    self.exp_alert.text = 'Fill in the time'
+            elif self.os_exp_option.active == 1:
+                if self.exp_option.active == 0:
+                    exp = int(self.exp_select.value)
+                elif self.exp_option.active ==1:
+                    exp = int(self.exp_enter.value)
+                comment = self.exp_comment.value
+                time = self.get_time(datetime.now().strftime("%H:%M"))
+
+
+        img_name, img_data, preview = self.image_uploaded('comment')
+        data = [time, comment, exp, self.your_name.value]
+        self.DESI_Log.write_other_exp(data, img_name=img_name, img_data=img_data)
+
+        if img_name is not None:
+            preview += "<br>"
+            preview += "A comment was added at {}".format(self.exp_time.value)
+            self.exp_alert.text = preview
+            self.img_upload_comments=FileInput(accept=".png")
+        else:
+            self.exp_alert.text = "A comment was added at {}".format(self.exp_time.value)
+        self.clear_input([self.exp_time, self.exp_comment])
 
     def exp_add(self):
         quality = self.quality_list[self.quality_btns.active]

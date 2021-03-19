@@ -277,7 +277,7 @@ class NightLog(object):
         file.close()
 
     def write_other_exp(self, data, img_name = None, img_data = None):
-        exp_columns = ['Time','Comment','Exp_Start','Exp_End','Name','img_name','img_data']
+        exp_columns = ['Time','Comment','Exp_Start','Name','img_name','img_data']
         data = np.hstack([data, img_name, img_data])
         df = self.write_pkl(data, exp_columns, self.other_exp)
         self.write_exposure()
@@ -318,10 +318,7 @@ class NightLog(object):
         file = open(self.exp_file,'w')
         os_df = self.check_exp_times(self.os_exp)
         dqs_df = self.check_exp_times(self.dqs_exp)
-        if os.path.exists(self.other_exp):
-            other_df = pd.read_pickle(self.other_exp)
-        else:
-            other_df = None
+        other_df = self.check_exp_times(self.other_exp)
         times = []
         for df in [os_df, dqs_df, other_df]:
             if df is not None:
@@ -347,7 +344,6 @@ class NightLog(object):
                 other_ = []
 
             if len(os_) > 0:
-                print('h1')
                 if os_['Exp_Start'].values[0] is not None:
 
                     file.write("- {} Exp. {} := {}".format(self.write_time(os_['Time'].values[0]), os_['Exp_Start'].values[0], os_['Comment'].values[0]))
@@ -363,6 +359,12 @@ class NightLog(object):
                         if dqs_['img_name'].values[0] is not None:
                             self.write_img(file, dqs_['img_data'].values[0], dqs_['img_name'].values[0])
                             file.write('\n')
+                    if len(other_) > 0:
+                        file.write("Comment: {} ({})\n".format(other_['Comment'].values[0], other_['Name'].values[0]))
+                        if other_['img_name'] is not None:
+                            self.write_img(file, other_['img_data'].values[0], other_['img_name'].values[0])
+                            file.write('\n')
+
                 else:
                     file.write("- {} := {}\n".format(self.write_time(os_['Time'].values[0]), os_['Comment'].values[0]))
 
@@ -371,25 +373,33 @@ class NightLog(object):
                     self.write_img(file, os_['img_data'].values[0], os_['img_name'].values[0])
                     file.write('\n')
 
-            elif len(other_) > 0:
-                file.write("- {} := {} ({})\n".format(self.write_time(other_['Time'].values[0]), other_['Comment'].values[0], other_['Name'].values[0]))
-                if other_['img_name'] is not None:
-                    self.write_img(file, other_['img_data'].values[0], other_['img_name'].values[0])
-                    file.write('\n')
-
             else:
-                print('h2')
-                file.write("- {} Exp. {} := Data Quality: {}, {}".format(self.write_time(dqs_['Time'].values[0]), dqs_['Exp_Start'].values[0], dqs_['Quality'].values[0],dqs_['Comment'].values[0]))
-                this_exp = exp_df[exp_df.id == int(dqs_['Exp_Start'].values[0])]
-                try:
+                if len(dqs_) > 0:
+                    file.write("- {} Exp. {} := Data Quality: {}, {}".format(self.write_time(dqs_['Time'].values[0]), dqs_['Exp_Start'].values[0], dqs_['Quality'].values[0],dqs_['Comment'].values[0]))
                     this_exp = exp_df[exp_df.id == int(dqs_['Exp_Start'].values[0])]
-                    file.write("; Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(
-                               this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
-                               this_exp['flavor'].values[0],this_exp['program'].values[0]))
-                except:
-                    file.write("\n")
-                if dqs_['img_name'].values[0] is not None:
-                        self.write_img(file, dqs_['img_data'].values[0], dqs_['img_name'].values[0])
+                    try:
+                        this_exp = exp_df[exp_df.id == int(dqs_['Exp_Start'].values[0])]
+                        file.write("; Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(
+                                   this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
+                                   this_exp['flavor'].values[0],this_exp['program'].values[0]))
+                    except:
+                        file.write("\n")
+                    if dqs_['img_name'].values[0] is not None:
+                            self.write_img(file, dqs_['img_data'].values[0], dqs_['img_name'].values[0])
+                            file.write('\n')
+
+                    if len(other_) > 0:
+                        file.write("Comment: {} ({})\n".format(other_['Comment'].values[0], other_['Name'].values[0]))
+                        if other_['img_name'] is not None:
+                            self.write_img(file, other_['img_data'].values[0], other_['img_name'].values[0])
+                            file.write('\n')
+                else:
+                    if other_['Exp_Start'].values[0] is not None:
+                        file.write("- {} Exp: {}:= {} ({})\n".format(self.write_time(other_['Time'].values[0]), other_['Exp_Start'].values[0], other_['Comment'].values[0], other_['Name'].values[0]))
+                    else:
+                        file.write("- {} := {} ({})\n".format(self.write_time(other_['Time'].values[0]), other_['Comment'].values[0], other_['Name'].values[0]))
+                    if other_['img_name'] is not None:
+                        self.write_img(file, other_['img_data'].values[0], other_['img_name'].values[0])
                         file.write('\n')
 
         file.close()
@@ -590,7 +600,7 @@ class NightLog(object):
         file_nl.write("h3. Details on the Night Progress\n")
         file_nl.write("\n")
         file_nl.write("\n")
-        self.compile_entries(self.exp_file, "h5. Progress/Exposures (OS)\n", file_nl)
+        self.compile_entries(self.exp_file, None, file_nl)
         #self.compile_entries(self.dqs_exp_file, "h5. Exposure Quality (DQS)\n", file_nl)
         #self.compile_entries(self.other_exp_file, "h5. Comments (Non-Observers)\n", file_nl)
 
