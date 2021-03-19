@@ -101,7 +101,7 @@ class Report():
 
     def get_exposure_list(self):
         try:
-            dir_ = self.nw_dir+'/'+self.date_init.value
+            dir_ = self.nw_dir+'/'+self.night
             exposures = []
             for path, subdirs, files in os.walk(dir_): 
                 for s in subdirs: 
@@ -224,7 +224,6 @@ class Report():
         self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
         self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
         self.os_exp_option = RadioButtonGroup(labels=['Time','Exposure'], active=0, width=200)
-
         self.get_exposure_list()
 
     def get_os_exp_layout(self):
@@ -254,7 +253,6 @@ class Report():
                         exp_subtitle,
                         exp_inst,
                         self.time_note,
-                        self.exp_info,
                         self.os_exp_option,
                         [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn],
                         [self.exp_option],

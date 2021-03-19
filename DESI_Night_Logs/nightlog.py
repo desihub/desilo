@@ -300,8 +300,8 @@ class NightLog(object):
                 exp_df = pd.read_csv(self.explist_file)
             for index, row in df.iterrows():
                 try:
-                    e_ = exp_df[exp_df.id == row['Exp_Start']]
-                    time = e_.date_obs.values[0]
+                    e_ = exp_df[exp_df.id == int(row['Exp_Start'])]
+                    time = pd.to_datetime(e_.date_obs).dt.strftime('%Y%m%dT%H:%M').values[0]  
                     df.at[index, 'Time'] = time
                 except:
                     pass
@@ -322,8 +322,15 @@ class NightLog(object):
             other_df = pd.read_pickle(self.other_exp)
         else:
             other_df = None
-
-        times = np.unique(np.hstack([x.Time for x in [os_df, dqs_df, other_df] if x is not None]))
+        times = []
+        for df in [os_df, dqs_df, other_df]:
+            if df is not None:
+                tt = list(df.Time)
+                for t in tt:
+                    if t is not None:
+                        times.append(t)
+        times = np.unique(times)
+        #times = np.unique([x.Time for x in np.hstack([os_df, dqs_df, other_df]) if x is not None])
 
         for time in times:
             if os_df is not None:
@@ -340,16 +347,17 @@ class NightLog(object):
                 other_ = []
 
             if len(os_) > 0:
+                print('h1')
                 if os_['Exp_Start'].values[0] is not None:
 
-                    file.write("- {} := {} {}\n".format(self.write_time(os_['Time'].values[0]), os_['Exp_Start'].values[0], os_['Comment'].values[0]))
+                    file.write("- {} Exp. {} := {}".format(self.write_time(os_['Time'].values[0]), os_['Exp_Start'].values[0], os_['Comment'].values[0]))
                     try:
                         this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
                         file.write("; Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(
                                    this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
                                    this_exp['flavor'].values[0],this_exp['program'].values[0]))
                     except:
-                        pass
+                        file.write("\n") 
                     if len(dqs_) > 0:
                         file.write(f"Data Quality: {dqs_['Quality'].values[0]}; {dqs_['Comment'].values[0]}\n")
                         if dqs_['img_name'].values[0] is not None:
@@ -370,14 +378,16 @@ class NightLog(object):
                     file.write('\n')
 
             else:
+                print('h2')
+                file.write("- {} Exp. {} := Data Quality: {}, {}".format(self.write_time(dqs_['Time'].values[0]), dqs_['Exp_Start'].values[0], dqs_['Quality'].values[0],dqs_['Comment'].values[0]))
+                this_exp = exp_df[exp_df.id == int(dqs_['Exp_Start'].values[0])]
                 try:
                     this_exp = exp_df[exp_df.id == int(dqs_['Exp_Start'].values[0])]
-                    file.write("- {} := {} ({}), {}".format(self.write_time(dqs_['Time']), dqs_['Exp_Start'], dqs_['Quality'],dqs_['Comment']))
                     file.write("; Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(
                                this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
                                this_exp['flavor'].values[0],this_exp['program'].values[0]))
                 except:
-                    file.write("- {} := {} ({}), {}".format(self.write_time(dqs_['Time'].values[0]), dqs_['Exp_Start'].values[0], dqs_['Quality'].values[0],dqs_['Comment'].values[0]))
+                    file.write("\n")
                 if dqs_['img_name'].values[0] is not None:
                         self.write_img(file, dqs_['img_data'].values[0], dqs_['img_name'].values[0])
                         file.write('\n')
