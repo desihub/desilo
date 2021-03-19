@@ -968,7 +968,7 @@ class Report():
             self.exp_alert.text = preview
             self.img_upload_comments=FileInput(accept=".png")
         else:
-            self.exp_alert.text = "A comment was added at {}".format(self.exp_time.value)
+            self.exp_alert.text = "A comment was added at {}".format(datetime.now().strftime("%H:%M"))
         self.clear_input([self.exp_time, self.exp_comment])
 
     def exp_add(self):
