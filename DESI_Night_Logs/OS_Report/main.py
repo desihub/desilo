@@ -13,7 +13,6 @@ view at: http://localhost:5006/OS_Report
 import os, sys
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
-#os.environ["NL_DIR"] = "/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs"
 
 from bokeh.io import curdoc
 from bokeh.models import TextInput, Button, TextAreaInput, Select
@@ -112,3 +111,4 @@ OS.run()
 curdoc().title = 'DESI Night Log - Observing Scientist'
 curdoc().add_root(OS.layout)
 curdoc().add_periodic_callback(OS.current_nl, 30000)
+curdoc().add_periodic_callback(OS.get_exposure_list, 30000)
