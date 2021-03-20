@@ -620,14 +620,16 @@ def sky_calendar(date = None, observer = None):
     sun.compute(observer.date)
     moon = ephem.Moon()
     moon.compute(observer.date)
-    obs_info['sunset'] =observer.previous_setting(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Sunset
-    obs_info['sunrise']=observer.next_rising(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Sunrise
+    obs_info['sunset'] = observer.previous_setting(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Sunset
+    obs_info['sunrise'] = observer.next_rising(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Sunrise
+
+
     try:
-        obs_info['moonrise']=observer.previous_rising(moon).datetime().time() #Moonrise
+        obs_info['moonrise'] = observer.previous_rising(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Moonrise
     except:
         obs_info['moonrise'] = None
     try:
-        obs_info['moonset'] =observer.next_setting(moon).datetime().time() #Moonset
+        obs_info['moonset'] = observer.next_setting(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Moonset
     except:
         obs_info['moonset'] = None
 
