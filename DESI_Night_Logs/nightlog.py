@@ -68,6 +68,7 @@ class NightLog(object):
         self.upload_image_file = os.path.join(self.image_dir, 'upload_image_list')
         self.contributer_file = os.path.join(self.root_dir, 'contributer_file')
         self.summary_file = os.path.join(self.root_dir, 'summary_file')
+        self.time_use = os.path.join(self.root_dir, 'time_use.csv')
         self.explist_file = os.path.join(self.root_dir, 'exposures.csv')
         self.telem_plots_file = os.path.join(self.root_dir, 'telem_plots.png')
 
@@ -485,12 +486,22 @@ class NightLog(object):
         file.write("\n")
         file.close()
 
-    def add_summary(self, summary):
-        if os.path.exists(self.summary_file):
-            file = open(self.summary_file, 'a')
-        else:
-            file = open(self.summary_file, 'w')
-        file.write(summary)
+    def add_summary(self, data):
+
+        df = pd.DataFrame(data, index=[0])
+        df.to_csv(self.time_use,index=False)
+
+        file = open(self.summary_file, 'w')
+
+        if df['summary_1'] is not None:
+            file.write(df['summary_1'].values[0])
+            file.write("\n")
+        if df['summary_2'] is not None:
+            file.write(df['summary_2'].values[0])
+            file.write("\n")
+        file.write("Time Use (hrs):")
+        file.write(" Observing: {}, Testing: {}, Loss to Instrument: {}, Loss to Weather: {}, Loss to Telescope: {}\n".format(df['obs_time'].values[0],
+            df['test_time'].values[0],df['inst_loss'].values[0], df['weather_loss'].values[0], df['tel_loss'].values[0]))
         file.write("\n")
         file.close()
 

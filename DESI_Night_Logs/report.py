@@ -174,6 +174,8 @@ class Report():
                     self.plan_alert], width=1000)
         self.plan_tab = Panel(child=plan_layout, title="Night Plan")
 
+
+
     def get_milestone_layout(self):
         self.milestone_subtitle = Div(text="Milestones & Major Accomplishments", css_classes=['subt-style'])
         inst = """<ul>
@@ -181,8 +183,11 @@ class Report():
         <b>Plan</b> tab. Include exposure numbers that correspond with the accomplishment, and if applicable, indicate any exposures to ignore in a series.
         Do NOT enter an index for new items - they will be generated.</li>
         <li>If you'd like to modify a submitted milestone, <b>Load</b> the index (these can be found on the Current NL), make your modifications, and then press <b>Update</b>.</li>
-        <li>At the end of your shift - either at the end of the night or half way through - summarize the activities of the night in the <b>End of Night Summary</b>.</li>
-        <li>You can submit more than one End of Night Summary, but you cannot edit them once submitted.</li>
+        <li>At the end of your shift - either at the end of the night or half way through - summarize the activities of the night in the <b>End of Night Summary</b>.
+        There is space for a night summary for the first half and the second half of the night. DO NOT delete what already exists.</li>
+        <li>At the end of the night, record how many hours of the night were spent observing <b>(ObsTime)</b>, lost to testing <b>(TestTime)</b>, lost to issues with the
+        instrument <b>(InstTime)</b>, lost due to weather <b>(WeathTime)</b> or lost due to issues with the telescope <b>(TelTime)</b>. The times entered should sum to the time spent 
+        "observing" during the night (i.e., if you started at 15 deg twi and ended and 12 deg twi, it should add up to that), but no less than the time between 18 deg twilights.</li>
         </ul>
         """
         self.milestone_inst = Div(text=inst, css_classes=['inst-style'],width=1000)
@@ -195,7 +200,15 @@ class Report():
         self.milestone_load_num = TextInput(title='Milestone Index', placeholder='0', value=None, width=75)
         self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
-        self.summary = TextAreaInput(rows=10, title='End of Night Summary',max_length=5000)
+        self.summary_1 = TextAreaInput(rows=10, placeholder='End of Night Summary for first half', title='End of Night Summary',max_length=5000)
+        self.summary_2 = TextAreaInput(rows=10, placeholder='End of Night Summary for second half', max_length=5000)
+        self.obs_time = TextInput(title ='ObsTime', placeholder='10', value=None, width=100)
+        self.test_time = TextInput(title ='TestTime', placeholder='0', value=None, width=100)
+        self.inst_loss_time = TextInput(title ='InstLoss', placeholder='0', value=None, width=100)
+        self.weather_loss_time = TextInput(title ='WeathLoss', placeholder='0', value=None, width=100)
+        self.tel_loss_time = TextInput(title ='TelLoss', placeholder='0', value=None, width=100)
+        self.total_time = Div(text='Time Documented (hrs): ', width=100) #add all times together
+        self.full_time = Div(text='Total time between 18 deg. twilights (hrs): ', width=100)
         self.summary_btn = Button(label='Add Summary', css_classes=['add_button'], width=300)
 
         milestone_layout = layout([self.title,
@@ -206,7 +219,9 @@ class Report():
                         [self.milestone_new_btn],
                         self.milestone_alert,
                         self.line,
-                        self.summary,
+                        self.summary_1,
+                        self.summary_2,
+                        [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time, [self.total_time, self.full_time]],
                         self.summary_btn,
                         ], width=1000)
         self.milestone_tab = Panel(child=milestone_layout, title='Milestones')
@@ -523,6 +538,8 @@ class Report():
                 self.os_name_1.value = meta_dict['{}_1_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_1_lastname'.format(self.report_type.lower())]
                 self.os_name_2.value = meta_dict['{}_2_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_2_lastname'.format(self.report_type.lower())]
 
+            full_time = (datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M'))
+            self.full_time.text = 'Total time between 18 deg. twilights (hrs): {:.2f}'.format(full_time.seconds/3600)
             self.display_current_header()
             self.nl_file = os.path.join(self.DESI_Log.root_dir,'nightlog.html')
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
@@ -538,6 +555,23 @@ class Report():
                     for line in f:
                         cont_txt += line
                     self.contributer_list.value = cont_txt
+                if os.path.exists(self.DESI_Log.time_use):
+                    df = pd.read_csv(self.DESI_Log.time_use)
+                    data = df.iloc[0]
+                    self.summary_1.value = str(data['summary_1'])
+                    self.summary_2.value = str(data['summary_2'])
+                    self.obs_time.value =  str(data['obs_time'])
+                    self.test_time.value = str(data['test_time'])
+                    self.inst_loss_time.value = str(data['inst_loss'])
+                    self.weather_loss_time.value = str(data['weather_loss'])
+                    self.tel_loss_time.value = str(data['tel_loss'])
+                    total = 0
+                    for i in [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time]:
+                        try:
+                            total += float(i.value)
+                        except:
+                            total += 0
+                    self.total_time.text = 'Time Documented (hrs): {}'.format(str(total))
             self.current_nl()
 
         else:
@@ -562,6 +596,9 @@ class Report():
         meta['illumination'] = eph['illumination']
         meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
         meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
+
+        full_time = (meta_dict['dawn_astronomical'] - meta_dict['dusk_astronomical'])
+        self.full_time.text = 'Total time between 18 deg. twilights (hrs): {}'.format(full_time)
 
         self.DESI_Log.initializing()
         self.DESI_Log.get_started_os(meta)
@@ -1053,10 +1090,24 @@ class Report():
 
     def add_summary(self):
         now = datetime.now().strftime("%H%M")
-        summary = self.summary.value
-        self.DESI_Log.add_summary(summary)
-        self.clear_input([self.summary])
-        self.milestone_alert.text = 'Summary Entered at {}'.format(now)
+        data = OrderedDict()
+        data['summary_1'] = self.summary_1.value
+        data['summary_2'] = self.summary_2.value
+        data['obs_time'] = self.obs_time.value
+        data['test_time'] = self.test_time.value
+        data['inst_loss'] = self.inst_loss_time.value
+        data['weather_loss'] = self.weather_loss_time.value
+        data['tel_loss'] = self.tel_loss_time.value
+
+        total = 0
+        for i in [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time]:
+            try:
+                total += float(i.value)
+            except:
+                total += 0
+        self.total_time.text = 'Time Documented (hrs): {}'.format(str(total))
+        self.DESI_Log.add_summary(data)
+        self.milestone_alert.text = 'Summary Information Entered at {}'.format(now)
 
     def upload_image(self, attr, old, new):
         print(f'Local image file upload: {self.img_upload.filename}')
