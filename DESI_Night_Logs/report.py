@@ -50,8 +50,6 @@ class Report():
         self.datefmt = DateFormatter(format="%m/%d/%Y %H:%M:%S")
         self.timefmt = DateFormatter(format="%m/%d %H:%M")
 
-
-
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
         if 'desi' in hostname:
@@ -60,7 +58,7 @@ class Report():
         elif 'app' in hostname: #this is not true. Needs to change.
             self.location = 'nersc'
         else:
-            self.location = 'other'
+            self.location = 'nersc'
 
         nw_dirs = {'nersc':'/global/cfs/cdirs/desi/spectro/nightwatch/nersc/', 'kpno':'/exposures/nightwatch/', 'other':None}
         self.nw_dir = nw_dirs[self.location]
@@ -114,7 +112,7 @@ class Report():
 
     def update_nl_list(self):
         days = [f for f in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir,f))]
-        init_nl_list = np.sort([day for day in days if 'nightlog_meta.json' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
+        init_nl_list = np.sort([day for day in days if 'OperationsScientist' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
 
@@ -132,6 +130,8 @@ class Report():
         self.date_init = Select(title="Existing Night Logs")
         self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
         self.now_btn = Button(label='Now', css_classes=['now_button'], width=75)
+
+        self.full_time = Div(text='Total time between 18 deg. twilights (hrs): ', width=100) #Not on intro slide, but needed across reports
 
         self.update_nl_list()
 
@@ -208,7 +208,6 @@ class Report():
         self.weather_loss_time = TextInput(title ='WeathLoss', placeholder='0', value=None, width=100)
         self.tel_loss_time = TextInput(title ='TelLoss', placeholder='0', value=None, width=100)
         self.total_time = Div(text='Time Documented (hrs): ', width=100) #add all times together
-        self.full_time = Div(text='Total time between 18 deg. twilights (hrs): ', width=100)
         self.summary_btn = Button(label='Add Summary', css_classes=['add_button'], width=300)
 
         milestone_layout = layout([self.title,
@@ -349,7 +348,8 @@ class Report():
         <li>Every hour, as part of the OS checklist, include a description of the weather and observing conditions.</li>
         <li>The most recent weather and observing condition information will be added to the table below and the Night Log when you <b>Add Weather Description</b>.
         Please note that the additional information may not correlate exactly with the time stamp but are just the most recent recorded values</li>
-        <li>Below the table there are plots of the ongoing telemetry for the observing conditions. These will be added to the Night Log when submitted at the end of the night.</li> 
+        <li>If you are not the OS, you can only see their inputs.</li>
+        <li>SCROLL DOWN! There are plots of the ongoing telemetry for the observing conditions. These will be added to the Night Log when submitted at the end of the night.</li> 
         </ul>
         """
         self.weather_inst = Div(text=inst, width=1000, css_classes=['inst-style'])
@@ -411,6 +411,7 @@ class Report():
         else:
             weather_layout = layout([self.title,
                 self.weather_subtitle,
+                self.weather_inst,
                 self.weather_table,
                 self.plots_subtitle,
                 p1,p2,p3,p4,p5,p6,p7,p8], width=1000)
@@ -517,7 +518,7 @@ class Report():
         elif mode == 'init':
             date = datetime.now().date()
         self.night = date.strftime("%Y%m%d")
-        self.DESI_Log = nl.NightLog(self.night)
+        self.DESI_Log = nl.NightLog(self.night, self.location)
 
     def connect_log(self):
         """Connect to Existing Night Log with Input Date
@@ -533,10 +534,8 @@ class Report():
                 self.DESI_Log.add_dqs_observer(your_firstname, your_lastname)
                 meta_dict = json.load(open(self.DESI_Log.meta_json,'r'))
                 self.your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
-            elif self.report_type == 'OS':
+            else:
                 meta_dict = json.load(open(self.DESI_Log.meta_json,'r'))
-                self.os_name_1.value = meta_dict['{}_1_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_1_lastname'.format(self.report_type.lower())]
-                self.os_name_2.value = meta_dict['{}_2_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_2_lastname'.format(self.report_type.lower())]
 
             full_time = (datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M'))
             self.full_time.text = 'Total time between 18 deg. twilights (hrs): {:.2f}'.format(full_time.seconds/3600)
@@ -547,6 +546,8 @@ class Report():
             if self.report_type == 'OS':
                 plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}".format(self.night)
                 self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
+                self.os_name_1.value = meta_dict['{}_1_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_1_lastname'.format(self.report_type.lower())]
+                self.os_name_2.value = meta_dict['{}_2_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_2_lastname'.format(self.report_type.lower())]
                 self.LO.value = meta_dict['LO_firstname']+' '+meta_dict['LO_lastname']
                 self.OA.value = meta_dict['OA_firstname']+' '+meta_dict['OA_lastname']
                 if os.path.exists(self.DESI_Log.contributer_file):
@@ -597,7 +598,7 @@ class Report():
         meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
         meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
 
-        full_time = (meta_dict['dawn_astronomical'] - meta_dict['dusk_astronomical'])
+        full_time = (datetime.strptime(meta['dawn_18_deg'],'%Y%m%dT%H:%M') - datetime.strptime(meta['dusk_18_deg'],'%Y%m%dT%H:%M')).seconds/3200
         self.full_time.text = 'Total time between 18 deg. twilights (hrs): {}'.format(full_time)
 
         self.DESI_Log.initializing()
@@ -612,7 +613,7 @@ class Report():
 
 
     def display_current_header(self):
-        path = os.path.join(self.DESI_Log.root_dir, "header.html")
+        path = self.DESI_Log.header_html
         nl_file = open(path, 'r')
         intro = ''
         for line in nl_file:
@@ -624,7 +625,7 @@ class Report():
         try:
             now = datetime.now()
             self.DESI_Log.finish_the_night()
-            path = os.path.join(self.DESI_Log.root_dir,"nightlog.html")
+            path = self.DESI_Log.nightlog_html 
             nl_file = open(path,'r')
             nl_txt = ''
             for line in nl_file:
@@ -635,7 +636,7 @@ class Report():
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
             self.get_exp_list()
             self.get_weather()
-            self.get_seeing()
+            #self.get_seeing()
             try:
                 self.make_telem_plots()
                 return True
@@ -695,17 +696,17 @@ class Report():
             except:
                 pass
             
-        self.seeing_df = pd.DataFrame()
-        self.seeing_df['Seeing'] = seeing
-        self.seeing_df['Exps'] = exps
-        self.seeing_df.to_csv(os.path.join(self.DESI_Log.root_dir,'seeing.csv'),index=False)
-        # KH added to avoid issues with X11 and Display (we only need the png)
-        figure = plt.figure()
-        plt.plot(self.seeing_df.Exps, self.seeing_df.Seeing,'o')
-        plt.xlabel("Exposure")
-        plt.ylabel("Seeing (arcsec)")
-        plt.savefig(os.path.join(self.DESI_Log.root_dir,'seeing.png'))
-        plt.close(figure)
+        # self.seeing_df = pd.DataFrame()
+        # self.seeing_df['Seeing'] = seeing
+        # self.seeing_df['Exps'] = exps
+        # self.seeing_df.to_csv(os.path.join(self.DESI_Log.root_dir,'seeing.csv'),index=False)
+        # # KH added to avoid issues with X11 and Display (we only need the png)
+        # figure = plt.figure()
+        # plt.plot(self.seeing_df.Exps, self.seeing_df.Seeing,'o')
+        # plt.xlabel("Exposure")
+        # plt.ylabel("Seeing (arcsec)")
+        # plt.savefig(os.path.join(self.DESI_Log.root_dir,'seeing.png'))
+        # plt.close(figure)
 
     def get_telem_list(self, df, l, item):
         list_ = []
@@ -925,24 +926,23 @@ class Report():
     def prob_add(self):
         """Adds problem to nightlog
         """
-        if self.report_type == 'Other':
-            name = self.your_name.value
+        name = self.your_name.value
+        if (self.report_type == 'Other') & (name in [None,' ','']):
+                self.prob_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
-            name = None
+            img_name, img_data, preview = self.image_uploaded('problem')
+            data = [self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name]
+            self.DESI_Log.write_problem(data, self.report_type, img_name=img_name, img_data=img_data)
 
-        img_name, img_data, preview = self.image_uploaded('problem')
-        data = [self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name]
-        self.DESI_Log.write_problem(data, self.report_type, img_name=img_name, img_data=img_data)
-
-        # Preview
-        if img_name != None:
-            preview += "<br>"
-            preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
-            self.prob_alert.text = preview
-            self.img_upload_problems = FileInput(accept=".png")
-        else:
-            self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
-        self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+            # Preview
+            if img_name != None:
+                preview += "<br>"
+                preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
+                self.prob_alert.text = preview
+                self.img_upload_problems = FileInput(accept=".png")
+            else:
+                self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
+            self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
 
     def progress_add(self):
         if self.os_exp_option.active == 0:
@@ -995,18 +995,18 @@ class Report():
                 time = self.get_time(datetime.now().strftime("%H:%M"))
 
 
-        img_name, img_data, preview = self.image_uploaded('comment')
-        data = [time, comment, exp, self.your_name.value]
-        self.DESI_Log.write_other_exp(data, img_name=img_name, img_data=img_data)
+            img_name, img_data, preview = self.image_uploaded('comment')
+            data = [time, comment, exp, self.your_name.value]
+            self.DESI_Log.write_other_exp(data, img_name=img_name, img_data=img_data)
 
-        if img_name is not None:
-            preview += "<br>"
-            preview += "A comment was added at {}".format(self.exp_time.value)
-            self.exp_alert.text = preview
-            self.img_upload_comments=FileInput(accept=".png")
-        else:
-            self.exp_alert.text = "A comment was added at {}".format(datetime.now().strftime("%H:%M"))
-        self.clear_input([self.exp_time, self.exp_comment])
+            if img_name is not None:
+                preview += "<br>"
+                preview += "A comment was added at {}".format(self.exp_time.value)
+                self.exp_alert.text = preview
+                self.img_upload_comments=FileInput(accept=".png")
+            else:
+                self.exp_alert.text = "A comment was added at {}".format(datetime.now().strftime("%H:%M"))
+            self.clear_input([self.exp_time, self.exp_comment])
 
     def exp_add(self):
         quality = self.quality_list[self.quality_btns.active]
@@ -1014,7 +1014,7 @@ class Report():
             exp_val = int(self.exp_select.value)
         elif self.exp_option.active ==1:
             exp_val = int(self.exp_enter.value)
-        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H%M")
+        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
 
         img_name, img_data, preview = self.image_uploaded('comment')
         data = [self.get_time(now), exp_val, quality, self.exp_comment.value]
@@ -1089,7 +1089,7 @@ class Report():
         self.DESI_Log.add_contributer_list(cont_list)
 
     def add_summary(self):
-        now = datetime.now().strftime("%H%M")
+        now = datetime.now().strftime("%H:%M")
         data = OrderedDict()
         data['summary_1'] = self.summary_1.value
         data['summary_2'] = self.summary_2.value
@@ -1125,7 +1125,7 @@ class Report():
         print(f'Local image file upload (Other comments): {self.img_upload_problems.filename}')
 
     def time_is_now(self):
-        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H%M")
+        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
 
         tab = self.layout.active
         time_input = self.time_tabs[tab]

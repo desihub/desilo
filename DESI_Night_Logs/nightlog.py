@@ -21,56 +21,66 @@ class NightLog(object):
         The DESI Night Intake (DNI) provides observers with an interface to write the nightlog
             in the proper formatting (textile for the eLog) while providing a platform to
             follow live the night progress.
+
+            PKL files unique but combination of them is what should be the same for both pages. So all _file
+            should be good.
+            #write_pkl
+            #make combined df
+            #then write its file
     """
 
-    def __init__(self, obsday):
+    def __init__(self, obsday, location):
         """
             Setup the nightlog framework for a given obsday.
         """
         self.obsday = obsday #YYYYMMDD
+        self.location = location
+
         self.root_dir = os.path.join(os.environ['NL_DIR'],self.obsday)
         self.image_dir = os.path.join(self.root_dir,"images")
         self.os_dir = os.path.join(self.root_dir,"OperationsScientist")
         self.dqs_dir = os.path.join(self.root_dir,"DataQualityAssessment")
         self.other_dir = os.path.join(self.root_dir,"OtherInput")
 
-        self.os_pb = os.path.join(self.os_dir,'problems.pkl')
-        self.dqs_pb = os.path.join(self.dqs_dir,'problems.pkl')
-        self.other_pb = os.path.join(self.other_dir,'problems.pkl')
-        self.os_pb_file = os.path.join(self.os_dir,'problems')
-        self.dqs_pb_file = os.path.join(self.dqs_dir,'problems')
-        self.other_pb_file = os.path.join(self.other_dir,'problems')
+        self.header_file = os.path.join(self.root_dir,'header_{}'.format(self.location))
+        self.header_html = os.path.join(self.root_dir,'header_{}.html'.format(self.location))
+        self.nightlog_file = os.path.join(self.root_dir,'nightlog_{}'.format(self.location))
+        self.nightlog_html = os.path.join(self.root_dir,'nightlog_{}.html'.format(self.location))
 
-        self.objectives = os.path.join(self.os_dir,'objectives.pkl')
-        self.objectives_file = os.path.join(self.os_dir,'objectives')
+        self.os_pb = os.path.join(self.os_dir,'problems_{}.pkl'.format(self.location))
+        self.dqs_pb = os.path.join(self.dqs_dir,'problems_{}.pkl'.format(self.location))
+        self.other_pb = os.path.join(self.other_dir,'problems_{}.pkl'.format(self.location))
+        self.os_pb_file = os.path.join(self.os_dir,'problems_{}'.format(self.location))
+        self.dqs_pb_file = os.path.join(self.dqs_dir,'problems_{}'.format(self.location))
+        self.other_pb_file = os.path.join(self.other_dir,'problems_{}'.format(self.location))
 
-        self.milestone = os.path.join(self.os_dir,'milestones.pkl')
-        self.milestone_file = os.path.join(self.os_dir,'milestones')
+        self.objectives = os.path.join(self.os_dir,'objectives_{}.pkl'.format(self.location))
+        self.objectives_file = os.path.join(self.os_dir,'objectives_{}'.format(self.location))
 
-        self.os_cl = os.path.join(self.os_dir,'checklist.pkl')
-        self.dqs_cl = os.path.join(self.dqs_dir,'checklist.pkl')
-        self.os_cl_file = os.path.join(self.os_dir,'checklist')
-        self.dqs_cl_file = os.path.join(self.dqs_dir,'checklist')
+        self.milestone = os.path.join(self.os_dir,'milestones_{}.pkl'.format(self.location))
+        self.milestone_file = os.path.join(self.os_dir,'milestones_{}'.format(self.location))
 
-        self.os_exp = os.path.join(self.os_dir,'exposures.pkl')
-        #self.os_exp_file = os.path.join(self.os_dir,'exposures')
-        self.dqs_exp = os.path.join(self.dqs_dir,'exposures.pkl')
-        #self.dqs_exp_file = os.path.join(self.dqs_dir,'exposures')
-        self.other_exp = os.path.join(self.other_dir,'exposures.pkl')
-        #self.other_exp_file = os.path.join(self.other_dir,'exposures')
-        self.exp_file = os.path.join(self.root_dir,'exposures')
+        self.os_cl = os.path.join(self.os_dir,'checklist_{}.pkl'.format(self.location))
+        self.dqs_cl = os.path.join(self.dqs_dir,'checklist_{}.pkl'.format(self.location))
+        self.os_cl_file = os.path.join(self.os_dir,'checklist_{}'.format(self.location))
+        self.dqs_cl_file = os.path.join(self.dqs_dir,'checklist_{}'.format(self.location))
 
-        self.weather = os.path.join(self.os_dir,'weather.pkl')
-        self.weather_file = os.path.join(self.os_dir,'weather')
+        self.os_exp = os.path.join(self.os_dir,'exposures_{}.pkl'.format(self.location))
+        self.dqs_exp = os.path.join(self.dqs_dir,'exposures_{}.pkl'.format(self.location))
+        self.other_exp = os.path.join(self.other_dir,'exposures_{}.pkl'.format(self.location))
+        self.exp_file = os.path.join(self.root_dir,'exposures_{}'.format(self.location))
 
-        self.meta_json = os.path.join(self.root_dir,'nightlog_meta.json')
-        self.image_file = os.path.join(self.image_dir, 'image_list')
-        self.upload_image_file = os.path.join(self.image_dir, 'upload_image_list')
-        self.contributer_file = os.path.join(self.root_dir, 'contributer_file')
-        self.summary_file = os.path.join(self.root_dir, 'summary_file')
-        self.time_use = os.path.join(self.root_dir, 'time_use.csv')
-        self.explist_file = os.path.join(self.root_dir, 'exposures.csv')
-        self.telem_plots_file = os.path.join(self.root_dir, 'telem_plots.png')
+        self.weather = os.path.join(self.os_dir,'weather_{}.pkl'.format(self.location))
+        self.weather_file = os.path.join(self.os_dir,'weather_{}'.format(self.location))
+
+        self.meta_json = os.path.join(self.root_dir,'nightlog_meta_{}.json'.format(self.location))
+        self.image_file = os.path.join(self.image_dir, 'image_list_{}'.format(self.location))
+        self.upload_image_file = os.path.join(self.image_dir, 'upload_image_list_{}'.format(self.location))
+        self.contributer_file = os.path.join(self.root_dir, 'contributer_file_{}'.format(self.location))
+        self.summary_file = os.path.join(self.root_dir, 'summary_file_{}'.format(self.location))
+        self.time_use = os.path.join(self.root_dir, 'time_use_{}.csv'.format(self.location))
+        self.explist_file = os.path.join(self.root_dir, 'exposures_{}.csv'.format(self.location))
+        self.telem_plots_file = os.path.join(self.root_dir, 'telem_plots_{}.png'.format(self.location))
 
         # Set this if you want to allow for replacing lines with a timestamp or not
         self.replace = True
@@ -109,7 +119,7 @@ class NightLog(object):
         except:
             return time_string
 
-    def get_started_os(self, data): #,weather_conditions
+    def get_started_os(self, data): 
         """
             Operations Scientist lists the personal present, ephemerids and weather conditions at sunset.
         """
@@ -126,27 +136,58 @@ class NightLog(object):
         with open(self.meta_json,'w') as fp:
             json.dump(meta_dict, fp)
 
+    def _open_kpno_file_first(self, filen):
+        loc = filen.split('_')[-1]
+        new_filen = filen.replace(loc, 'kpno')
+        if os.path.exists(new_filen):
+            return open(new_filen, 'r')
+        else:
+            try:
+                return open(filen, 'r')
+            except:
+                return None
 
     def add_dqs_observer(self, dqs_firstname, dqs_lastname):
-        with open(self.meta_json, 'r') as f:
+        f = self._open_kpno_file_first(self.meta_json)
+        if f is not None:
             meta_dict = json.load(f)
             meta_dict['dqs_1'] = dqs_firstname
             meta_dict['dqs_last'] = dqs_lastname
-        os.remove(self.meta_json)
-        with open(self.meta_json, 'w') as f:
-            json.dump(meta_dict, f)
+            os.remove(self.meta_json)
+            with open(self.meta_json, 'w') as ff:
+                json.dump(meta_dict, ff)
 
         self.write_intro()
 
-    def write_pkl(self, data, cols, filen, dqs_exp=False):
-        # order = time, index
-        if not os.path.exists(filen):
+    def _combine_compare_pkl_files(self, filen):
+        loc = os.path.splitext(filen)[0].split('_')[-1]
+        df = pd.read_pickle(filen)
+        if loc == 'kpno':
+            nersc_filen = filen.replace(loc, 'nersc')
+            if os.path.exists(nersc_filen):
+                df2 = pd.read_pickle(nersc_filen)
+                df_ = pd.concat([df,df2])
+                df_ = df_.drop_duplicates(by=['Time'],keep='first')
+                df_ = df_.sort_values(by=['Time'])
+                return df_
+            else:
+                return df
+        elif loc == 'nersc':
+            kpno_filen = filen.replace(loc, 'kpno')
+            if os.path.exists(kpno_filen):
+                df2 = pd.read_pickle(kpno_filen)
+                df_ = pd.concat([df2,df])
+                df_ = df_.drop_duplicates(by=['Time'],keep='first')
+                df_ = df_.sort_values(by=['Time'])
+                return df_
+            else:
+                return df
 
+    def write_pkl(self, data, cols, filen, dqs_exp=False):
+        if not os.path.exists(filen):
             init_df = pd.DataFrame(columns=cols)
             init_df.to_pickle(filen)
-
         data = np.array(data)
-        #data[np.where(data == None)] = 'None'
 
         df = pd.read_pickle(filen)
         data_df = pd.DataFrame([data], columns=cols)
@@ -161,7 +202,8 @@ class NightLog(object):
         df = df.sort_values(by=['Time'])
         df.reset_index(inplace=True, drop=True)
         df.to_pickle(filen)
-        return df
+        df_ = self._combine_compare_pkl_files(filen)
+        return df_
 
     def write_img(self, file, img_data, img_name):
         if img_name is not None and img_data is not None:
@@ -238,6 +280,7 @@ class NightLog(object):
             file.write("\n")
         file.close()
 
+
     def write_problem(self, data, user, img_name=None, img_data=None):
         prob_cols = ['Time', 'Problem', 'alarm_id', 'action', 'name','img_name','img_data']
         if user == 'OS':
@@ -251,6 +294,7 @@ class NightLog(object):
             filen = self.other_pb_file
         data = np.hstack([data, img_name, img_data])
         df = self.write_pkl(data, prob_cols, file)
+
 
         file = open(filen, 'w')
         for index, row in df.iterrows():  
@@ -377,7 +421,6 @@ class NightLog(object):
             else:
                 if len(dqs_) > 0:
                     file.write("- {} Exp. {} := Data Quality: {}, {}".format(self.write_time(dqs_['Time'].values[0]), dqs_['Exp_Start'].values[0], dqs_['Quality'].values[0],dqs_['Comment'].values[0]))
-                    this_exp = exp_df[exp_df.id == int(dqs_['Exp_Start'].values[0])]
                     try:
                         this_exp = exp_df[exp_df.id == int(dqs_['Exp_Start'].values[0])]
                         file.write("; Tile: {}, Exptime: {}, Airmass: {}, Sequence: {}, Flavor: {}, Program: {}\n".format(
@@ -422,7 +465,7 @@ class NightLog(object):
             the_path = self.milestone
         if page == 'plan':
             the_path = self.objectives
-        df = pd.read_pickle(the_path)
+        df = self._combine_compare_pkl_files(the_path)
         item = df[df.index == int(idx)]
         if len(item) > 0:
             return True, item
@@ -432,7 +475,7 @@ class NightLog(object):
     def load_exp(self, exp):
         the_path = self.dqs_exp
 
-        df = pd.read_pickle(the_path)
+        df = self._combine_compare_pkl_files(the_path)
 
         item = df[df.Exp_Start == exp]
         if len(item) > 0:
@@ -454,7 +497,7 @@ class NightLog(object):
         elif exp_type == 'problem':
             the_path = os.path.join(_dir, 'problems.pkl')
 
-        df = pd.read_pickle(the_path)
+        df = self._combine_compare_pkl_files(the_path)
         item = df[df.Time == time]
 
         if len(item) > 0:
@@ -490,6 +533,7 @@ class NightLog(object):
 
         df = pd.DataFrame(data, index=[0])
         df.to_csv(self.time_use,index=False)
+        d = df.iloc[0]
 
         file = open(self.summary_file, 'w')
 
@@ -500,46 +544,60 @@ class NightLog(object):
             file.write(df['summary_2'].values[0])
             file.write("\n")
         file.write("Time Use (hrs):")
-        file.write(" Observing: {}, Testing: {}, Loss to Instrument: {}, Loss to Weather: {}, Loss to Telescope: {}\n".format(df['obs_time'].values[0],
-            df['test_time'].values[0],df['inst_loss'].values[0], df['weather_loss'].values[0], df['tel_loss'].values[0]))
+        file.write(" Observing: {}, Testing: {}, Loss to Instrument: {}, Loss to Weather: {}, Loss to Telescope: {}, Total: {}, Time between 18 deg. twilight: {}\n".format(d['obs_time'],
+            d['test_time'],d['inst_loss'], d['weather_loss'], d['tel_loss'], d['total'], d['18deg']))
         file.write("\n")
         file.close()
 
-    def compile_entries(self, the_path, header, file_nl):
-        if os.path.exists(the_path):
-            if header is not None:
-                file_nl.write(header)
-            file_nl.write("\n")
-            file_nl.write("\n")
-
-            f =  open(the_path, "r") 
-            for line in f:
-                file_nl.write(line)
+    def compile_entries(self, the_path, header, file_nl, kpno_first = True):
+        if kpno_first:
+            f = self._open_kpno_file_first(the_path)
+            if f is not None:
+                if header is not None:
+                    file_nl.write(header)
                 file_nl.write("\n")
-
+                file_nl.write("\n")
+                for line in f:
+                    file_nl.write(line)
+                    file_nl.write("\n") 
             f.close()
+        else:
+            if os.path.exists(the_path):
+                f = open(the_path, 'r')
+                if header is not None:
+                    file_nl.write(header)
+                file_nl.write("\n")
+                file_nl.write("\n")
+                for line in f:
+                    file_nl.write(line)
+                    file_nl.write("\n")
+                f.close()
+        
 
     def write_intro(self):
-        file_intro=open(os.path.join(self.root_dir,'header'),'w')
+        file_intro=open(self.header_file,'w')
+        try:
+            meta_dict = json.load(self._open_kpno_file_first(self.meta_json))
+            file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
+            file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
+            file_intro.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
+            file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['LO_firstname'],meta_dict['LO_lastname']))
+            file_intro.write("*Telescope Operator*: {} {}\n".format(meta_dict['OA_firstname'],meta_dict['OA_lastname']))
+            file_intro.write("*Ephemerides in local time [UTC]*:\n")
+            file_intro.write("* sunset: {}\n".format(self.write_time(meta_dict['time_sunset'])))
+            file_intro.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['dusk_18_deg'])))
+            file_intro.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['dawn_18_deg'])))
+            file_intro.write("* sunrise: {}\n".format(self.write_time(meta_dict['time_sunrise'])))
+            file_intro.write("* moonrise: {}\n".format(self.write_time(meta_dict['time_moonrise'])))
+            file_intro.write("* moonset: {}\n".format(self.write_time(meta_dict['time_moonset'])))
+            file_intro.write("* illumination: {}\n".format(meta_dict['illumination']))
 
-        meta_dict = json.load(open(self.meta_json,'r'))
-        file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
-        file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
-        file_intro.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
-        file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['LO_firstname'],meta_dict['LO_lastname']))
-        file_intro.write("*Telescope Operator*: {} {}\n".format(meta_dict['OA_firstname'],meta_dict['OA_lastname']))
-        file_intro.write("*Ephemerides in local time [UTC]*:\n")
-        file_intro.write("* sunset: {}\n".format(self.write_time(meta_dict['time_sunset'])))
-        file_intro.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['dusk_18_deg'])))
-        file_intro.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['dawn_18_deg'])))
-        file_intro.write("* sunrise: {}\n".format(self.write_time(meta_dict['time_sunrise'])))
-        file_intro.write("* moonrise: {}\n".format(self.write_time(meta_dict['time_moonrise'])))
-        file_intro.write("* moonset: {}\n".format(self.write_time(meta_dict['time_moonset'])))
-        file_intro.write("* illumination: {}\n".format(meta_dict['illumination']))
-        #file_intro.write("* sunset weather: {} \n".format(meta_dict['os_weather_conditions']))
+        except Exception as e:
+            print('Exception reading meta json file: {}'.format(str(e)))
 
         file_intro.close()
-        cmd = "pandoc --metadata pagetitle=header -s {} -f textile -t html -o {}".format(os.path.join(self.root_dir,'header'),os.path.join(self.root_dir,'header.html'))
+        cmd = "pandoc --metadata pagetitle=header -s {} -f textile -t html -o {}".format(self.header_file,self.header_html)
+
         try:
             os.system(cmd)
         except Exception as e:
@@ -549,21 +607,24 @@ class NightLog(object):
         """
             Merge together all the different files into one '.txt' file to copy past on the eLog.
         """
-        file_nl=open(os.path.join(self.root_dir,'nightlog'),'w')
+        file_nl=open(self.nightlog_file, 'w')
 
         #Write the meta_html here
-        file_intro=open(os.path.join(self.root_dir,'header'),'r')
-        lines = file_intro.readlines()
-        for line in lines:
-            file_nl.write(line)
-        file_nl.write("\n")
-        file_nl.write("\n")
+        try:
+            file_intro = self._open_kpno_file_first(self.header_file)
+            lines = file_intro.readlines()
+            for line in lines:
+                file_nl.write(line)
+            file_nl.write("\n")
+            file_nl.write("\n")
+        except Exception as e:
+            print("Exception with nightlog header: {}".format(e))
 
         #Contributers
-        self.compile_entries(self.contributer_file, "h3. Contributers\n", file_nl)
+        self.compile_entries(self.contributer_file, "h3. Contributers\n", file_nl, kpno_first=False)
 
         #Night Summary
-        self.compile_entries(self.summary_file, "h3. Night Summary\n", file_nl)
+        self.compile_entries(self.summary_file, "h3. Night Summary\n", file_nl, kpno_first=False)
 
         #Plan for the night
         file_nl.write("h3. Plan for the night\n")
@@ -571,7 +632,7 @@ class NightLog(object):
         file_nl.write("The detailed operations plan for today (obsday "+self.obsday+") can be found at https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan"+self.obsday+".\n")
         file_nl.write("\n")
         file_nl.write("Main items are listed below:\n")
-        self.compile_entries(self.objectives_file, None, file_nl)
+        self.compile_entries(self.objectives_file, None, file_nl, kpno_first=False)
 
         #Milestones/Accomplishments
         file_nl.write("\n")
@@ -579,21 +640,21 @@ class NightLog(object):
         file_nl.write("h3. Milestones and Major Progress\n")
         file_nl.write("\n")
         file_nl.write("\n")
-        self.compile_entries(self.milestone_file, None, file_nl)
+        self.compile_entries(self.milestone_file, None, file_nl, kpno_first=False)
 
         #Problems
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Problems and Operations Issues [OS, *DQS*, _Other_]\n")
-        self.compile_entries(self.os_pb_file, None, file_nl)
-        self.compile_entries(self.dqs_pb_file, None, file_nl)
-        self.compile_entries(self.other_pb_file, None, file_nl)
+        self.compile_entries(self.os_pb_file, None, file_nl, kpno_first=False)
+        self.compile_entries(self.dqs_pb_file, None, file_nl, kpno_first=False)
+        self.compile_entries(self.other_pb_file, None, file_nl, kpno_first=False)
 
         #Weather
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Observing Conditions\n")
-        self.compile_entries(self.weather_file, None, file_nl)
+        self.compile_entries(self.weather_file, None, file_nl, kpno_first=False)
         file_nl.write("\n")
         file_nl.write("\n")
 
@@ -603,15 +664,15 @@ class NightLog(object):
         file_nl.write("h3. Checklists\n")
         file_nl.write("\n")
         file_nl.write("\n")
-        self.compile_entries(self.os_cl_file, "h5. Observing Scientist", file_nl)
-        self.compile_entries(self.dqs_cl_file, "h5. Data Quality Scientist", file_nl)
+        self.compile_entries(self.os_cl_file, "h5. Observing Scientist", file_nl, kpno_first=False)
+        self.compile_entries(self.dqs_cl_file, "h5. Data Quality Scientist", file_nl, kpno_first=False)
 
 
         #Nightly Progress
         file_nl.write("h3. Details on the Night Progress\n")
         file_nl.write("\n")
         file_nl.write("\n")
-        self.compile_entries(self.exp_file, None, file_nl)
+        self.compile_entries(self.exp_file, None, file_nl, kpno_first=False)
         #self.compile_entries(self.dqs_exp_file, "h5. Exposure Quality (DQS)\n", file_nl)
         #self.compile_entries(self.other_exp_file, "h5. Comments (Non-Observers)\n", file_nl)
 
@@ -656,8 +717,8 @@ class NightLog(object):
 
         file_nl.close()
         cmd = "pandoc  --resource-path={} --metadata pagetitle=report -s {} -f textile -t html -o {}".format(self.root_dir,
-                                                                                                             os.path.join(self.root_dir,'nightlog'),
-                                                                                                             os.path.join(self.root_dir,'nightlog.html'))
+                                                                                                             self.nightlog_file,
+                                                                                                             self.nightlog_html)
         try:
             os.system(cmd)
         except Exception as e:
