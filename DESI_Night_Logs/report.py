@@ -83,6 +83,7 @@ class Report():
         self.nl_file = None
         self.milestone_time = None
         self.plan_time = None
+        self.full_time = None
 
         self.DESI_Log = None
         self.save_telem_plots = False
@@ -131,7 +132,7 @@ class Report():
         self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
         self.now_btn = Button(label='Now', css_classes=['now_button'], width=75)
 
-        self.full_time = Div(text='Total time between 18 deg. twilights (hrs): ', width=100) #Not on intro slide, but needed across reports
+        self.full_time_text = Div(text='Total time between 18 deg. twilights (hrs): ', width=100) #Not on intro slide, but needed across reports
 
         self.update_nl_list()
 
@@ -220,7 +221,7 @@ class Report():
                         self.line,
                         self.summary_1,
                         self.summary_2,
-                        [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time, [self.total_time, self.full_time]],
+                        [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time, [self.total_time, self.full_time_text]],
                         self.summary_btn,
                         ], width=1000)
         self.milestone_tab = Panel(child=milestone_layout, title='Milestones')
@@ -537,8 +538,8 @@ class Report():
             else:
                 meta_dict = json.load(open(self.DESI_Log.meta_json,'r'))
 
-            full_time = (datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M'))
-            self.full_time.text = 'Total time between 18 deg. twilights (hrs): {:.2f}'.format(full_time.seconds/3600)
+            self.full_time = (datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
+            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.2f}'.format(self.full_time)
             self.display_current_header()
             self.nl_file = os.path.join(self.DESI_Log.root_dir,'nightlog.html')
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
@@ -598,8 +599,8 @@ class Report():
         meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
         meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
 
-        full_time = (datetime.strptime(meta['dawn_18_deg'],'%Y%m%dT%H:%M') - datetime.strptime(meta['dusk_18_deg'],'%Y%m%dT%H:%M')).seconds/3200
-        self.full_time.text = 'Total time between 18 deg. twilights (hrs): {}'.format(full_time)
+        self.full_time = (datetime.strptime(meta['dawn_18_deg'],'%Y%m%dT%H:%M') - datetime.strptime(meta['dusk_18_deg'],'%Y%m%dT%H:%M')).seconds/3200
+        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self.full_time)
 
         self.DESI_Log.initializing()
         self.DESI_Log.get_started_os(meta)
@@ -664,7 +665,7 @@ class Report():
 
     def get_weather(self):
         if os.path.exists(self.DESI_Log.weather):
-            obs_df = pd.read_pickle(self.DESI_Log.weather)
+            obs_df = pd.read_csv(self.DESI_Log.weather)
             t = [datetime.strptime(tt, "%Y%m%dT%H:%M") for tt in obs_df['Time']]
             obs_df['Time'] = t
             self.weather_source.data = obs_df.sort_values(by='Time')
@@ -832,7 +833,7 @@ class Report():
         complete = self.checklist.active
         check_time = datetime.now().strftime("%Y%m%dT%H:%M")
         if len(complete) == len(self.checklist.labels):
-            self.DESI_Log.write_checklist([check_time, self.check_comment.value], self.report_type)
+            self.DESI_Log.add_input([self.report_type, check_time, self.check_comment.value], 'checklist')
             self.check_alert.text = "Checklist last submitted at {}".format(check_time[-5:])
         else:
             self.check_alert.text = "Must complete all tasks before submitting checklist"
@@ -852,7 +853,7 @@ class Report():
             ts = datetime.now().strftime("%Y%m%dT%H:%M")
         else: 
             ts = self.plan_time
-        self.DESI_Log.write_plan([ts, self.plan_input.value])
+        self.DESI_Log.add_input([ts, self.plan_input.value], 'plan')
         self.plan_alert.text = 'Last item input: {}'.format(self.plan_input.value)
         self.clear_input([self.plan_order, self.plan_input])
         self.plan_time = None
@@ -862,7 +863,7 @@ class Report():
             ts = datetime.now().strftime("%Y%m%dT%H:%M")
         else:
             ts = self.milestone_time
-        self.DESI_Log.write_milestone([ts, self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value])
+        self.DESI_Log.add_input([ts, self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value],'milestone')
         self.milestone_alert.text = 'Last Milestone Entered: {}'.format(self.milestone_input.value)
         self.clear_input([self.milestone_input, self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl])
         self.milestone_time = None
@@ -890,13 +891,12 @@ class Report():
             tput = self.get_latest_val(telem_df.tput) #list(telem_df.tput.dropna())[-1]
             skylevel = self.get_latest_val(telem_df.skylevel)  #list(telem_df.skylevel.dropna())[-1]
             data = [now, desc, temp, wind, humidity, seeing, tput, skylevel]
-            df = self.DESI_Log.write_weather(data)
 
         else: 
             data = [now, self.weather_desc.value, None, None, None, None, None, None]
-            df = self.DESI_Log.write_weather(data)
+            
             self.weather_alert.text = 'Not connected to the telemetry DB. Only weather description will be recorded.'
-
+        df = self.DESI_Log.add_input(data,'weather')
         self.clear_input([self.weather_desc])
         self.get_weather()
 
@@ -931,8 +931,8 @@ class Report():
                 self.prob_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
             img_name, img_data, preview = self.image_uploaded('problem')
-            data = [self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name]
-            self.DESI_Log.write_problem(data, self.report_type, img_name=img_name, img_data=img_data)
+            data = [self.report_type, self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name, img_name, img_data]
+            self.DESI_Log.add_input(data, 'problem')
 
             # Preview
             if img_name != None:
@@ -962,9 +962,10 @@ class Report():
             comment = self.exp_comment.value
             time = self.get_time(datetime.now().strftime("%H:%M"))
 
-        data = [time, comment, exp]
+
         img_name, img_data, preview = self.image_uploaded('comment')
-        self.DESI_Log.write_os_exp(data, img_name=img_name, img_data=img_data)
+        data = [time, comment, exp, img_name, img_data]
+        self.DESI_Log.add_input(data, 'os_exp')
         if img_name is not None:
             preview += "<br>"
             preview += "A comment was added at {}".format(datetime.now().strftime("%H:%M"))
@@ -988,16 +989,22 @@ class Report():
                     self.exp_alert.text = 'Fill in the time'
             elif self.os_exp_option.active == 1:
                 if self.exp_option.active == 0:
-                    exp = int(self.exp_select.value)
+                    try:
+                        exp = int(self.exp_select.value)
+                    except:
+                        self.exp_alert.text = 'Check your exposure input'
                 elif self.exp_option.active ==1:
-                    exp = int(self.exp_enter.value)
+                    try:
+                        exp = int(self.exp_enter.value)
+                    except:
+                        self.exp_alert.text = 'Check your exposure input'
                 comment = self.exp_comment.value
                 time = self.get_time(datetime.now().strftime("%H:%M"))
 
 
             img_name, img_data, preview = self.image_uploaded('comment')
-            data = [time, comment, exp, self.your_name.value]
-            self.DESI_Log.write_other_exp(data, img_name=img_name, img_data=img_data)
+            data = [time, comment, exp, self.your_name.value, img_name, img_data]
+            self.DESI_Log.add_input(data, 'other_exp')
 
             if img_name is not None:
                 preview += "<br>"
@@ -1017,8 +1024,8 @@ class Report():
         now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
 
         img_name, img_data, preview = self.image_uploaded('comment')
-        data = [self.get_time(now), exp_val, quality, self.exp_comment.value]
-        self.DESI_Log.write_dqs_exp(data, img_name=img_name, img_data=img_data)
+        data = [self.get_time(now), exp_val, quality, self.exp_comment.value, img_name, img_data]
+        self.DESI_Log.add_input(data, 'dqs_exp')
 
         if img_name is not None:
             preview += "<br>"
@@ -1098,6 +1105,7 @@ class Report():
         data['inst_loss'] = self.inst_loss_time.value
         data['weather_loss'] = self.weather_loss_time.value
         data['tel_loss'] = self.tel_loss_time.value
+        data['18deg'] = self.full_time
 
         total = 0
         for i in [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time]:
@@ -1105,6 +1113,7 @@ class Report():
                 total += float(i.value)
             except:
                 total += 0
+        data['total'] = total
         self.total_time.text = 'Time Documented (hrs): {}'.format(str(total))
         self.DESI_Log.add_summary(data)
         self.milestone_alert.text = 'Summary Information Entered at {}'.format(now)
