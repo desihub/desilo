@@ -70,7 +70,7 @@ class NightLog(object):
         self.contributer_file = os.path.join(self.root_dir, 'contributer_file_{}'.format(self.location))
         self.summary_file = os.path.join(self.root_dir, 'summary_file_{}'.format(self.location))
         self.time_use = os.path.join(self.root_dir, 'time_use_{}.csv'.format(self.location))
-        self.explist_file = os.path.join(self.root_dir, 'exposures_{}.csv'.format(self.location))
+        self.explist_file = os.path.join(self.root_dir, 'explist_{}.csv'.format(self.location))
         self.telem_plots_file = os.path.join(self.root_dir, 'telem_plots_{}.png'.format(self.location))
 
         # Set this if you want to allow for replacing lines with a timestamp or not
@@ -127,7 +127,7 @@ class NightLog(object):
             json.dump(meta_dict, fp)
 
     def _open_kpno_file_first(self, filen):
-        loc = filen.split('_')[-1]
+        loc = os.path.splitext(filen)[0].split('_')[-1]
         new_filen = filen.replace(loc, 'kpno')
         if os.path.exists(new_filen):
             return new_filen
@@ -164,6 +164,7 @@ class NightLog(object):
         if len(dfs) > 0:
             df_ = pd.concat(dfs)
             df_ = df_.sort_values(by=['Time'])
+            df_.reset_index(inplace=True, drop=True)
             return df_
         else:
             return None
@@ -236,7 +237,8 @@ class NightLog(object):
 
     def write_plan(self, filen):
         df = self._combine_compare_csv_files(self.objectives)
-        df.reset_index(inplace=True)
+        df = df.drop_duplicates(['Time'], keep='first')
+        df.reset_index(inplace=True, drop=True)
         if df is not None:
             for index, row in df.iterrows():
                 filen.write("* [{}] {}".format(index, row['Objective']))
@@ -244,7 +246,8 @@ class NightLog(object):
 
     def write_milestone(self, filen):
         df = self._combine_compare_csv_files(self.milestone)
-        df.reset_index(inplace=True)
+        df = df.drop_duplicates(['Time'], keep='first')
+        df.reset_index(inplace=True, drop=True)
         if df is not None:
             for index, row in df.iterrows():
                 filen.write("* [{}] {}".format(index, row['Desc']))
@@ -370,8 +373,10 @@ class NightLog(object):
                 other_ = []
 
             if len(os_) > 0:
-                if str(os_['Exp_Start'].values[0]) not in ['nan', 'None']:
-                    file.write("- {} Exp. {} := {}".format(self.write_time(os_['Time'].values[0]), int(os_['Exp_Start'].values[0]), os_['Comment'].values[0]))
+                os_ = os_.iloc[0]
+                if str(os_['Exp_Start']) not in [np.nan, None, 'nan', 'None']:
+                    file.write("- {} Exp. {} := {}".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
+
                     try:
                         this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
                         this_exp = this_exp.fillna(value=np.nan)
@@ -386,51 +391,65 @@ class NightLog(object):
                         (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
                     except:
                         file.write("\n") 
+                    if str(os_['img_name']) not in [np.nan, None, 'nan', 'None']:
+                        self.write_img(file, os_['img_data'], os_['img_name'])
+                        file.write('\n')
+
                     if len(dqs_) > 0:
-                        file.write(f"Data Quality: {dqs_['Quality'].values[0]}; {dqs_['Comment'].values[0]}\n")
-                        if str(dqs_['img_name'].values[0]) not in ['nan', 'None']:
-                            self.write_img(file, dqs_['img_data'].values[0], dqs_['img_name'].values[0])
+                        dqs_ = dqs_.iloc[0]
+                        file.write(f"Data Quality: {dqs_['Quality']}; {dqs_['Comment']}\n")
+                        if str(dqs_['img_name']) not in ['nan', 'None']:
+                            self.write_img(file, dqs_['img_data'], dqs_['img_name'])
                             file.write('\n')
                     if len(other_) > 0:
-                        file.write("Comment: {} ({})\n".format(other_['Comment'].values[0], other_['Name'].values[0]))
+                        other_ = other_.iloc[0]
+                        file.write("Comment: {} ({})\n".format(other_['Comment'], other_['Name']))
                         if str(other_['img_name']) not in ['nan', 'None']:
-                            self.write_img(file, other_['img_data'].values[0], other_['img_name'].values[0])
+                            self.write_img(file, other_['img_data'], other_['img_name'])
                             file.write('\n')
 
                 else:
-                    file.write("- {} := {}\n".format(self.write_time(os_['Time'].values[0]), os_['Comment'].values[0]))
+                    file.write("- {} := {}\n".format(self.write_time(os_['Time']), os_['Comment']))
 
 
-                if str(os_['img_name'].values[0]) not in ['nan', 'None']:
-                    self.write_img(file, os_['img_data'].values[0], os_['img_name'].values[0])
-                    file.write('\n')
+                
 
             else:
                 if len(dqs_) > 0:
-                    file.write("- {} Exp. {} := Data Quality: {}, {}".format(self.write_time(dqs_['Time'].values[0]), int(dqs_['Exp_Start'].values[0]), dqs_['Quality'].values[0],dqs_['Comment'].values[0]))
+                    dqs_ = dqs_.iloc[0]
+                    file.write("- {} Exp. {} := Data Quality: {}, {}".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
                     try:
-                        this_exp = exp_df[exp_df.id == dqs_['Exp_Start'].values[0]]
-                        file.write("; Tile: %d, Exptime: %.2f, Airmass: %.2f, Sequence: %d, Flavor: %s, Program: %s\n" % (
-                                   this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
-                                   this_exp['flavor'].values[0],this_exp['program'].values[0]))
+                        this_exp = exp_df[exp_df.id == dqs_['Exp_Start']]
+                        this_exp = this_exp.fillna(value=np.nan)
+                        this_exp = this_exp.iloc[0]
+                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass'] 
+                        for x in [tile, exptime, airmass]:
+                            try:
+                                x = float(x)
+                            except:
+                                x = np.nan
+                        file.write("; Tile: %.1f, Exptime: %.2f, Airmass: %.2f, Sequence: %s, Flavor: %s, Program: %s\n" %
+                        (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
                     except:
                         file.write("\n")
-                    if str(dqs_['img_name'].values[0]) not in ['nan', 'None']:
-                            self.write_img(file, dqs_['img_data'].values[0], dqs_['img_name'].values[0])
+                    if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None']:
+                            self.write_img(file, dqs_['img_data'], dqs_['img_name'])
                             file.write('\n')
 
                     if len(other_) > 0:
-                        file.write("Comment: {} ({})\n".format(other_['Comment'].values[0], other_['Name'].values[0]))
-                        if str(other_['img_name']) not in ['nan', 'None']:
-                            self.write_img(file, other_['img_data'].values[0], other_['img_name'].values[0])
+                        other_ = other_.iloc[0]
+                        file.write("Comment: {} ({})\n".format(other_['Comment'], other_['Name']))
+                        if str(other_['img_name']) not in [np.nan, None, 'nan', 'None']:
+                            self.write_img(file, other_['img_data'], other_['img_name'])
                             file.write('\n')
                 else:
-                    if str(other_['Exp_Start'].values[0]) not in ['nan', 'None']:
-                        file.write("- {} Exp: {}:= {} ({})\n".format(self.write_time(other_['Time'].values[0]), int(other_['Exp_Start'].values[0]), other_['Comment'].values[0], other_['Name'].values[0]))
+                    other_ = other_.iloc[0]
+                    if str(other_['Exp_Start']) not in [np.nan, None, 'nan', 'None']:
+                        file.write("- {} Exp: {}:= {} ({})\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
                     else:
-                        file.write("- {} := {} ({})\n".format(self.write_time(other_['Time'].values[0]), other_['Comment'].values[0], other_['Name'].values[0]))
-                    if str(other_['img_name']) not in ['nan', 'None']:
-                        self.write_img(file, other_['img_data'].values[0], other_['img_name'].values[0])
+                        file.write("- {} := {} ({})\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
+                    if str(other_['img_name']) not in [np.nan, None, 'nan', 'None']:
+                        self.write_img(file, other_['img_data'], other_['img_name'])
                         file.write('\n')
 
     def load_index(self, idx, page):
@@ -439,44 +458,52 @@ class NightLog(object):
         if page == 'plan':
             the_path = self.objectives
         df = self._combine_compare_csv_files(the_path)
-        item = df[df.index == int(idx)]
-        if len(item) > 0:
-            return True, item
-        else:
-            return False, item
+        try:
+            item = df[df.index == int(idx)]
+            item = item.iloc[0]
+            if len(item) > 0:
+                return True, item
+            else:
+                return False, item
+        except Exception as e:
+            return False, e
 
     def load_exp(self, exp):
         the_path = self.dqs_exp
 
         df = self._combine_compare_csv_files(the_path)
-
-        item = df[df.Exp_Start == exp]
-        if len(item) > 0:
-            return True, item
-        else:
-            return False, item
+        try:
+            item = df[df.Exp_Start == exp]
+            item = item.iloc[0]
+            if len(item) > 0:
+                return True, item
+            else:
+                return False, item
+        except Exception as e:
+            return False, e
 
     def load_timestamp(self, time, user, exp_type):
 
         if user == 'OS':
-            _dir = self.os_dir
+            files = {'exposure':self.os_exp, 'problem':self.os_pb}
         elif user == 'DQS':
-            _dir = self.dqs_dir
+            _dir = {'exposure':self.dqs_exp, 'problem':self.dqs_pb}
         elif user == 'Other':
-            _dir = self.other_dir
+            _dir = {'exposure':self.other_exp, 'problem':self.other_pb}
 
-        if exp_type == 'exposure':
-            the_path = os.path.join(_dir, 'exposures.csv')
-        elif exp_type == 'problem':
-            the_path = os.path.join(_dir, 'problems.csv')
+        the_path = files[exp_type]
 
         df = self._combine_compare_csv_files(the_path)
-        item = df[df.Time == time]
+        try:
+            item = df[df.Time == time]
+            item = item.iloc[0]
 
-        if len(item) > 0:
-            return True, item
-        else:
-            return False, item
+            if len(item) > 0:
+                return True, item
+            else:
+                return False, item
+        except Exception as e:
+            return False, e
 
     def _upload_and_save_image(self, img_data, img_name):
         import base64

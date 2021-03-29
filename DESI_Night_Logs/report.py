@@ -38,7 +38,7 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
+os.environ['NL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs' #'/n/home/desiobserver/parkerf/desilo/nightlogs'
 
 class Report():
     def __init__(self, type):
@@ -312,9 +312,9 @@ class Report():
     def get_prob_layout(self):
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
         inst = """<ul>
-        <li>Describe problems as they come up and at what time they occur. If there is an Alarm ID associated with the problem, 
+        <li>Describe problems as they come up, the time at which they occur, the resolution, and how much time was lost as a result. If there is an Alarm ID associated with the problem, 
         include it, but leave blank if not. </li>
-        <li>If possible, include a description of the resolution. </li>
+        <li>Please enter the time when the problem began, or use the “Now” button if it just occurred.</li>
         <li>If you'd like to modify or add to a submission, you can <b>Load</b> it using its timestamp. 
         If you forget when a comment was submitted, check the Current NL. After making the modifications 
         or additions, press the <b>Add/Update</b> button.</li>
@@ -534,15 +534,17 @@ class Report():
 
             if self.report_type == 'DQS':
                 self.DESI_Log.add_dqs_observer(your_firstname, your_lastname)
-                meta_dict = json.load(open(self.DESI_Log.meta_json,'r'))
+                
+            meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
+            meta_dict = json.load(open(meta_dict_file,'r'))
+                
+            if self.report_type == 'DQS':
                 self.your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
-            else:
-                meta_dict = json.load(open(self.DESI_Log.meta_json,'r'))
 
             self.full_time = (datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
             self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.2f}'.format(self.full_time)
             self.display_current_header()
-            self.nl_file = os.path.join(self.DESI_Log.root_dir,'nightlog.html')
+            self.nl_file = self.DESI_Log.nightlog_file
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
             if self.report_type == 'OS':
@@ -617,7 +619,7 @@ class Report():
 
 
     def display_current_header(self):
-        path = self.DESI_Log.header_html
+        path = self.DESI_Log._open_kpno_file_first(self.DESI_Log.header_html)
         nl_file = open(path, 'r')
         intro = ''
         for line in nl_file:
@@ -1043,11 +1045,10 @@ class Report():
     def plan_load(self):
         b, item = self.DESI_Log.load_index(self.plan_order.value, 'plan')
         if b:
-            self.plan_order.value = str(item.index[0])
-            self.plan_input.value = item['Objective'].values[0]
-            self.plan_time = item['Time'].values[0]
+            self.plan_input.value = str(item['Objective'])
+            self.plan_time = item['Time']
         else:
-            self.plan_alert.text = "That plan item doesn't exist yet"
+            self.plan_alert.text = "That plan item doesn't exist yet. {}".format(item)
 
     def dqs_load(self):
         if self.exp_option.active == 0:
@@ -1056,44 +1057,44 @@ class Report():
             exp = int(self.exp_enter.value)
         b, item = self.DESI_Log.load_exp(exp)
         if b:
-            self.exp_comment.value = item['Comment'].values[0]
-            qual = np.where(self.quality_list==item['Quality'].values[0])[0]
+            self.exp_comment.value = item['Comment']
+            qual = np.where(self.quality_list==item['Quality'])[0]
             self.quality_btns.active = int(qual)
         else:
-            self.exp_alert.text = "An input for that exposure doesn't exist."
+            self.exp_alert.text = "An input for that exposure doesn't exist for this user. {}".format(item)
 
     def milestone_load(self):
         b, item = self.DESI_Log.load_index(int(self.milestone_load_num.value), 'milestone')
         if b:
-            self.milestone_input.value = item['Desc'].values[0]
-            self.milestone_exp_start.value = item['Exp_Start'].values[0]
-            self.milestone_exp_end.value = item['Exp_Stop'].values[0]
-            self.milestone_exp_excl.value = item['Exp_Excl'].values[0]
-            self.milestone_time = item['Time'].values[0]
+            self.milestone_input.value = str(item['Desc'])
+            self.milestone_exp_start.value = str(item['Exp_Start'])
+            self.milestone_exp_end.value = str(item['Exp_Stop'])
+            self.milestone_exp_excl.value = str(item['Exp_Excl'])
+            self.milestone_time = item['Time']
         else:
-            self.milestone_alert.text = "That milestone index doesn't exist yet"
+            self.milestone_alert.text = "That milestone index doesn't exist yet. {}".format(item)
 
     def load_exposure(self):
         #Check if progress has been input with a given timestamp
         _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.exp_time.value), self.report_type, 'exposure')
 
         if not _exists:
-            self.exp_alert.text = 'This timestamp does not yet have an input'
+            self.exp_alert.text = 'This timestamp does not yet have an input from this user. {}'.format(item)
         else:
-            self.exp_comment.value = item['Comment'].values[0]
-            self.exp_exposure_start.value = item['Exp_Start'].values[0]
-            self.exp_exposure_finish.value = item['Exp_End'].values[0]
+            self.exp_comment.value = str(item['Comment'])
+            self.exp_exposure_start.value = str(item['Exp_Start'])
+            #self.exp_exposure_finish.value = str(item['Exp_End'])
 
     def load_problem(self):
         #Check if progress has been input with a given timestamp
         _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.prob_time.value), self.report_type, 'problem')
 
         if not _exists:
-            self.prob_alert.text = 'This timestamp does not yet have an input'
+            self.prob_alert.text = 'This timestamp does not yet have an input from this user. {}'.format(item)
         else:
-            self.prob_input.value = item['Problem'].values[0]
-            self.prob_alarm.value = item['alarm_id'].values[0]
-            self.prob_action.value = item['action'].values[0]
+            self.prob_input.value = str(item['Problem'])
+            self.prob_alarm.value = str(item['alarm_id'])
+            self.prob_action.value = str(item['action'])
 
     def add_contributer_list(self):
         cont_list = self.contributer_list.value
