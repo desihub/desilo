@@ -236,6 +236,7 @@ class NightLog(object):
 
     def write_plan(self, filen):
         df = self._combine_compare_csv_files(self.objectives)
+        df.reset_index(inplace=True)
         if df is not None:
             for index, row in df.iterrows():
                 filen.write("* [{}] {}".format(index, row['Objective']))
@@ -243,6 +244,7 @@ class NightLog(object):
 
     def write_milestone(self, filen):
         df = self._combine_compare_csv_files(self.milestone)
+        df.reset_index(inplace=True)
         if df is not None:
             for index, row in df.iterrows():
                 filen.write("* [{}] {}".format(index, row['Desc']))
@@ -261,7 +263,7 @@ class NightLog(object):
             filen.write("OS checklist completed at (Local time):")
             filen.write("\n\n")
             for index, row in df_os.iterrows():
-                filen.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+                filen.write("* {} - {}\n".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
             filen.write("\n")
             filen.write("\n")
 
@@ -269,7 +271,7 @@ class NightLog(object):
             filen.write("DQS checklist completed at (Local time):")
             filen.write("\n\n")
             for index, row in df_dqs.iterrows():
-                filen.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+                filen.write("* {} - {}\n".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
             filen.write("\n")
             filen.write("\n")
 
@@ -280,8 +282,8 @@ class NightLog(object):
         if df is not None:
             for index, row in df.iterrows():
                 filen.write("- {} := {}".format(self.write_time(row['Time']), row['desc']))
-                filen.write(f"; Temp: {str(row['temp'])}, Wind Speed: {str(row['wind'])}, Humidity: {str(row['humidity'])}")
-                filen.write(f", Seeing: {str(row['seeing'])}, Tput: {str(row['tput'])}, Sky: {str(row['skylevel'])}")
+                filen.write("; Temp: %.2f, Wind Speed: %.2f, Humidity: %.2f" % (row['temp'], row['wind'], row['humidity']))
+                filen.write(", Seeing: %.2f, Tput: %.2f, Sky: %.2f" % (row['seeing'], row['tput'], row['skylevel']))
                 filen.write("\n")
 
     def write_problem(self, filen):
@@ -330,7 +332,7 @@ class NightLog(object):
                         df.at[index, 'Time'] = time
                     except:
                         pass
-                df.to_pickle(file)
+                df.to_csv(file,index=False)
 
     def write_exposure(self, file):
         if os.path.exists(self.explist_file):
@@ -369,12 +371,19 @@ class NightLog(object):
 
             if len(os_) > 0:
                 if str(os_['Exp_Start'].values[0]) not in ['nan', 'None']:
-                    file.write("- {} Exp. {} := {}".format(self.write_time(os_['Time'].values[0]), os_['Exp_Start'].values[0], os_['Comment'].values[0]))
+                    file.write("- {} Exp. {} := {}".format(self.write_time(os_['Time'].values[0]), int(os_['Exp_Start'].values[0]), os_['Comment'].values[0]))
                     try:
                         this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
-                        file.write("; Tile: %d, Exptime: %.2f, Airmass: %.2f, Sequence: %d, Flavor: %s, Program: %s\n" % (
-                                   this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
-                                   this_exp['flavor'].values[0],this_exp['program'].values[0]))
+                        this_exp = this_exp.fillna(value=np.nan)
+                        this_exp = this_exp.iloc[0]
+                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass'] 
+                        for x in [tile, exptime, airmass]:
+                            try:
+                                x = float(x)
+                            except:
+                                x = np.nan
+                        file.write("; Tile: %.1f, Exptime: %.2f, Airmass: %.2f, Sequence: %s, Flavor: %s, Program: %s\n" %
+                        (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
                     except:
                         file.write("\n") 
                     if len(dqs_) > 0:
@@ -398,9 +407,9 @@ class NightLog(object):
 
             else:
                 if len(dqs_) > 0:
-                    file.write("- {} Exp. {} := Data Quality: {}, {}".format(self.write_time(dqs_['Time'].values[0]), dqs_['Exp_Start'].values[0], dqs_['Quality'].values[0],dqs_['Comment'].values[0]))
+                    file.write("- {} Exp. {} := Data Quality: {}, {}".format(self.write_time(dqs_['Time'].values[0]), int(dqs_['Exp_Start'].values[0]), dqs_['Quality'].values[0],dqs_['Comment'].values[0]))
                     try:
-                        this_exp = exp_df[exp_df.id == int(dqs_['Exp_Start'].values[0])]
+                        this_exp = exp_df[exp_df.id == dqs_['Exp_Start'].values[0]]
                         file.write("; Tile: %d, Exptime: %.2f, Airmass: %.2f, Sequence: %d, Flavor: %s, Program: %s\n" % (
                                    this_exp['tileid'].values[0],this_exp['exptime'].values[0],this_exp['airmass'].values[0],this_exp['sequence'].values[0],
                                    this_exp['flavor'].values[0],this_exp['program'].values[0]))
@@ -498,6 +507,12 @@ class NightLog(object):
         df = pd.DataFrame(data, index=[0])
         df.to_csv(self.time_use,index=False)
         d = df.iloc[0]
+        obs_time, test_time, inst_loss, weather_loss, tel_loss, total, deg_18 = d['obs_time'], d['test_time'], d['inst_loss'], d['weather_loss'], d['tel_loss'], d['total'], d['18deg']
+        for x in [obs_time, test_time, inst_loss, weather_loss, tel_loss, total, deg_18]:
+            try:
+                x = float(x)
+            except:
+                x = np.nan
 
         file = open(self.summary_file, 'w')
 
@@ -508,8 +523,7 @@ class NightLog(object):
             file.write(d['summary_2'])
             file.write("\n")
         file.write("Time Use (hrs):")
-        file.write(" Observing: %.2f, Testing: %.2f, Loss to Instrument: %.2f, Loss to Weather: %.2f, Loss to Telescope: %.2f, Total: %.2f, Time between 18 deg. twilight: %.2f\n" % (float(d['obs_time']),
-            float(d['test_time']),float(d['inst_loss']), float(d['weather_loss']), float(d['tel_loss']), float(d['total']), float(d['18deg'])))
+        file.write(" Observing: %.2f, Testing: %.2f, Loss to Instrument: %.2f, Loss to Weather: %.2f, Loss to Telescope: %.2f, Total: %.2f, Time between 18 deg. twilight: %.2f\n" % (obs_time,test_time,inst_loss, weather_loss, tel_loss, total, deg_18))
         file.write("\n")
         file.close()
 

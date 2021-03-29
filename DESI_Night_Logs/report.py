@@ -38,6 +38,7 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
+os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
 
 class Report():
     def __init__(self, type):
@@ -551,14 +552,16 @@ class Report():
                 self.os_name_2.value = meta_dict['{}_2_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_2_lastname'.format(self.report_type.lower())]
                 self.LO.value = meta_dict['LO_firstname']+' '+meta_dict['LO_lastname']
                 self.OA.value = meta_dict['OA_firstname']+' '+meta_dict['OA_lastname']
-                if os.path.exists(self.DESI_Log.contributer_file):
+                cont_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.contributer_file)
+                if os.path.exists(cont_file):
                     cont_txt = ''
-                    f =  open(self.DESI_Log.contributer_file, "r")
+                    f =  open(cont_file, "r")
                     for line in f:
                         cont_txt += line
                     self.contributer_list.value = cont_txt
-                if os.path.exists(self.DESI_Log.time_use):
-                    df = pd.read_csv(self.DESI_Log.time_use)
+                time_use_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.time_use)
+                if os.path.exists(time_use_file):
+                    df = pd.read_csv(time_use_file)
                     data = df.iloc[0]
                     self.summary_1.value = str(data['summary_1'])
                     self.summary_2.value = str(data['summary_2'])
@@ -652,7 +655,7 @@ class Report():
     def get_exp_list(self):
         if self.location == 'kpno':
             self.exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
-            if len(self.exp_df.date_obs) != 0:
+            if len(self.exp_df.date_obs) >  0:
                 time = self.exp_df.date_obs.dt.tz_convert('US/Arizona')
                 self.exp_df['date_obs'] = time
                 self.explist_source.data = self.exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
@@ -722,8 +725,8 @@ class Report():
         dt = datetime.strptime(self.night, '%Y%m%d').date()
         #start_utc = '{} {}'.format(self.night, '13:00:00')
         dt_2 = dt + timedelta(days=1)
-        start_utc = '{} {}'.format(dt_2.strftime("%Y%m%d"), '0:00:00')
-        end_utc = '{} {}'.format(dt_2.strftime("%Y%m%d"), '13:00:00')
+        start_utc = '{} {}'.format(dt.strftime("%Y%m%d"), '21:00:00')
+        end_utc = '{} {}'.format(dt_2.strftime("%Y%m%d"), '21:00:00')
         #tel_df  = pd.read_sql_query(f"SELECT * FROM environmentmonitor_telescope WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn)
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE date_obs > '{start_utc}' AND date_obs < '{end_utc}'", self.conn) #night = '{self.night}'", self.conn)
         #tower_df = pd.read_sql_query(f"SELECT * FROM environmentmonitor_tower WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn) 
@@ -731,20 +734,21 @@ class Report():
         #self.get_seeing()
         telem_data = pd.DataFrame(columns =
         ['time','exp','mirror_temp','truss_temp','air_temp','temp','humidity','wind_speed','airmass','exptime','seeing','tput','skylevel'])
-        exp_df.sort_values('date_obs',inplace=True)
-        telem_data.time = exp_df.date_obs.dt.tz_convert('US/Arizona')
-        telem_data.exp = exp_df.id 
-        telem_data.mirror_temp = self.get_telem_list(exp_df, 'telescope','mirror_temp') #[r['mirror_temp'] for r in list(exp_df['telescope'])] #['mirror_temp']
-        telem_data.truss_temp = self.get_telem_list(exp_df, 'telescope','truss_temp') #[r['truss_temp'] for r in list(exp_df['telescope'])] #exp_df['telescope']['truss_temp']
-        telem_data.air_temp = self.get_telem_list(exp_df, 'telescope','air_temp')#[r['air_temp'] for r in list(exp_df['telescope'])] #['air_temp']
-        telem_data.temp = self.get_telem_list(exp_df, 'tower','temperature') #[r['temperature'] for r in list(exp_df['tower'])] #['temperature']
-        telem_data.humidity = self.get_telem_list(exp_df, 'tower','humidity') #[r['humidity'] for r in list(exp_df['tower'])] #['humidity']
-        telem_data.wind_speed = self.get_telem_list(exp_df, 'tower','wind_speed') #[r['wind_speed'] for r in list(exp_df['tower'])] #['wind_speed']
-        telem_data.airmass = exp_df.airmass
-        telem_data.exptime = exp_df.exptime
-        telem_data.seeing = exp_df.seeing
-        telem_data.tput = exp_df.transpar
-        telem_data.skylevel = exp_df.skylevel
+        if len(exp_df) > 0:
+            exp_df.sort_values('date_obs',inplace=True)
+            telem_data.time = exp_df.date_obs.dt.tz_convert('US/Arizona')
+            telem_data.exp = exp_df.id 
+            telem_data.mirror_temp = self.get_telem_list(exp_df, 'telescope','mirror_temp') #[r['mirror_temp'] for r in list(exp_df['telescope'])] #['mirror_temp']
+            telem_data.truss_temp = self.get_telem_list(exp_df, 'telescope','truss_temp') #[r['truss_temp'] for r in list(exp_df['telescope'])] #exp_df['telescope']['truss_temp']
+            telem_data.air_temp = self.get_telem_list(exp_df, 'telescope','air_temp')#[r['air_temp'] for r in list(exp_df['telescope'])] #['air_temp']
+            telem_data.temp = self.get_telem_list(exp_df, 'tower','temperature') #[r['temperature'] for r in list(exp_df['tower'])] #['temperature']
+            telem_data.humidity = self.get_telem_list(exp_df, 'tower','humidity') #[r['humidity'] for r in list(exp_df['tower'])] #['humidity']
+            telem_data.wind_speed = self.get_telem_list(exp_df, 'tower','wind_speed') #[r['wind_speed'] for r in list(exp_df['tower'])] #['wind_speed']
+            telem_data.airmass = exp_df.airmass
+            telem_data.exptime = exp_df.exptime
+            telem_data.seeing = exp_df.seeing
+            telem_data.tput = exp_df.transpar
+            telem_data.skylevel = exp_df.skylevel
 
         self.telem_source.data = telem_data
 
@@ -786,28 +790,28 @@ class Report():
             ax3.tick_params(labelbottom=False)
 
             ax4 = fig.add_subplot(8,1,4, sharex=ax1)
-            ax4.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
+            ax4.scatter(exp_df.time, exp_df.airmass, s=5, label='airmass')
             ax4.set_ylabel("Airmass")
             ax4.grid(True)
             ax4.tick_params(labelbottom=False)
 
             ax5 = fig.add_subplot(8,1,5, sharex=ax1)
-            ax5.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
+            ax5.scatter(exp_df.time, exp_df.exptime, s=5, label='exptime')
             ax5.set_ylabel("Exposure time (s)")
             ax5.grid(True)
 
             ax6 = fig.add_subplot(8,1,6,sharex=ax1)
-            ax6.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
+            ax6.scatter(exp_df.time, exp_df.seeing, s=5, label='seeing')   
             ax6.set_ylabel("Seeing")
             ax6.grid(True)
 
             ax7 = fig.add_subplot(8,1,7,sharex=ax1)
-            ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
+            ax7.scatter(exp_df.time, exp_df.transpar, s=5, label='transparency')
             ax7.set_ylabel("Transparency (%)")
             ax7.grid(True)
 
             ax8 = fig.add_subplot(8,1,8,sharex=ax1)
-            ax8.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
+            ax8.scatter(exp_df.time, exp_df.skylevel, s=5, label='Sky Level')      
             ax8.set_ylabel("Sky level (AB/arcsec^2)")
             ax8.grid(True)
 
@@ -879,7 +883,7 @@ class Report():
         """Adds table to Night Log
         """
         now = datetime.now().astimezone(tz=self.kp_zone).strftime("%Y%m%dT%H:%M")
-        if self.location == 'kpno':
+        try:
             self.make_telem_plots()
             telem_df = pd.DataFrame(self.telem_source.data)
             this_data = telem_df.iloc[-1]
@@ -892,7 +896,7 @@ class Report():
             skylevel = self.get_latest_val(telem_df.skylevel)  #list(telem_df.skylevel.dropna())[-1]
             data = [now, desc, temp, wind, humidity, seeing, tput, skylevel]
 
-        else: 
+        except: 
             data = [now, self.weather_desc.value, None, None, None, None, None, None]
             
             self.weather_alert.text = 'Not connected to the telemetry DB. Only weather description will be recorded.'
