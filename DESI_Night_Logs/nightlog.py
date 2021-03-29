@@ -285,8 +285,8 @@ class NightLog(object):
         if df is not None:
             for index, row in df.iterrows():
                 filen.write("- {} := {}".format(self.write_time(row['Time']), row['desc']))
-                filen.write("; Temp: {}, Wind Speed: {}, Humidity: {}".format(row['temp'], row['wind'], row['humidity']))
-                filen.write(", Seeing: {}, Tput: {}, Sky: {}".format(row['seeing'], row['tput'], row['skylevel']))
+                filen.write("; Temp: {:.2f}, Wind Speed: {:.2f}, Humidity: {:.2f}".format(float(row['temp']), float(row['wind']), float(row['humidity'])))
+                filen.write(", Seeing: {:.2f}, Tput: {:.2f}, Sky: {:.2f}".format(float(row['seeing']), float(row['tput']), float(row['skylevel'])))
                 filen.write("\n")
 
     def write_problem(self, filen):

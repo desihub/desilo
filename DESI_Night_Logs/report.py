@@ -38,7 +38,7 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['NL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs' #'/n/home/desiobserver/parkerf/desilo/nightlogs'
+#os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
 
 class Report():
     def __init__(self, type):
