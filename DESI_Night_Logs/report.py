@@ -38,7 +38,7 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['NL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs' #'/n/home/desiobserver/parkerf/desilo/nightlogs'
+#os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
 
 class Report():
     def __init__(self, type):
@@ -88,6 +88,7 @@ class Report():
 
         self.DESI_Log = None
         self.save_telem_plots = False
+        self.buffer = Div(text=' ')
 
 
     def clear_input(self, items):
@@ -95,9 +96,9 @@ class Report():
         """
         if isinstance(items, list):
             for item in items:
-                item.value = None
+                item.value = ' '
         else:
-            items.value = None
+            items.value = ' '
 
     def get_exposure_list(self):
         try:
@@ -141,6 +142,7 @@ class Report():
         self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
 
         intro_layout = layout([self.title,
+                            self.title,
                             [self.page_logo, self.instructions],
                             self.intro_subtitle,
                             [self.date_init, self.your_name],
@@ -160,14 +162,15 @@ class Report():
         """
         self.plan_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
         self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'], width=500)
-        self.plan_order = TextInput(title ='Plan Index (see Current NL):', placeholder='0', value=None, width=75)
+        self.plan_order = TextInput(title ='Plan Index (see Current NL):', placeholder='0', width=75)
         self.plan_input = TextAreaInput(placeholder="description", rows=5, cols=3, title="Enter item of the night plan:",max_length=5000, width=800)
         self.plan_btn = Button(label='Update', css_classes=['add_button'], width=75)
         self.plan_new_btn = Button(label='Add New', css_classes=['add_button'])
         self.plan_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.plan_alert = Div(text=' ', css_classes=['alert-style'])
 
-        plan_layout = layout([self.title,
+        plan_layout = layout([self.buffer,
+                    self.title,
                     self.plan_subtitle,
                     self.plan_inst,
                     self.plan_txt,
@@ -194,25 +197,26 @@ class Report():
         """
         self.milestone_inst = Div(text=inst, css_classes=['inst-style'],width=1000)
         self.milestone_input = TextAreaInput(placeholder="Description", title="Enter a Milestone:", rows=5, cols=3, max_length=5000, width=800)
-        self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345', value=None, width=200)
-        self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', value=None, width=200)
-        self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', value=None, width=200)
+        self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345',  width=200)
+        self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', width=200)
+        self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', width=200)
         self.milestone_btn = Button(label='Update', css_classes=['add_button'],width=75)
         self.milestone_new_btn = Button(label='Add New Milestone', css_classes=['add_button'], width=300)
-        self.milestone_load_num = TextInput(title='Milestone Index', placeholder='0', value=None, width=75)
+        self.milestone_load_num = TextInput(title='Milestone Index', placeholder='0',  width=75)
         self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
         self.summary_1 = TextAreaInput(rows=10, placeholder='End of Night Summary for first half', title='End of Night Summary',max_length=5000)
         self.summary_2 = TextAreaInput(rows=10, placeholder='End of Night Summary for second half', max_length=5000)
-        self.obs_time = TextInput(title ='ObsTime', placeholder='10', value=None, width=100)
-        self.test_time = TextInput(title ='TestTime', placeholder='0', value=None, width=100)
-        self.inst_loss_time = TextInput(title ='InstLoss', placeholder='0', value=None, width=100)
-        self.weather_loss_time = TextInput(title ='WeathLoss', placeholder='0', value=None, width=100)
-        self.tel_loss_time = TextInput(title ='TelLoss', placeholder='0', value=None, width=100)
+        self.obs_time = TextInput(title ='ObsTime', placeholder='10', width=100)
+        self.test_time = TextInput(title ='TestTime', placeholder='0', width=100)
+        self.inst_loss_time = TextInput(title ='InstLoss', placeholder='0', width=100)
+        self.weather_loss_time = TextInput(title ='WeathLoss', placeholder='0', width=100)
+        self.tel_loss_time = TextInput(title ='TelLoss', placeholder='0', width=100)
         self.total_time = Div(text='Time Documented (hrs): ', width=100) #add all times together
         self.summary_btn = Button(label='Add Summary', css_classes=['add_button'], width=300)
 
-        milestone_layout = layout([self.title,
+        milestone_layout = layout([self.buffer,
+                        self.title,
                         self.milestone_subtitle,
                         self.milestone_inst,
                         [self.milestone_input,[self.milestone_load_num, self.milestone_load_btn, self.milestone_btn]] ,
@@ -228,15 +232,15 @@ class Report():
         self.milestone_tab = Panel(child=milestone_layout, title='Milestones')
 
     def exp_layout(self):
-        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',value=None,rows=10, cols=5,width=800,max_length=10000)
-        self.exp_time = TextInput(placeholder = '20:07',value=None, width=100) #title ='Time in Kitt Peak local time*', 
+        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',rows=10, cols=5,width=800,max_length=10000)
+        self.exp_time = TextInput(placeholder = '20:07', width=100) #title ='Time in Kitt Peak local time*', 
         self.exp_btn = Button(label='Add/Update', css_classes=['add_button'])
         self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
         self.dqs_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
 
         self.exp_select = Select(title='(1) Select Exposure',options=['None'],width=150)
-        self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', value=None, width=150)
+        self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', width=150)
         self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
         self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
         self.os_exp_option = RadioButtonGroup(labels=['Time','Exposure'], active=0, width=200)
@@ -262,10 +266,10 @@ class Report():
         """
         exp_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
         
-        self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', value=None, width=200)
-        self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', value=None, width=200)
+        self.exp_exposure_start = TextInput(title='Exposure Number: First', placeholder='12345', width=200)
+        self.exp_exposure_finish = TextInput(title='Exposure Number: Last', placeholder='12346', width=200)
 
-        self.exp_layout = layout(children=[self.title,
+        self.exp_layout = layout(children=[self.buffer, self.title,
                         exp_subtitle,
                         exp_inst,
                         self.time_note,
@@ -297,7 +301,7 @@ class Report():
         self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
         
         
-        self.exp_layout = layout(self.title,
+        self.exp_layout = layout(self.buffer,self.title,
                             exp_subtitle,
                             exp_inst,
                             [self.exp_option, self.dqs_load_btn],
@@ -321,15 +325,15 @@ class Report():
         </ul>
         """
         self.prob_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
-        self.prob_time = TextInput(placeholder = '20:07', value=None, width=100) #title ='Time in Kitt Peak local time*', 
+        self.prob_time = TextInput(placeholder = '20:07', width=100) #title ='Time in Kitt Peak local time*', 
         self.prob_input = TextAreaInput(placeholder="NightWatch not plotting raw data", rows=10, cols=5, title="Problem Description*:",width=400,max_length=10000)
-        self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', value=None, width=100)
+        self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', width=100)
         self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5,width=400,max_length=10000)
         self.prob_btn = Button(label='Add/Update', css_classes=['add_button'])
         self.prob_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
 
-        prob_layout = layout([self.title,
+        prob_layout = layout([self.buffer,self.title,
                             self.prob_subtitle,
                             self.prob_inst,
                             self.time_note,
@@ -396,13 +400,13 @@ class Report():
         p7.circle(x = 'exp',y='tput',source=self.telem_source, size=10, alpha=0.5)
         p8.circle(x = 'exp',y='skylevel',source=self.telem_source, size=10, alpha=0.5)
 
-        self.weather_desc = TextInput(title='Weather Description', placeholder='description', value=None, width=500)
+        self.weather_desc = TextInput(title='Weather Description', placeholder='description', width=500)
         self.weather_btn = Button(label='Add Weather Description', css_classes=['add_button'], width=100)
         self.weather_alert = Div(text=' ', css_classes=['alert-style'])
         self.plots_subtitle = Div(text='Telemetry Plots', css_classes=['subt-style'],width=800)
 
         if self.report_type == 'OS':
-            weather_layout = layout([self.title,
+            weather_layout = layout([self.buffer,self.title,
                             self.weather_subtitle,
                             self.weather_inst,
                             [self.weather_desc, self.weather_btn],
@@ -411,7 +415,7 @@ class Report():
                             self.plots_subtitle,
                             p1,p2,p3,p4,p5,p6,p7,p8], width=1000)
         else:
-            weather_layout = layout([self.title,
+            weather_layout = layout([self.buffer,self.title,
                 self.weather_subtitle,
                 self.weather_inst,
                 self.weather_table,
@@ -431,7 +435,7 @@ class Report():
         """
         self.checklist_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
 
-        self.check_time = TextInput(placeholder = '20:07', value=None) #title ='Time in Kitt Peak local time*', 
+        self.check_time = TextInput(placeholder = '20:07') #title ='Time in Kitt Peak local time*', 
         self.check_alert = Div(text=" ", css_classes=['alert-style'])
         self.check_btn = Button(label='Submit', css_classes=['add_button'])
         self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
@@ -442,7 +446,7 @@ class Report():
         elif self.report_type == 'DQS':
             self.checklist.labels = self.dqs_checklist
             self.check_subtitle = Div(text="DQS Checklist", css_classes=['subt-style'])
-        checklist_layout = layout(self.title,
+        checklist_layout = layout(self.buffer,self.title,
                                 self.check_subtitle,
                                 self.checklist_inst,
                                 self.checklist,
@@ -475,7 +479,7 @@ class Report():
 
         self.exp_table = DataTable(source=self.explist_source, columns=exp_columns, width=1000)
 
-        nl_layout = layout([self.title,
+        nl_layout = layout([self.buffer,self.title,
                         self.nl_subtitle,
                         self.nl_alert,
                         self.nl_text,
@@ -572,13 +576,7 @@ class Report():
                     self.inst_loss_time.value = str(data['inst_loss'])
                     self.weather_loss_time.value = str(data['weather_loss'])
                     self.tel_loss_time.value = str(data['tel_loss'])
-                    total = 0
-                    for i in [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time]:
-                        try:
-                            total += float(i.value)
-                        except:
-                            total += 0
-                    self.total_time.text = 'Time Documented (hrs): {}'.format(str(total))
+                    self.total_time.text = 'Time Documented (hrs): {}'.format(str(data['total']))
             self.current_nl()
 
         else:
@@ -1115,7 +1113,10 @@ class Report():
         total = 0
         for i in [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time]:
             try:
-                total += float(i.value)
+                if i.value not in ['nan',np.nan]:
+                    total += float(i.value)
+                else:
+                    total+=0
             except:
                 total += 0
         data['total'] = total
