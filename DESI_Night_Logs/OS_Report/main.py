@@ -30,8 +30,11 @@ class OS_Report(Report):
 
         self.title = Div(text="DESI Nightly Intake - Observing Scientist", css_classes=['h1-title-style'], width=1000)# width=800, style={'font-size':'24pt','font-style':'bold'})
         desc = """
-        To begin, connect to an existing Night Log using the list of Existing Night Logs. If today's Night Log does not yet exist, it is the reponsibility of the Observing Scientist (OS) to initializing the Night Log. 
-        Throughout the night, enter information about the exposures, problems that occur, and observing conditions. Complete the OS Checklist at least once every hour.
+        To begin, connect to an existing Night Log using the list of Existing Night Logs. If today's Night Log does not yet exist, 
+        it is the reponsibility of the Observing Scientist (OS) to initializing the Night Log. 
+        Throughout the night, enter information about the exposures, problems that occur, and observing conditions. Complete the 
+        OS Checklist at least once every hour. NOTE: If inputs are being made into a DNI for the OS at both KPNO and NERSC, the inputs
+        made at KPNO for certain things (meta data, plan, milestones), will be prioritized over those made at NERSC.
         """
         self.instructions = Div(text=desc, css_classes=['inst-style'], width=500)
         
