@@ -67,7 +67,8 @@ class OS_Report(Report):
         self.get_weather_layout()
         self.check_tab.title = 'OS Checklist'
 
-        intro_layout = layout([self.title,
+        intro_layout = layout([self.buffer,
+                            self.title,
                             [self.page_logo, self.instructions],
                             self.connect_hdr,
                             [self.date_init, self.connect_bt],

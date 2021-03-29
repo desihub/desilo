@@ -285,8 +285,8 @@ class NightLog(object):
         if df is not None:
             for index, row in df.iterrows():
                 filen.write("- {} := {}".format(self.write_time(row['Time']), row['desc']))
-                filen.write("; Temp: %.2f, Wind Speed: %.2f, Humidity: %.2f" % (row['temp'], row['wind'], row['humidity']))
-                filen.write(", Seeing: %.2f, Tput: %.2f, Sky: %.2f" % (row['seeing'], row['tput'], row['skylevel']))
+                filen.write("; Temp: {}, Wind Speed: {}, Humidity: {}".format(row['temp'], row['wind'], row['humidity']))
+                filen.write(", Seeing: {}, Tput: {}, Sky: {}".format(row['seeing'], row['tput'], row['skylevel']))
                 filen.write("\n")
 
     def write_problem(self, filen):
@@ -374,7 +374,7 @@ class NightLog(object):
 
             if len(os_) > 0:
                 os_ = os_.iloc[0]
-                if str(os_['Exp_Start']) not in [np.nan, None, 'nan', 'None']:
+                if str(os_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
                     file.write("- {} Exp. {} := {}".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
 
                     try:
@@ -391,7 +391,7 @@ class NightLog(object):
                         (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
                     except:
                         file.write("\n") 
-                    if str(os_['img_name']) not in [np.nan, None, 'nan', 'None']:
+                    if str(os_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                         self.write_img(file, os_['img_data'], os_['img_name'])
                         file.write('\n')
 
@@ -432,23 +432,23 @@ class NightLog(object):
                         (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
                     except:
                         file.write("\n")
-                    if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None']:
+                    if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                             self.write_img(file, dqs_['img_data'], dqs_['img_name'])
                             file.write('\n')
 
                     if len(other_) > 0:
                         other_ = other_.iloc[0]
                         file.write("Comment: {} ({})\n".format(other_['Comment'], other_['Name']))
-                        if str(other_['img_name']) not in [np.nan, None, 'nan', 'None']:
+                        if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                             self.write_img(file, other_['img_data'], other_['img_name'])
                             file.write('\n')
                 else:
                     other_ = other_.iloc[0]
-                    if str(other_['Exp_Start']) not in [np.nan, None, 'nan', 'None']:
+                    if str(other_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
                         file.write("- {} Exp: {}:= {} ({})\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
                     else:
                         file.write("- {} := {} ({})\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
-                    if str(other_['img_name']) not in [np.nan, None, 'nan', 'None']:
+                    if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                         self.write_img(file, other_['img_data'], other_['img_name'])
                         file.write('\n')
 
@@ -539,18 +539,18 @@ class NightLog(object):
             try:
                 x = float(x)
             except:
-                x = np.nan
+                x = 0
 
         file = open(self.summary_file, 'w')
 
-        if d['summary_1'] is not None:
+        if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_1'])
             file.write("\n")
-        if d['summary_2'] is not None:
+        if d['summary_2'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_2'])
             file.write("\n")
         file.write("Time Use (hrs):")
-        file.write(" Observing: %.2f, Testing: %.2f, Loss to Instrument: %.2f, Loss to Weather: %.2f, Loss to Telescope: %.2f, Total: %.2f, Time between 18 deg. twilight: %.2f\n" % (obs_time,test_time,inst_loss, weather_loss, tel_loss, total, deg_18))
+        file.write(" Observing:{}, Testing: {}, Loss to Instrument: {}, Loss to Weather: {}, Loss to Telescope: {}, Total: {}, Time between 18 deg. twilight: {}\n".format(obs_time,test_time,inst_loss, weather_loss, tel_loss, total, deg_18))
         file.write("\n")
         file.close()
 
