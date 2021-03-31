@@ -38,7 +38,8 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-#os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
+os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
+os.environ['NW_DIR'] = '/exposures/nightwatch/'
 
 class Report():
     def __init__(self, type):
@@ -102,7 +103,6 @@ class Report():
             items.value = ' '
 
     def get_exposure_list(self):
-        dir_ = os.path.join(self.nw_dir,self.night)
         try:
             dir_ = os.path.join(self.nw_dir,self.night)
             exposures = []
@@ -118,6 +118,7 @@ class Report():
     def update_nl_list(self):
         days = [f for f in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir,f))]
         init_nl_list = np.sort([day for day in days if 'OperationsScientist' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
+        init_nl_list = [x for x in init_nl_list if x > '20210327']
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
 
@@ -532,7 +533,7 @@ class Report():
                 date = datetime.now().date()
         elif mode == 'init':
             date = datetime.now().date()
-        self.night = '20210328' #date.strftime("%Y%m%d")
+        self.night = date.strftime("%Y%m%d")
         self.DESI_Log = nl.NightLog(self.night, self.location)
 
     def connect_log(self):
