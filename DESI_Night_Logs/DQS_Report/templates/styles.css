@@ -46,7 +46,7 @@
 
 .bk-root .subt-style {
 	color: black;
-    width: 800px;
+        width: 800px;
 	text-decoration: underline;
 	font-size:18pt;
 	font-style: bold;
@@ -55,7 +55,6 @@
 .bk-root .title-style {
 	color: black;
 	text-decoration: underline;
-	text-align: center;
 	font-size:18pt;
 	font-style: bold;
 }

@@ -43,7 +43,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = False 
+        self.test = True 
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -58,11 +58,12 @@ class Report():
             self.conn = psycopg2.connect(host="desi-db", port="5442", database="desi_dev", user="desi_reader", password="reader")
         elif 'app' in hostname: #this is not true. Needs to change.
             self.location = 'nersc'
+            self.conn = psycopg2.connect(host="db.replicator.dev-cattle.stable.spin.nersc.org", port="60042", database="desi_dev", user="desi_reader", password="reader")
         else:
             self.location = 'nersc'
 
         nw_dirs = {'nersc':'/global/cfs/cdirs/desi/spectro/nightwatch/nersc/', 'kpno':'/exposures/nightwatch/', 'other':None}
-        self.nw_dir = nw_dirs[self.location]
+        self.nw_dir = os.environ['NW_DIR'] #nw_dirs[self.location]
         self.nl_dir = os.environ['NL_DIR']     
 
         self.intro_subtitle = Div(text="Connect to Night Log", css_classes=['subt-style'])
@@ -101,15 +102,16 @@ class Report():
             items.value = ' '
 
     def get_exposure_list(self):
+        dir_ = os.path.join(self.nw_dir,self.night)
         try:
-            dir_ = self.nw_dir+'/'+self.night
+            dir_ = os.path.join(self.nw_dir,self.night)
             exposures = []
             for path, subdirs, files in os.walk(dir_): 
                 for s in subdirs: 
                     exposures.append(s)  
-            exposures = list([str(int(e)) for e in list(exposures)])
-            self.exp_select.options = exposures
-            self.exp_select.value = exposures[0] 
+            x = list([str(int(e)) for e in list(exposures)])
+            self.exp_select.options = x 
+            self.exp_select.value = x[0] 
         except:
             self.exp_select.options = []
 
@@ -141,7 +143,7 @@ class Report():
         self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
 
-        intro_layout = layout([self.title,
+        intro_layout = layout([self.buffer,
                             self.title,
                             [self.page_logo, self.instructions],
                             self.intro_subtitle,
@@ -244,7 +246,6 @@ class Report():
         self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
         self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
         self.os_exp_option = RadioButtonGroup(labels=['Time','Exposure'], active=0, width=200)
-        self.get_exposure_list()
 
     def get_os_exp_layout(self):
         self.exp_layout()
@@ -459,7 +460,7 @@ class Report():
     def get_nl_layout(self):
         self.nl_subtitle = Div(text="Current DESI Night Log: {}".format(self.nl_file), css_classes=['subt-style'])
         self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
-        self.nl_text = Div(text=" ", css_classes=['inst-style'], width=1000)
+        self.nl_text = Div(text=" ", width=800)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
         
@@ -479,13 +480,21 @@ class Report():
 
         self.exp_table = DataTable(source=self.explist_source, columns=exp_columns, width=1000)
 
-        nl_layout = layout([self.buffer,self.title,
+        if (self.report_type == 'OS') & (self.location == 'kpno'):
+            nl_layout = layout([self.buffer,self.title,
                         self.nl_subtitle,
                         self.nl_alert,
                         self.nl_text,
                         self.exptable_alert,
                         self.exp_table,
                         self.nl_submit_btn], width=1000)
+        else:
+            nl_layout = layout([self.buffer, self.title,
+                        self.nl_subtitle,
+                        self.nl_alert,
+                        self.nl_text,
+                        self.exptable_alert,
+                        self.exp_table], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
 
@@ -523,7 +532,7 @@ class Report():
                 date = datetime.now().date()
         elif mode == 'init':
             date = datetime.now().date()
-        self.night = date.strftime("%Y%m%d")
+        self.night = '20210328' #date.strftime("%Y%m%d")
         self.DESI_Log = nl.NightLog(self.night, self.location)
 
     def connect_log(self):
@@ -576,8 +585,9 @@ class Report():
                     self.inst_loss_time.value = str(data['inst_loss'])
                     self.weather_loss_time.value = str(data['weather_loss'])
                     self.tel_loss_time.value = str(data['tel_loss'])
-                    self.total_time.text = 'Time Documented (hrs): {}'.format(str(data['total']))
+                    self.total_time.text = 'Time Documented (hrs): %.2f' % float(data['total'])
             self.current_nl()
+            self.get_exposure_list()
 
         else:
             self.connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(self.date_init.value)
@@ -653,7 +663,7 @@ class Report():
             return False
 
     def get_exp_list(self):
-        if self.location == 'kpno':
+        try:
             self.exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
             if len(self.exp_df.date_obs) >  0:
                 time = self.exp_df.date_obs.dt.tz_convert('US/Arizona')
@@ -663,8 +673,8 @@ class Report():
                 self.exp_df.to_csv(self.DESI_Log.explist_file, index=False)
             else:
                 self.exptable_alert.text = f'No exposures available for night {self.night}'
-        else:
-            self.exptable_alert.text = 'Cannot connect to Exposure Data Base'
+        except Exception as e:
+            self.exptable_alert.text = 'Cannot connect to Exposure Data Base. {}'.format(e)
 
     def get_weather(self):
         if os.path.exists(self.DESI_Log.weather):
@@ -1111,16 +1121,17 @@ class Report():
         data['18deg'] = self.full_time
 
         total = 0
-        for i in [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time]:
+        for i in ['obs_time','test_time','inst_loss','weather_loss','tel_loss','18deg']:
             try:
-                if i.value not in ['nan',np.nan]:
-                    total += float(i.value)
+                if data[i] not in ['',' ','nan',np.nan]:
+                    total += float(data[i])
                 else:
+                    data[i] = 0
                     total+=0
             except:
                 total += 0
         data['total'] = total
-        self.total_time.text = 'Time Documented (hrs): {}'.format(str(total))
+        self.total_time.text = 'Time Documented (hrs): %.2f' % total
         self.DESI_Log.add_summary(data)
         self.milestone_alert.text = 'Summary Information Entered at {}'.format(now)
 
@@ -1160,7 +1171,7 @@ class Report():
                 ECLConnection = None
                 self.nl_text.text = "Can't connect to eLog"
 
-            f = self.nl_file[:-5]
+            f = self.DESI_Log._open_kpno_file_first(self.DESI_Log.nightlog_html)
             nl_file=open(f,'r')
             lines = nl_file.readlines()
             nl_html = ' '
@@ -1196,11 +1207,10 @@ class Report():
 
     def email_nightsum(self,user_email = None):
 
-        if self.location == 'kpno':
-            try:
-                self.make_telem_plots()
-            except:
-                print("Something wrong with telem plots")
+        try:
+            self.make_telem_plots()
+        except:
+            print("Something wrong with telem plots")
 
         sender = "noreply-ecl@noao.edu"
 

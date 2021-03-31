@@ -29,7 +29,7 @@ class DQS_Report(Report):
         The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality.
         You can connect to an existing Night Log that was created by the Observing Scientist.
         """
-        self.instructions = Div(text=inst, css_classes=['inst-style'], width=600)
+        self.instructions = Div(text=inst, css_classes=['inst-style'], width=500)
         self.page_logo = Div(text="<img src='DQS_Report/static/logo.png'>", width=350, height=300)
 
         self.dqs_checklist = ["Are all images being transferred to Night Watch?", "Did you check the observing conditions?", "Did you check the guiding?"]

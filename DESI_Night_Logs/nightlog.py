@@ -237,25 +237,25 @@ class NightLog(object):
 
     def write_plan(self, filen):
         df = self._combine_compare_csv_files(self.objectives)
-        df = df.drop_duplicates(['Time'], keep='first')
-        df.reset_index(inplace=True, drop=True)
         if df is not None:
+            df = df.drop_duplicates(['Time'], keep='first')
+            df.reset_index(inplace=True, drop=True)
             for index, row in df.iterrows():
                 filen.write("* [{}] {}".format(index, row['Objective']))
                 filen.write("\n\n")
 
     def write_milestone(self, filen):
         df = self._combine_compare_csv_files(self.milestone)
-        df = df.drop_duplicates(['Time'], keep='first')
-        df.reset_index(inplace=True, drop=True)
         if df is not None:
+            df = df.drop_duplicates(['Time'], keep='first')
+            df.reset_index(inplace=True, drop=True)
             for index, row in df.iterrows():
                 filen.write("* [{}] {}".format(index, row['Desc']))
-                if row['Exp_Start'] not in [None, 'None', " ", ""]:
+                if not pd.isna(row['Exp_Start']): # not in [np.nan, 'nan',None, 'None', " ", ""]:
                     filen.write("; Exposure(s): {}".format(row['Exp_Start']))
-                if row['Exp_Stop'] not in [None, 'None', " ", ""]:   
+                if not pd.isna(row['Exp_Stop']): #not in [np.nan, 'nan',None, 'None', " ", ""]:   
                     filen.write(" - {}".format(row['Exp_Stop']))
-                if row['Exp_Excl'] not in [None, 'None', " ", ""]:   
+                if not pd.isna(row['Exp_Excl']): # not in [np.nan, 'nan',None, 'None', " ", ""]:   
                     filen.write(", excluding {}".format(row['Exp_Excl']))
                 filen.write("\n")
 
@@ -308,11 +308,12 @@ class NightLog(object):
                     filen.write('*')
                 if row['user'] == 'Other':
                     filen.write('_')
-                if row['Problem'] not in [None, 'None', " ", ""]:
+                if not pd.isna(row['Problem']): # not in [np.nan, 'nan',None, 'None', " ", ""]:
                     filen.write("{}".format(row['Problem']))
-                if row['alarm_id'] not in [None, 'None', " ", ""]:
+                if not pd.isna(row['alarm_id']): # not in [float(np.nan), 'nan',None, 'None', " ", ""]:
+                    print(row['alarm_id'], type(row['alarm_id']))
                     filen.write('; AlarmID: {}'.format(row['alarm_id']))
-                if row['action'] not in [None, 'None', " ", ""]:
+                if not pd.isna(row['action']): # not in [np.nan, 'nan', None, 'None', " ", ""]:
                     filen.write('; Action: {}'.format(row['action']))
                 if row['user'] == 'DQS':
                     filen.write('*')
@@ -375,38 +376,38 @@ class NightLog(object):
             if len(os_) > 0:
                 os_ = os_.iloc[0]
                 if str(os_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
-                    file.write("- {} Exp. {} := {}".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
+                    file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
 
-                    try:
-                        this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
-                        this_exp = this_exp.fillna(value=np.nan)
-                        this_exp = this_exp.iloc[0]
-                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass'] 
-                        for x in [tile, exptime, airmass]:
-                            try:
-                                x = float(x)
-                            except:
-                                x = np.nan
-                        file.write("; Tile: %.1f, Exptime: %.2f, Airmass: %.2f, Sequence: %s, Flavor: %s, Program: %s\n" %
-                        (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
-                    except:
-                        file.write("\n") 
                     if str(os_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                         self.write_img(file, os_['img_data'], os_['img_name'])
                         file.write('\n')
 
                     if len(dqs_) > 0:
                         dqs_ = dqs_.iloc[0]
-                        file.write(f"Data Quality: {dqs_['Quality']}; {dqs_['Comment']}\n")
+                        file.write(f"*Data Quality: {dqs_['Quality']}; {dqs_['Comment']}*\n")
                         if str(dqs_['img_name']) not in ['nan', 'None']:
                             self.write_img(file, dqs_['img_data'], dqs_['img_name'])
                             file.write('\n')
                     if len(other_) > 0:
                         other_ = other_.iloc[0]
-                        file.write("Comment: {} ({})\n".format(other_['Comment'], other_['Name']))
+                        file.write("_Comment: {} ({})_\n".format(other_['Comment'], other_['Name']))
                         if str(other_['img_name']) not in ['nan', 'None']:
                             self.write_img(file, other_['img_data'], other_['img_name'])
                             file.write('\n')
+                    try:
+                        this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
+                        this_exp = this_exp.fillna(value=np.nan)
+                        this_exp = this_exp.iloc[0]
+                        tile, exptime, arimass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass']
+                        for x in [tile, exptime, airmass]:
+                            try:
+                                x = float(x)
+                            except:
+                                x = np.nan
+                        file.write("Tile %.1f, Exptime: %.2f, Airmass: %.2f, Sequence: %s, Flavor: %s, Program %s\n" %
+                                (tile, exptime, airmass, this_exp['sequence'], this_exp['flavor'], this_exp['program']))
+                    except:
+                        file.write("\n")
 
                 else:
                     file.write("- {} := {}\n".format(self.write_time(os_['Time']), os_['Comment']))
@@ -417,37 +418,40 @@ class NightLog(object):
             else:
                 if len(dqs_) > 0:
                     dqs_ = dqs_.iloc[0]
-                    file.write("- {} Exp. {} := Data Quality: {}, {}".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
-                    try:
-                        this_exp = exp_df[exp_df.id == dqs_['Exp_Start']]
-                        this_exp = this_exp.fillna(value=np.nan)
-                        this_exp = this_exp.iloc[0]
-                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass'] 
-                        for x in [tile, exptime, airmass]:
-                            try:
-                                x = float(x)
-                            except:
-                                x = np.nan
-                        file.write("; Tile: %.1f, Exptime: %.2f, Airmass: %.2f, Sequence: %s, Flavor: %s, Program: %s\n" %
-                        (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
-                    except:
-                        file.write("\n")
+                    file.write("- {} Exp. {} := *Data Quality: {}, {}*\n".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+
                     if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                             self.write_img(file, dqs_['img_data'], dqs_['img_name'])
                             file.write('\n')
 
                     if len(other_) > 0:
                         other_ = other_.iloc[0]
-                        file.write("Comment: {} ({})\n".format(other_['Comment'], other_['Name']))
+                        file.write("_Comment: {} ({})_\n".format(other_['Comment'], other_['Name']))
                         if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                             self.write_img(file, other_['img_data'], other_['img_name'])
                             file.write('\n')
+
+                    try:
+                        this_exp = exp_df[exp_df.id == dqs_['Exp_Start']]
+                        this_exp = this_exp.fillna(value=np.nan)
+                        this_exp = this_exp.iloc[0]
+                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass']
+                        for x in [tile, exptime, airmass]:
+                            try:
+                                x = float(x)
+                            except:
+                                x = np.nan
+                        file.write("Tile: %.1f, Exptime: %.2f, Airmass: %.2f, Sequence: %s, Flavor: %s, Program: %s\n" %
+                        (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
+                    except:
+                        file.write("\n")
+
                 else:
                     other_ = other_.iloc[0]
                     if str(other_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
-                        file.write("- {} Exp: {}:= {} ({})\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
+                        file.write("- {} Exp: {}:= _{} ({})_\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
                     else:
-                        file.write("- {} := {} ({})\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
+                        file.write("- {} := _{} ({})_\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
                     if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                         self.write_img(file, other_['img_data'], other_['img_name'])
                         file.write('\n')
@@ -533,13 +537,9 @@ class NightLog(object):
 
         df = pd.DataFrame(data, index=[0])
         df.to_csv(self.time_use,index=False)
+        df = df.fillna(value=0)
         d = df.iloc[0]
         obs_time, test_time, inst_loss, weather_loss, tel_loss, total, deg_18 = d['obs_time'], d['test_time'], d['inst_loss'], d['weather_loss'], d['tel_loss'], d['total'], d['18deg']
-        for x in [obs_time, test_time, inst_loss, weather_loss, tel_loss, total, deg_18]:
-            try:
-                x = float(x)
-            except:
-                x = 0
 
         file = open(self.summary_file, 'w')
 
@@ -550,7 +550,8 @@ class NightLog(object):
             file.write(d['summary_2'])
             file.write("\n")
         file.write("Time Use (hrs):")
-        file.write(" Observing:{}, Testing: {}, Loss to Instrument: {}, Loss to Weather: {}, Loss to Telescope: {}, Total: {}, Time between 18 deg. twilight: {}\n".format(obs_time,test_time,inst_loss, weather_loss, tel_loss, total, deg_18))
+        file.write(" Observing: {:.2f}, Testing: {:.2f}, Loss to Instrument: {:.2f}, Loss to Weather: {:.2f}, Loss to Telescope: {:.2f}, Total: {:.2f}, Time between 18 deg. twilight: {:.2f}\n".format(float(obs_time), float(test_time), float(inst_loss), float(weather_loss), float(tel_loss), float(total), float(deg_18)))
+
         file.write("\n")
         file.close()
 

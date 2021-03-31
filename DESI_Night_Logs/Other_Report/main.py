@@ -29,8 +29,8 @@ class Other_Report(Report):
         In special circumstances, if a non-observer has an important comment about an exposure or problem, it can be added here.
         Before doing so, make sure to communicate with the Observing Scientist.
         """
-        self.instructions = Div(text=desc+self.time_note.text, css_classes=['inst_style'], width=800)
-        self.page_logo = Div(text="<img src='Other_Report/static/logo.png'>", width=400, height=400)
+        self.instructions = Div(text=desc+self.time_note.text, css_classes=['inst_style'], width=500)
+        self.page_logo = Div(text="<img src='Other_Report/static/logo.png'>", width=350, height=300)
 
     def get_layout(self):
         self.get_intro_layout()
