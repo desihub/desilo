@@ -38,13 +38,13 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
-os.environ['NW_DIR'] = '/exposures/nightwatch/'
+#os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
+#os.environ['NW_DIR'] = '/exposures/nightwatch/'
 
 class Report():
     def __init__(self, type):
 
-        self.test = True 
+        self.test = False
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
