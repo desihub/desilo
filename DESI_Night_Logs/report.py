@@ -118,7 +118,7 @@ class Report():
     def update_nl_list(self):
         days = [f for f in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir,f))]
         init_nl_list = np.sort([day for day in days if 'OperationsScientist' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
-        init_nl_list = [x for x in init_nl_list if x > '20210327']
+        init_nl_list = [x for x in init_nl_list if x > '20210331']
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
 
