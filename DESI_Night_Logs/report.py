@@ -936,8 +936,10 @@ class Report():
                 img_data = self.img_upload_problems.value.encode('utf-8')
                 img_name = str(self.img_upload_problems.filename)
 
-        self.image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/{self.night}/images/{img_name}' #http://desi-www.kpno.noao.edu:8090/nightlogs
-        preview = '<img src="{}" style="width:300px;height:300px;">'.format(self.image_location_on_server)
+        self.image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/{self.night}/images/{img_name}'
+        width=400
+        height=400 #http://desi-www.kpno.noao.edu:8090/nightlogs
+        preview = '<img src="%s" width=%s height=%s alt="Uploaded image %s">\n' % (self.image_location_on_server,str(width),str(height),img_name))
         return img_name, img_data, preview
        
     def prob_add(self):
