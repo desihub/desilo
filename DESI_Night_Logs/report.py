@@ -103,15 +103,17 @@ class Report():
             items.value = ' '
 
     def get_exposure_list(self):
+        
         try:
+            current_exp = self.exp_select.value
             dir_ = os.path.join(self.nw_dir,self.night)
             exposures = []
             for path, subdirs, files in os.walk(dir_): 
                 for s in subdirs: 
                     exposures.append(s)  
-            x = list([str(int(e)) for e in list(exposures)])
+            x = list([str(int(e)) for e in list(exposures)])[::-1]
             self.exp_select.options = x 
-            self.exp_select.value = x[0] 
+            self.exp_select.value = current_exp 
         except:
             self.exp_select.options = []
 
