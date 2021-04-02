@@ -679,26 +679,17 @@ class NightLog(object):
         file_nl.write("\n")
         self.write_exposure(file_nl)
 
-        #Images
-        if os.path.exists(self.image_file):
-            file_nl.write("h3. Images\n")
-            file_nl.write("<br>")
-            file_nl.write("<br>")
-            f =  open(self.image_file, "r") 
-            for line in f:
-                file_nl.write(line)
-                file_nl.write("<br>")
         # Uploaded images
-        if os.path.exists(self.image_dir):
-            if os.path.exists(self.upload_image_file):
-                file_nl.write("h3. Uploaded Images\n")
-                file_nl.write("\n")
-                f =  open(self.upload_image_file, "r") 
-                for line in f:
-                    file_nl.write(line)
-                    file_nl.write('\n')
-                file_nl.write("<br> ------<br>\n")
-            else:
+        # if os.path.exists(self.image_dir):
+        #     if os.path.exists(self.upload_image_file):
+        #         file_nl.write("h3. Uploaded Images\n")
+        #         file_nl.write("\n")
+        #         f =  open(self.upload_image_file, "r") 
+        #         for line in f:
+        #             file_nl.write(line)
+        #             file_nl.write('\n')
+        #         file_nl.write("<br> ------<br>\n")
+        #     else:
                 # this is the code if we want to scan the directory and use every png file
                 # will possibly cause in duplication with the Other comments images
                 # so it's disabled for now
@@ -715,8 +706,8 @@ class NightLog(object):
                         file_nl.write('<p><img src="%s/%s" alt="Uploaded image %s"></p>' % (server,name,name))
                         file_nl.write("<br>")
                     file_nl.write("<br>")
-                """
-                pass
+                # """
+                # pass
 
         file_nl.close()
         cmd = "pandoc  --resource-path={} --metadata pagetitle=report -s {} -f textile -t html -o {}".format(self.root_dir,
