@@ -44,7 +44,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = False
+        self.test = False 
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -118,7 +118,7 @@ class Report():
     def update_nl_list(self):
         days = [f for f in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir,f))]
         init_nl_list = np.sort([day for day in days if 'OperationsScientist' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
-        init_nl_list = [x for x in init_nl_list if x > '20210331']
+        init_nl_list = [x for x in init_nl_list if x > '20210326']
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
 
@@ -934,7 +934,7 @@ class Report():
                 img_data = self.img_upload_problems.value.encode('utf-8')
                 img_name = str(self.img_upload_problems.filename)
 
-        self.image_location_on_server = f'{os.environ["NL_DIR"]}/{self.night}/images/{img_name}' #http://desi-www.kpno.noao.edu:8090/nightlogs
+        self.image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/{self.night}/images/{img_name}' #http://desi-www.kpno.noao.edu:8090/nightlogs
         preview = '<img src="{}" style="width:300px;height:300px;">'.format(self.image_location_on_server)
         return img_name, img_data, preview
        
@@ -946,6 +946,8 @@ class Report():
                 self.prob_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
             img_name, img_data, preview = self.image_uploaded('problem')
+            print(img_name, preview)
+            print(img_data)
             data = [self.report_type, self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name, img_name, img_data]
             self.DESI_Log.add_input(data, 'problem')
 
@@ -1225,7 +1227,7 @@ class Report():
             msg['To'] = ', '.join(user_email)
 
         # Create the body of the message (a plain-text and an HTML version).
-        f = self.nl_file
+        f = f = self.DESI_Log._open_kpno_file_first(self.DESI_Log.nightlog_html)
         nl_file=open(f,'r')
         lines = nl_file.readlines()
         nl_html = ' '
