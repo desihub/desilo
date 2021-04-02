@@ -44,7 +44,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = False 
+        self.test = True
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
