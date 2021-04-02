@@ -44,7 +44,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = False 
+        self.test = False
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -103,15 +103,17 @@ class Report():
             items.value = ' '
 
     def get_exposure_list(self):
+        
         try:
+            current_exp = self.exp_select.value
             dir_ = os.path.join(self.nw_dir,self.night)
             exposures = []
             for path, subdirs, files in os.walk(dir_): 
                 for s in subdirs: 
                     exposures.append(s)  
-            x = list([str(int(e)) for e in list(exposures)])
+            x = list([str(int(e)) for e in list(exposures)])[::-1]
             self.exp_select.options = x 
-            self.exp_select.value = x[0] 
+            self.exp_select.value = current_exp 
         except:
             self.exp_select.options = []
 
@@ -934,8 +936,10 @@ class Report():
                 img_data = self.img_upload_problems.value.encode('utf-8')
                 img_name = str(self.img_upload_problems.filename)
 
-        self.image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/{self.night}/images/{img_name}' #http://desi-www.kpno.noao.edu:8090/nightlogs
-        preview = '<img src="{}" style="width:300px;height:300px;">'.format(self.image_location_on_server)
+        self.image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/{self.night}/images/{img_name}'
+        width=400
+        height=400 #http://desi-www.kpno.noao.edu:8090/nightlogs
+        preview = '<img src="%s" width=%s height=%s alt="Uploaded image %s">\n' % (self.image_location_on_server,str(width),str(height),img_name)
         return img_name, img_data, preview
        
     def prob_add(self):
@@ -946,10 +950,8 @@ class Report():
                 self.prob_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
             img_name, img_data, preview = self.image_uploaded('problem')
-            print(img_name, preview)
-            print(img_data)
-            data = [self.report_type, self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name, img_name, img_data]
-            self.DESI_Log.add_input(data, 'problem')
+            data = [self.report_type, self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name]
+            self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
 
             # Preview
             if img_name != None:
@@ -981,8 +983,8 @@ class Report():
 
 
         img_name, img_data, preview = self.image_uploaded('comment')
-        data = [time, comment, exp, img_name, img_data]
-        self.DESI_Log.add_input(data, 'os_exp')
+        data = [time, comment, exp]
+        self.DESI_Log.add_input(data, 'os_exp',img_name=img_name, img_data=img_data)
         if img_name is not None:
             preview += "<br>"
             preview += "A comment was added at {}".format(datetime.now().strftime("%H:%M"))
@@ -1020,8 +1022,8 @@ class Report():
 
 
             img_name, img_data, preview = self.image_uploaded('comment')
-            data = [time, comment, exp, self.your_name.value, img_name, img_data]
-            self.DESI_Log.add_input(data, 'other_exp')
+            data = [time, comment, exp, self.your_name.value]
+            self.DESI_Log.add_input(data, 'other_exp',img_name=img_name, img_data=img_data)
 
             if img_name is not None:
                 preview += "<br>"
@@ -1041,8 +1043,8 @@ class Report():
         now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
 
         img_name, img_data, preview = self.image_uploaded('comment')
-        data = [self.get_time(now), exp_val, quality, self.exp_comment.value, img_name, img_data]
-        self.DESI_Log.add_input(data, 'dqs_exp')
+        data = [self.get_time(now), exp_val, quality, self.exp_comment.value]
+        self.DESI_Log.add_input(data, 'dqs_exp',img_name=img_name, img_data=img_data)
 
         if img_name is not None:
             preview += "<br>"
@@ -1234,26 +1236,6 @@ class Report():
         img_names = []
         for line in lines:
             nl_html += line
-
-        # Add images
-        x = nl_html.find('Images')
-        nl_html = nl_html[:x]
-        nl_html += "<h3 id='images'>Images</h3>"
-        nl_html += '\n'
-        
-        if os.path.exists(self.DESI_Log.image_file):
-            images = os.listdir(self.DESI_Log.image_dir)
-            images = [s for s in images if os.path.splitext(s)[1] != '']
-            f = open(self.DESI_Log.image_file,'r')
-            image_lines = f.readlines()
-
-            for ii, line in enumerate(image_lines):
-                for i, img in enumerate(images):
-                    if img in line:
-                        nl_html += '<img src="cid:image{}" style="width:300px;height:300px;">'.format(i)
-                        nl_html += '\n'
-                        nl_html += '{}'.format(image_lines[ii+1])
-                        nl_html += '\n'
 
         # Add exposures
         if os.path.exists(self.DESI_Log.explist_file):

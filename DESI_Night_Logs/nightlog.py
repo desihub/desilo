@@ -202,7 +202,7 @@ class NightLog(object):
                 print('ERROR: invalid format for uploading image')
         return file
 
-    def add_input(self, data, tab):
+    def add_input(self, data, tab, img_name=None, img_data=None):
         dqs_exp = False
         if tab == 'plan':
             cols =['Time', 'Objective']
@@ -214,24 +214,34 @@ class NightLog(object):
             cols = ['Time','desc','temp','wind','humidity','seeing','tput','skylevel']
             file = self.weather
         if tab == 'problem':
-            cols = ['user','Time', 'Problem', 'alarm_id', 'action', 'name','img_name','img_data']
+            cols = ['user','Time', 'Problem', 'alarm_id', 'action', 'name','img_name']
             pb_files = {'OS':self.os_pb,'DQS':self.dqs_pb,'Other':self.other_pb}
             file = pb_files[data[0]]
+            data.append(img_name)
         if tab == 'checklist':
             cols = ['user','Time','Comment']
             cl_files = {'OS':self.os_cl,'DQS':self.dqs_cl}
             file = cl_files[data[0]]
         if tab == 'other_exp':
-            cols = ['Time','Comment','Exp_Start','Name','img_name','img_data']
+            cols = ['Time','Comment','Exp_Start','Name','img_name']
             file = self.other_exp
+            data.append(img_name)
         if tab == 'dqs_exp':
-            cols = ['Time','Exp_Start','Quality','Comment','img_name','img_data']
+            cols = ['Time','Exp_Start','Quality','Comment','img_name']
             file = self.dqs_exp
             dqs_exp = True
+            data.append(img_name)
         if tab == 'os_exp':
-            cols = ['Time','Comment','Exp_Start','img_name','img_data']
+            cols = ['Time','Comment','Exp_Start','img_name']
             file = self.os_exp
+            data.append(img_name)
 
+        if str(img_name) not in ['None','nan'] and str(img_data) not in ['None','nan']:
+            # if img_filen is a bytearray we have received an image in base64 string (from local upload)
+            # images are stored in the images directory
+            if isinstance(img_data, bytes):
+                self._upload_and_save_image(img_data, img_name)
+        
         df = self.write_csv(data, cols, file, dqs_exp=dqs_exp)
         
 
@@ -321,7 +331,7 @@ class NightLog(object):
                     filen.write(' ({})'.format(row['name']))
                     filen.write('_')
                 if row['img_name'] is not None:
-                    self.write_img(filen, row['img_data'], row['img_name'])
+                    self._write_image_tag(filen, row['img_name'])
                 filen.write('\n')
 
     def check_exp_times(self, file):
@@ -379,20 +389,20 @@ class NightLog(object):
                     file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
 
                     if str(os_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
-                        self.write_img(file, os_['img_data'], os_['img_name'])
+                        self._write_image_tag(file, os_['img_name'])
                         file.write('\n')
 
                     if len(dqs_) > 0:
                         dqs_ = dqs_.iloc[0]
                         file.write(f"*Data Quality: {dqs_['Quality']}; {dqs_['Comment']}*\n")
                         if str(dqs_['img_name']) not in ['nan', 'None']:
-                            self.write_img(file, dqs_['img_data'], dqs_['img_name'])
+                            self._write_image_tag(file, dqs_['img_name'])
                             file.write('\n')
                     if len(other_) > 0:
                         other_ = other_.iloc[0]
                         file.write("_Comment: {} ({})_\n".format(other_['Comment'], other_['Name']))
                         if str(other_['img_name']) not in ['nan', 'None']:
-                            self.write_img(file, other_['img_data'], other_['img_name'])
+                            self._write_image_tag(file, other_['img_name'])
                             file.write('\n')
                     try:
                         this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
@@ -421,14 +431,14 @@ class NightLog(object):
                     file.write("- {} Exp. {} := *Data Quality: {}, {}*\n".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
 
                     if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
-                            self.write_img(file, dqs_['img_data'], dqs_['img_name'])
+                            self._write_image_tag(file, dqs_['img_name'])
                             file.write('\n')
 
                     if len(other_) > 0:
                         other_ = other_.iloc[0]
                         file.write("_Comment: {} ({})_\n".format(other_['Comment'], other_['Name']))
                         if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
-                            self.write_img(file, other_['img_data'], other_['img_name'])
+                            self._write_image_tag(file, other_['img_name'])
                             file.write('\n')
 
                     try:
@@ -453,7 +463,7 @@ class NightLog(object):
                     else:
                         file.write("- {} := _{} ({})_\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
                     if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
-                        self.write_img(file, other_['img_data'], other_['img_name'])
+                        self._write_image_tag(file, other_['img_name'])
                         file.write('\n')
 
     def load_index(self, idx, page):
@@ -669,44 +679,6 @@ class NightLog(object):
         file_nl.write("\n")
         self.write_exposure(file_nl)
 
-        #Images
-        if os.path.exists(self.image_file):
-            file_nl.write("h3. Images\n")
-            file_nl.write("<br>")
-            file_nl.write("<br>")
-            f =  open(self.image_file, "r") 
-            for line in f:
-                file_nl.write(line)
-                file_nl.write("<br>")
-        # Uploaded images
-        if os.path.exists(self.image_dir):
-            if os.path.exists(self.upload_image_file):
-                file_nl.write("h3. Uploaded Images\n")
-                file_nl.write("\n")
-                f =  open(self.upload_image_file, "r") 
-                for line in f:
-                    file_nl.write(line)
-                    file_nl.write('\n')
-                file_nl.write("<br> ------<br>\n")
-            else:
-                # this is the code if we want to scan the directory and use every png file
-                # will possibly cause in duplication with the Other comments images
-                # so it's disabled for now
-                """
-                server = "http://desi-www.kpno.noao.edu:8090/nightlogs/20210116/images"
-                image_files = glob.glob("%s/*.png" % self.image_dir)
-                image_files.sort(key=os.path.getmtime)
-                if len(image_files) != 0:
-                    file_nl.write("h3. Uploaded Images:\n")
-                    file_nl.write("\n")
-                    for img in image_files:
-                        name = os.path.basename(img)
-                        file_nl.write("<p><b>%s</b></p>" % name)
-                        file_nl.write('<p><img src="%s/%s" alt="Uploaded image %s"></p>' % (server,name,name))
-                        file_nl.write("<br>")
-                    file_nl.write("<br>")
-                """
-                pass
 
         file_nl.close()
         cmd = "pandoc  --resource-path={} --metadata pagetitle=report -s {} -f textile -t html -o {}".format(self.root_dir,
