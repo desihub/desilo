@@ -946,10 +946,8 @@ class Report():
                 self.prob_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
             img_name, img_data, preview = self.image_uploaded('problem')
-            print(img_name, preview)
-            print(img_data)
-            data = [self.report_type, self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name, img_name, img_data]
-            self.DESI_Log.add_input(data, 'problem')
+            data = [self.report_type, self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name]
+            self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
 
             # Preview
             if img_name != None:
@@ -981,8 +979,8 @@ class Report():
 
 
         img_name, img_data, preview = self.image_uploaded('comment')
-        data = [time, comment, exp, img_name, img_data]
-        self.DESI_Log.add_input(data, 'os_exp')
+        data = [time, comment, exp]
+        self.DESI_Log.add_input(data, 'os_exp',img_name=img_name, img_data=img_data)
         if img_name is not None:
             preview += "<br>"
             preview += "A comment was added at {}".format(datetime.now().strftime("%H:%M"))
@@ -1020,8 +1018,8 @@ class Report():
 
 
             img_name, img_data, preview = self.image_uploaded('comment')
-            data = [time, comment, exp, self.your_name.value, img_name, img_data]
-            self.DESI_Log.add_input(data, 'other_exp')
+            data = [time, comment, exp, self.your_name.value]
+            self.DESI_Log.add_input(data, 'other_exp',img_name=img_name, img_data=img_data)
 
             if img_name is not None:
                 preview += "<br>"
@@ -1041,8 +1039,8 @@ class Report():
         now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
 
         img_name, img_data, preview = self.image_uploaded('comment')
-        data = [self.get_time(now), exp_val, quality, self.exp_comment.value, img_name, img_data]
-        self.DESI_Log.add_input(data, 'dqs_exp')
+        data = [self.get_time(now), exp_val, quality, self.exp_comment.value]
+        self.DESI_Log.add_input(data, 'dqs_exp',img_name=img_name, img_data=img_data)
 
         if img_name is not None:
             preview += "<br>"
