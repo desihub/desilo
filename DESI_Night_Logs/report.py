@@ -1237,26 +1237,6 @@ class Report():
         for line in lines:
             nl_html += line
 
-        # Add images
-        x = nl_html.find('Images')
-        nl_html = nl_html[:x]
-        nl_html += "<h3 id='images'>Images</h3>"
-        nl_html += '\n'
-        
-        if os.path.exists(self.DESI_Log.image_file):
-            images = os.listdir(self.DESI_Log.image_dir)
-            images = [s for s in images if os.path.splitext(s)[1] != '']
-            f = open(self.DESI_Log.image_file,'r')
-            image_lines = f.readlines()
-
-            for ii, line in enumerate(image_lines):
-                for i, img in enumerate(images):
-                    if img in line:
-                        nl_html += '<img src="cid:image{}" style="width:300px;height:300px;">'.format(i)
-                        nl_html += '\n'
-                        nl_html += '{}'.format(image_lines[ii+1])
-                        nl_html += '\n'
-
         # Add exposures
         if os.path.exists(self.DESI_Log.explist_file):
             exp_list = self.exp_to_html()
