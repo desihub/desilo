@@ -2,7 +2,7 @@
 import os, sys
 import glob
 import time, sched
-from datetime import datetime, timedelta
+import datetime 
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
@@ -38,13 +38,16 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
+os.environ['NL_DIR'] = '/software/www2/html/nightlogs'
+os.environ['NW_DIR'] = '/exposures/nightwatch/'
+
 #os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
 #os.environ['NW_DIR'] = '/exposures/nightwatch/'
 
 class Report():
     def __init__(self, type):
 
-        self.test = False
+        self.test = False 
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -89,7 +92,7 @@ class Report():
         self.full_time = None
 
         self.DESI_Log = None
-        self.save_telem_plots = False
+        self.save_telem_plots =True 
         self.buffer = Div(text=' ')
 
 
@@ -111,8 +114,9 @@ class Report():
             for path, subdirs, files in os.walk(dir_): 
                 for s in subdirs: 
                     exposures.append(s)  
-            x = list([str(int(e)) for e in list(exposures)])[::-1]
-            self.exp_select.options = x 
+            x = list([str(int(e)) for e in list(exposures)])
+            x = np.sort(x)[::-1]
+            self.exp_select.options = list(x) 
             self.exp_select.value = current_exp 
         except:
             self.exp_select.options = []
@@ -504,37 +508,43 @@ class Report():
     def get_time(self, time):
         """Returns strptime with utc. Takes time zone selection
         """
-        date = self.night
-        zone = self.kp_zone #zones[time_select.active]
+        date = datetime.datetime.strptime(self.night,'%Y%m%d')
         try:
-            t = datetime.strptime(date+time,'%Y%m%d%H:%M')
+            b = datetime.datetime.strptime(time, '%H:%M')
         except:
             try:
-                t = datetime.strptime(date+time,'%Y%m%d%I%M%p')
+                b = datetime.datetime.strptime(time, '%H%M')
             except:
                 try:
-                    t = datetime.strptime(date+time,'%Y%m%d%H%M')
+                    b = datetime.datetime.strptime(time, '%I%M%p')
                 except:
-                    print("need format %H%M, %H:%M, %H:%M%p")
+                    print(time)
+                    print('need format %H%M, %H:%M, %H:%M%p')
+        t = datetime.time(hour=b.hour, minute=b.minute)
+        if t > datetime.datetime.min.time():
+            d = date + datetime.timedelta(days=1)
+        else:
+            d = date
+        tt = datetime.datetime.combine(d, t)
         try:
-            return t.strftime("%Y%m%dT%H:%M")
+            return tt.strftime("%Y%m%dT%H:%M")
         except:
             return time
 
     def get_strftime(self, time):
         date = self.night
-        d = datetime.strptime(date, "%Y%m%d")
-        dt = datetime.combine(d,time)
+        d = datetime.datetime.strptime(date, "%Y%m%d")
+        dt = datetime.datetime.combine(d,time)
         return dt.strftime("%Y%m%dT%H:%M")
 
     def get_night(self, mode='connect'):
         if mode == 'connect':
             try:
-                date = datetime.strptime(self.date_init.value, '%Y%m%d')
+                date = datetime.datetime.strptime(self.date_init.value, '%Y%m%d')
             except:
-                date = datetime.now().date()
+                date = datetime.datetime.now().date()
         elif mode == 'init':
-            date = datetime.now().date()
+            date = datetime.datetime.now().date()
         self.night = date.strftime("%Y%m%d")
         self.DESI_Log = nl.NightLog(self.night, self.location)
 
@@ -557,7 +567,7 @@ class Report():
             if self.report_type == 'DQS':
                 self.your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
 
-            self.full_time = (datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
+            self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
             self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.2f}'.format(self.full_time)
             self.display_current_header()
             self.nl_file = self.DESI_Log.nightlog_file
@@ -615,7 +625,7 @@ class Report():
         meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
         meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
 
-        self.full_time = (datetime.strptime(meta['dawn_18_deg'],'%Y%m%dT%H:%M') - datetime.strptime(meta['dusk_18_deg'],'%Y%m%dT%H:%M')).seconds/3200
+        self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'],'%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'],'%Y%m%dT%H:%M')).seconds/3200
         self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self.full_time)
 
         self.DESI_Log.initializing()
@@ -640,7 +650,7 @@ class Report():
 
     def current_nl(self):
         try:
-            now = datetime.now()
+            now = datetime.datetime.now()
             self.DESI_Log.finish_the_night()
             path = self.DESI_Log.nightlog_html 
             nl_file = open(path,'r')
@@ -682,7 +692,7 @@ class Report():
     def get_weather(self):
         if os.path.exists(self.DESI_Log.weather):
             obs_df = pd.read_csv(self.DESI_Log.weather)
-            t = [datetime.strptime(tt, "%Y%m%dT%H:%M") for tt in obs_df['Time']]
+            t = [datetime.datetime.strptime(tt, "%Y%m%dT%H:%M") for tt in obs_df['Time']]
             obs_df['Time'] = t
             self.weather_source.data = obs_df.sort_values(by='Time')
         else:
@@ -735,15 +745,12 @@ class Report():
         return list_
         
     def make_telem_plots(self):
-        dt = datetime.strptime(self.night, '%Y%m%d').date()
+        dt = datetime.datetime.strptime(self.night, '%Y%m%d').date()
         #start_utc = '{} {}'.format(self.night, '13:00:00')
-        dt_2 = dt + timedelta(days=1)
+        dt_2 = dt + datetime.timedelta(days=1)
         start_utc = '{} {}'.format(dt.strftime("%Y%m%d"), '21:00:00')
         end_utc = '{} {}'.format(dt_2.strftime("%Y%m%d"), '21:00:00')
-        #tel_df  = pd.read_sql_query(f"SELECT * FROM environmentmonitor_telescope WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn)
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE date_obs > '{start_utc}' AND date_obs < '{end_utc}'", self.conn) #night = '{self.night}'", self.conn)
-        #tower_df = pd.read_sql_query(f"SELECT * FROM environmentmonitor_tower WHERE time_recorded > '{start_utc}' AND time_recorded < '{end_utc}'", self.conn) 
-
         #self.get_seeing()
         telem_data = pd.DataFrame(columns =
         ['time','exp','mirror_temp','truss_temp','air_temp','temp','humidity','wind_speed','airmass','exptime','seeing','tput','skylevel'])
@@ -762,69 +769,57 @@ class Report():
             telem_data.seeing = exp_df.seeing
             telem_data.tput = exp_df.transpar
             telem_data.skylevel = exp_df.skylevel
-
         self.telem_source.data = telem_data
 
         if self.save_telem_plots:
-            #if set(list(exp_df.seeing)) == set([None]):
-                #sky_monitor = False
-                #fig = plt.figure(figsize= (8, 15))
-                #fig, axarr = plt.subplots(5, 1, figsize = (8,15), sharex=True)
-            #else:
-                #sky_monitor = True
-                #fig, axarr = plt.subplots(9, 1, figsize = (8,20), sharex=True)
-
             fig = plt.figure(figsize=(8,20))
-            #ax1 = fig.add_subplot(6,1,1)
-            #ax1.scatter(telem_data.exp, telem_data.seeing, s=5, label='Seeing')
-            #ax1.set_ylabel("Seeing (arcsec)")
-            #ax1.grid(True)
-            #ax1.set_xlabel("Exposure")
-            #ax = axarr.ravel()
             ax1 = fig.add_subplot(8,1,1)
-            ax1.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.mirror_temp, s=5, label='mirror temp')    
-            ax1.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.truss_temp, s=5, label='truss temp')  
-            ax1.scatter(tel_df.time_recorded.dt.tz_convert('US/Arizona'), tel_df.air_temp, s=5, label='air temp') 
+            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','mirror_temp'), s=5, label='mirror temp')    
+            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','truss_temp'), s=5, label='truss temp')  
+            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','air_temp'), s=5, label='air temp') 
             ax1.set_ylabel("Telescop Temperature (C)")
             ax1.legend()
             ax1.grid(True)
             ax1.tick_params(labelbottom=False)
 
             ax2 = fig.add_subplot(8,1,2, sharex = ax1)
-            ax2.scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.humidity, s=5, label='humidity') 
+            ax2.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','humidity'), s=5, label='humidity') 
             ax2.set_ylabel("Humidity %")
             ax2.grid(True)
             ax2.tick_params(labelbottom=False)
 
             ax3 = fig.add_subplot(8,1,3, sharex=ax1) 
-            ax3.scatter(tower_df.time_recorded.dt.tz_convert('US/Arizona'), tower_df.wind_speed, s=5, label='wind speed')
+            ax3.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','wind_speed'), s=5, label='wind speed')
             ax3.set_ylabel("Wind Speed (mph)")
             ax3.grid(True)
             ax3.tick_params(labelbottom=False)
 
             ax4 = fig.add_subplot(8,1,4, sharex=ax1)
-            ax4.scatter(exp_df.time, exp_df.airmass, s=5, label='airmass')
+            ax4.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
             ax4.set_ylabel("Airmass")
             ax4.grid(True)
             ax4.tick_params(labelbottom=False)
 
             ax5 = fig.add_subplot(8,1,5, sharex=ax1)
-            ax5.scatter(exp_df.time, exp_df.exptime, s=5, label='exptime')
+            ax5.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
             ax5.set_ylabel("Exposure time (s)")
             ax5.grid(True)
+            ax5.tick_params(labelbottom=False)
 
             ax6 = fig.add_subplot(8,1,6,sharex=ax1)
-            ax6.scatter(exp_df.time, exp_df.seeing, s=5, label='seeing')   
+            ax6.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
             ax6.set_ylabel("Seeing")
             ax6.grid(True)
+            ax6.tick_params(labelbottom=False)
 
             ax7 = fig.add_subplot(8,1,7,sharex=ax1)
-            ax7.scatter(exp_df.time, exp_df.transpar, s=5, label='transparency')
+            ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
             ax7.set_ylabel("Transparency (%)")
             ax7.grid(True)
+            ax7.tick_params(labelbottom=False)
 
             ax8 = fig.add_subplot(8,1,8,sharex=ax1)
-            ax8.scatter(exp_df.time, exp_df.skylevel, s=5, label='Sky Level')      
+            ax8.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
             ax8.set_ylabel("Sky level (AB/arcsec^2)")
             ax8.grid(True)
 
@@ -839,7 +834,9 @@ class Report():
                 
     def exp_to_html(self):
         exp_df = pd.read_csv(self.DESI_Log.explist_file)
-        exp_df = exp_df[['night','id','program','sequence','flavor','exptime']]
+        exp_df = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
+        exp_df = exp_df.rename(columns={"date_obs": "Time", "id":
+        "Exp","tileid":'Tile','program':'Program','sequence':'Sequence','flavor':'Flavor','exptime':'Exptime','airmass':'Airmass','seeing':'Seeing'})
         exp_html = exp_df.to_html()
         return exp_html
 
@@ -848,7 +845,7 @@ class Report():
         """add checklist time to Night Log
         """
         complete = self.checklist.active
-        check_time = datetime.now().strftime("%Y%m%dT%H:%M")
+        check_time = datetime.datetime.now().strftime("%Y%m%dT%H:%M")
         if len(complete) == len(self.checklist.labels):
             self.DESI_Log.add_input([self.report_type, check_time, self.check_comment.value], 'checklist')
             self.check_alert.text = "Checklist last submitted at {}".format(check_time[-5:])
@@ -867,7 +864,7 @@ class Report():
 
     def plan_add(self):
         if self.plan_time is None:
-            ts = datetime.now().strftime("%Y%m%dT%H:%M")
+            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M")
         else: 
             ts = self.plan_time
         self.DESI_Log.add_input([ts, self.plan_input.value], 'plan')
@@ -877,7 +874,7 @@ class Report():
 
     def milestone_add(self):
         if self.milestone_time is None:
-            ts = datetime.now().strftime("%Y%m%dT%H:%M")
+            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M")
         else:
             ts = self.milestone_time
         self.DESI_Log.add_input([ts, self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value],'milestone')
@@ -895,7 +892,7 @@ class Report():
     def weather_add(self):
         """Adds table to Night Log
         """
-        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%Y%m%dT%H:%M")
+        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%Y%m%dT%H:%M")
         try:
             self.make_telem_plots()
             telem_df = pd.DataFrame(self.telem_source.data)
@@ -923,16 +920,16 @@ class Report():
 
         if mode == 'comment':         
             if self.report_type == 'DQS':
-                if hasattr(self, 'img_upload_comments_dqs') and self.img_upload_comments_dqs.filename not in [None,'']:
+                if hasattr(self, 'img_upload_comments_dqs') and self.img_upload_comments_dqs.filename not in [None,'',np.nan,'nan']:
                     img_data = self.img_upload_comments_dqs.value.encode('utf-8')
                     img_name = str(self.img_upload_comments_dqs.filename)
             else:
-                if self.exp_comment.value not in [None, ''] and hasattr(self, 'img_upload_comments_os') and self.img_upload_comments_os.filename not in [None,'']:
+                if self.exp_comment.value not in [None, ''] and hasattr(self, 'img_upload_comments_os') and self.img_upload_comments_os.filename not in [None,'','nan',np.nan]:
                     img_data = self.img_upload_comments_os.value.encode('utf-8')
                     img_name = str(self.img_upload_comments_os.filename)
 
         elif mode == 'problem':
-            if hasattr(self, 'img_upload_problems') and self.img_upload_problems.filename not in [None, '']:
+            if hasattr(self, 'img_upload_problems') and self.img_upload_problems.filename not in [None, '',np.nan, 'nan']:
                 img_data = self.img_upload_problems.value.encode('utf-8')
                 img_name = str(self.img_upload_problems.filename)
 
@@ -950,24 +947,25 @@ class Report():
                 self.prob_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
             img_name, img_data, preview = self.image_uploaded('problem')
-            data = [self.report_type, self.get_time(self.prob_time.value), self.prob_input.value, self.prob_alarm.value, self.prob_action.value, name]
+            data = [self.report_type, self.get_time(self.prob_time.value.strip()), self.prob_input.value.strip(), self.prob_alarm.value.strip(),
+            self.prob_action.value.strip(), name]
             self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
 
             # Preview
-            if img_name != None:
+            if img_name not in [None,'',' ','nan']:
                 preview += "<br>"
-                preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
+                preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
                 self.prob_alert.text = preview
                 self.img_upload_problems = FileInput(accept=".png")
             else:
-                self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value, self.prob_time.value)
+                self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
             self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
 
     def progress_add(self):
         if self.os_exp_option.active == 0:
             if self.exp_time.value not in [None, 'None'," ", ""]:
-                time = self.get_time(self.exp_time.value)
-                comment = self.exp_comment.value
+                time = self.get_time(self.exp_time.value.strip())
+                comment = self.exp_comment.value.strip()
                 exp = None
             else:
                 self.exp_alert.text = 'Fill in the time'
@@ -977,9 +975,9 @@ class Report():
             if self.exp_option.active == 0:
                 exp = int(self.exp_select.value)
             elif self.exp_option.active ==1:
-                exp = int(self.exp_enter.value)
-            comment = self.exp_comment.value
-            time = self.get_time(datetime.now().strftime("%H:%M"))
+                exp = int(self.exp_enter.value.strip())
+            comment = self.exp_comment.value.strip()
+            time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
 
         img_name, img_data, preview = self.image_uploaded('comment')
@@ -987,11 +985,11 @@ class Report():
         self.DESI_Log.add_input(data, 'os_exp',img_name=img_name, img_data=img_data)
         if img_name is not None:
             preview += "<br>"
-            preview += "A comment was added at {}".format(datetime.now().strftime("%H:%M"))
+            preview += "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
             self.exp_alert.text = preview
             self.img_upload_comments_os=FileInput(accept=".png")
         else:
-            self.exp_alert.text = 'Last Input was at {}'.format(datetime.now().strftime("%H:%M"))
+            self.exp_alert.text = 'Last Input was at {}'.format(datetime.datetime.now().strftime("%H:%M"))
 
         self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
     
@@ -1001,8 +999,8 @@ class Report():
         else:
             if self.os_exp_option.active == 0:
                 if self.exp_time.value not in [None, 'None'," ", ""]:
-                    time = self.get_time(self.exp_time.value)
-                    comment = self.exp_comment.value
+                    time = self.get_time(self.exp_time.value.strip())
+                    comment = self.exp_comment.value.strip()
                     exp = None
                 else:
                     self.exp_alert.text = 'Fill in the time'
@@ -1014,24 +1012,24 @@ class Report():
                         self.exp_alert.text = 'Check your exposure input'
                 elif self.exp_option.active ==1:
                     try:
-                        exp = int(self.exp_enter.value)
+                        exp = int(self.exp_enter.value.strip())
                     except:
                         self.exp_alert.text = 'Check your exposure input'
-                comment = self.exp_comment.value
-                time = self.get_time(datetime.now().strftime("%H:%M"))
+                comment = self.exp_comment.value.strip()
+                time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
 
             img_name, img_data, preview = self.image_uploaded('comment')
-            data = [time, comment, exp, self.your_name.value]
+            data = [time, comment, exp, self.your_name.value.strip()]
             self.DESI_Log.add_input(data, 'other_exp',img_name=img_name, img_data=img_data)
 
             if img_name is not None:
                 preview += "<br>"
-                preview += "A comment was added at {}".format(self.exp_time.value)
+                preview += "A comment was added at {}".format(self.exp_time.value.strip())
                 self.exp_alert.text = preview
                 self.img_upload_comments=FileInput(accept=".png")
             else:
-                self.exp_alert.text = "A comment was added at {}".format(datetime.now().strftime("%H:%M"))
+                self.exp_alert.text = "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
             self.clear_input([self.exp_time, self.exp_comment])
 
     def exp_add(self):
@@ -1039,16 +1037,16 @@ class Report():
         if self.exp_option.active == 0:
             exp_val = int(self.exp_select.value)
         elif self.exp_option.active ==1:
-            exp_val = int(self.exp_enter.value)
-        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
+            exp_val = int(self.exp_enter.value.strip())
+        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
 
         img_name, img_data, preview = self.image_uploaded('comment')
-        data = [self.get_time(now), exp_val, quality, self.exp_comment.value]
+        data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
         self.DESI_Log.add_input(data, 'dqs_exp',img_name=img_name, img_data=img_data)
 
         if img_name is not None:
             preview += "<br>"
-            preview += "A comment was added at {}".format(self.exp_time.value)
+            preview += "A comment was added at {}".format(self.exp_time.value.strip())
             self.exp_alert.text = preview
             self.img_upload_comments_dqs=FileInput(accept=".png")
         else:
@@ -1067,7 +1065,7 @@ class Report():
         if self.exp_option.active == 0:
              exp = int(self.exp_select.value)
         if self.exp_option.active == 1:
-            exp = int(self.exp_enter.value)
+            exp = int(self.exp_enter.value.strip())
         b, item = self.DESI_Log.load_exp(exp)
         if b:
             self.exp_comment.value = item['Comment']
@@ -1089,7 +1087,7 @@ class Report():
 
     def load_exposure(self):
         #Check if progress has been input with a given timestamp
-        _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.exp_time.value), self.report_type, 'exposure')
+        _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.exp_time.value.strip()), self.report_type, 'exposure')
 
         if not _exists:
             self.exp_alert.text = 'This timestamp does not yet have an input from this user. {}'.format(item)
@@ -1100,7 +1098,7 @@ class Report():
 
     def load_problem(self):
         #Check if progress has been input with a given timestamp
-        _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.prob_time.value), self.report_type, 'problem')
+        _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.prob_time.value.strip()), self.report_type, 'problem')
 
         if not _exists:
             self.prob_alert.text = 'This timestamp does not yet have an input from this user. {}'.format(item)
@@ -1114,7 +1112,7 @@ class Report():
         self.DESI_Log.add_contributer_list(cont_list)
 
     def add_summary(self):
-        now = datetime.now().strftime("%H:%M")
+        now = datetime.datetime.now().strftime("%H:%M")
         data = OrderedDict()
         data['summary_1'] = self.summary_1.value
         data['summary_2'] = self.summary_2.value
@@ -1126,7 +1124,7 @@ class Report():
         data['18deg'] = self.full_time
 
         total = 0
-        for i in ['obs_time','test_time','inst_loss','weather_loss','tel_loss','18deg']:
+        for i in ['obs_time','test_time','inst_loss','weather_loss','tel_loss']:
             try:
                 if data[i] not in ['',' ','nan',np.nan]:
                     total += float(data[i])
@@ -1156,7 +1154,7 @@ class Report():
         print(f'Local image file upload (Other comments): {self.img_upload_problems.filename}')
 
     def time_is_now(self):
-        now = datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
+        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
 
         tab = self.layout.active
         time_input = self.time_tabs[tab]
@@ -1248,9 +1246,9 @@ class Report():
         nl_html += "<h3 id='telem_plots'>Night Telemetry</h3>"
         nl_html += '\n'
         
-        if os.path.exists(self.DESI_Log.telem_plots_file):
-            nl_html += '<img src="{}">'.format(self.DESI_Log.telem_plots_file)
-            nl_html += '\n'
+        #if os.path.exists(self.DESI_Log.telem_plots_file):
+        #    nl_html += '<img src="{}"> alt="Telemetry Plots"'.format(self.DESI_Log.telem_plots_file)
+        #    nl_html += '\n'
 
         Html_file = open(os.path.join(self.DESI_Log.root_dir,'NightSummary{}'.format(self.night)),"w")
         Html_file.write(nl_html)
