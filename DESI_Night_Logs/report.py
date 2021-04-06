@@ -521,7 +521,7 @@ class Report():
                     print(time)
                     print('need format %H%M, %H:%M, %H:%M%p')
         t = datetime.time(hour=b.hour, minute=b.minute)
-        if t > datetime.datetime.min.time():
+        if t < datetime.time(hour=12,minute=0):
             d = date + datetime.timedelta(days=1)
         else:
             d = date
@@ -979,17 +979,19 @@ class Report():
             comment = self.exp_comment.value.strip()
             time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
-
-        img_name, img_data, preview = self.image_uploaded('comment')
-        data = [time, comment, exp]
-        self.DESI_Log.add_input(data, 'os_exp',img_name=img_name, img_data=img_data)
-        if img_name is not None:
-            preview += "<br>"
-            preview += "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
-            self.exp_alert.text = preview
-            self.img_upload_comments_os=FileInput(accept=".png")
-        else:
-            self.exp_alert.text = 'Last Input was at {}'.format(datetime.datetime.now().strftime("%H:%M"))
+        try:
+            img_name, img_data, preview = self.image_uploaded('comment')
+            data = [time, comment, exp]
+            self.DESI_Log.add_input(data, 'os_exp',img_name=img_name, img_data=img_data)
+            if img_name is not None:
+                preview += "<br>"
+                preview += "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
+                self.exp_alert.text = preview
+                self.img_upload_comments_os=FileInput(accept=".png")
+            else:
+                self.exp_alert.text = 'Last Input was at {}'.format(datetime.datetime.now().strftime("%H:%M"))
+        except Exception as e:
+            self.exp_alert.text = 'Error with your input: {}'.format(e)
 
         self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
     
