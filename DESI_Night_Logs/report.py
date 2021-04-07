@@ -664,12 +664,12 @@ class Report():
             self.get_exp_list()
             self.get_weather()
             #self.get_seeing()
-            try:
-                self.make_telem_plots()
-                return True
-            except:
+            #try:
+            #    self.make_telem_plots()
+            #    return True
+            #except:
                 #print('Something wrong with making telemetry plots')
-                return True 
+            #    return True 
         except Exception as e:
             print('current_nl Exception: %s' % str(e))
             self.nl_alert.text = 'You are not connected to a Night Log'
