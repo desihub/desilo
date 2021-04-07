@@ -236,7 +236,7 @@ class NightLog(object):
             file = self.os_exp
             data.append(img_name)
 
-        if str(img_name) not in ['None','nan'] and str(img_data) not in ['None','nan']:
+        if str(img_name) not in ['None','nan','',' ',np.nan] and str(img_data) not in ['None','nan','',' ',np.nan]:
             # if img_filen is a bytearray we have received an image in base64 string (from local upload)
             # images are stored in the images directory
             if isinstance(img_data, bytes):
@@ -276,7 +276,11 @@ class NightLog(object):
             filen.write("OS checklist completed at (Local time):")
             filen.write("\n\n")
             for index, row in df_os.iterrows():
-                filen.write("* {} - {}\n".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+                if not pd.isna(row['Comment']):
+                    if str(row['Comment']) not in ['',' ','nan','None']:
+                        filen.write("* {} - {}\n".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+                else:
+                    filen.write("* {}\n".format(self.write_time(row['Time'],kp_only=True)))
             filen.write("\n")
             filen.write("\n")
 
@@ -284,7 +288,11 @@ class NightLog(object):
             filen.write("DQS checklist completed at (Local time):")
             filen.write("\n\n")
             for index, row in df_dqs.iterrows():
-                filen.write("* {} - {}\n".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+                if not pd.isna(row['Comment']):
+                    if str(row['Comment']) not in ['',' ','nan','None']:
+                       filen.write("* {} - {}\n".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+                else:
+                    filen.write("* {}\n".format(self.write_time(row['Time'],kp_only=True)))
             filen.write("\n")
             filen.write("\n")
 
@@ -321,16 +329,17 @@ class NightLog(object):
                 if not pd.isna(row['Problem']): # not in [np.nan, 'nan',None, 'None', " ", ""]:
                     filen.write("{}".format(row['Problem']))
                 if not pd.isna(row['alarm_id']): # not in [float(np.nan), 'nan',None, 'None', " ", ""]:
-                    print(row['alarm_id'], type(row['alarm_id']))
-                    filen.write('; AlarmID: {}'.format(row['alarm_id']))
-                if not pd.isna(row['action']): # not in [np.nan, 'nan', None, 'None', " ", ""]:
-                    filen.write('; Action: {}'.format(row['action']))
+                    if str(row['alarm_id']) not in ['nan','None','',' ']:
+                        filen.write('; AlarmID: {}'.format(int(row['alarm_id'])))
+                if not pd.isna(row['action']):
+                    if str(row['action']) not in ['nan','None', " ", ""]:
+                        filen.write('; Action: {}'.format(row['action']))
                 if row['user'] == 'DQS':
                     filen.write('*')
                 if row['user'] == 'Other':
                     filen.write(' ({})'.format(row['name']))
                     filen.write('_')
-                if row['img_name'] is not None:
+                if str(row['img_name']) not in [None,np.nan,'nan','',' ']:
                     self._write_image_tag(filen, row['img_name'])
                 filen.write('\n')
 
@@ -394,13 +403,13 @@ class NightLog(object):
 
                     if len(dqs_) > 0:
                         dqs_ = dqs_.iloc[0]
-                        file.write(f"*Data Quality: {dqs_['Quality']}; {dqs_['Comment']}*\n")
+                        file.write(f"*Data Quality:* {dqs_['Quality']}; {dqs_['Comment']}\n")
                         if str(dqs_['img_name']) not in ['nan', 'None']:
                             self._write_image_tag(file, dqs_['img_name'])
                             file.write('\n')
                     if len(other_) > 0:
                         other_ = other_.iloc[0]
-                        file.write("_Comment: {} ({})_\n".format(other_['Comment'], other_['Name']))
+                        file.write("_Comment:_ {} ({})\n".format(other_['Comment'], other_['Name']))
                         if str(other_['img_name']) not in ['nan', 'None']:
                             self._write_image_tag(file, other_['img_name'])
                             file.write('\n')
@@ -408,14 +417,15 @@ class NightLog(object):
                         this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
                         this_exp = this_exp.fillna(value=np.nan)
                         this_exp = this_exp.iloc[0]
-                        tile, exptime, arimass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass']
+                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass'] #, this_exp['etc']['seeing'], this_exp['etc']['transp']
                         for x in [tile, exptime, airmass]:
                             try:
                                 x = float(x)
                             except:
                                 x = np.nan
-                        file.write("Tile %.1f, Exptime: %.2f, Airmass: %.2f, Sequence: %s, Flavor: %s, Program %s\n" %
-                                (tile, exptime, airmass, this_exp['sequence'], this_exp['flavor'], this_exp['program']))
+                        file.write("Tile {:.1f}, Exptime: {:.2f}, Airmass: {:.2f}, Sequence: {}, Flavor: {}, Program {}\n".format(float(tile), float(exptime),
+                    float(airmass), this_exp['sequence'], this_exp['flavor'], this_exp['program']))
+
                     except:
                         file.write("\n")
 
@@ -428,7 +438,7 @@ class NightLog(object):
             else:
                 if len(dqs_) > 0:
                     dqs_ = dqs_.iloc[0]
-                    file.write("- {} Exp. {} := *Data Quality: {}, {}*\n".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                    file.write("- {} Exp. {} := *Data Quality:* {}, {}\n".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
 
                     if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                             self._write_image_tag(file, dqs_['img_name'])
@@ -436,7 +446,7 @@ class NightLog(object):
 
                     if len(other_) > 0:
                         other_ = other_.iloc[0]
-                        file.write("_Comment: {} ({})_\n".format(other_['Comment'], other_['Name']))
+                        file.write("_Comment:_ {} ({})\n".format(other_['Comment'], other_['Name']))
                         if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                             self._write_image_tag(file, other_['img_name'])
                             file.write('\n')
@@ -457,14 +467,15 @@ class NightLog(object):
                         file.write("\n")
 
                 else:
-                    other_ = other_.iloc[0]
-                    if str(other_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
-                        file.write("- {} Exp: {}:= _{} ({})_\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
-                    else:
-                        file.write("- {} := _{} ({})_\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
-                    if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
-                        self._write_image_tag(file, other_['img_name'])
-                        file.write('\n')
+                    if len(other_) > 0:
+                        other_ = other_.iloc[0]
+                        if str(other_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
+                            file.write("- {} Exp: {}:= _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
+                        else:
+                            file.write("- {} := _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
+                        if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
+                            self._write_image_tag(file, other_['img_name'])
+                            file.write('\n')
 
     def load_index(self, idx, page):
         if page == 'milestone':
@@ -678,7 +689,6 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("\n")
         self.write_exposure(file_nl)
-
 
         file_nl.close()
         cmd = "pandoc  --resource-path={} --metadata pagetitle=report -s {} -f textile -t html -o {}".format(self.root_dir,
