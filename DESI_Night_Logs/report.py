@@ -667,13 +667,13 @@ class Report():
 
     def get_exp_list(self):
         try:
-            self.exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
-            if len(self.exp_df.date_obs) >  0:
-                time = self.exp_df.date_obs.dt.tz_convert('US/Arizona')
-                self.exp_df['date_obs'] = time
-                self.explist_source.data = self.exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
-                self.exp_df = self.exp_df.sort_values(by='id')
-                self.exp_df.to_csv(self.DESI_Log.explist_file, index=False)
+            exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE night = '{self.night}'", self.conn)
+            if len(exp_df.date_obs) >  0:
+                time = exp_df.date_obs.dt.tz_convert('US/Arizona')
+                exp_df['date_obs'] = time
+                explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
+                exp_df = exp_df.sort_values(by='id')
+                exp_df.to_csv(self.DESI_Log.explist_file, index=False)
             else:
                 self.exptable_alert.text = f'No exposures available for night {self.night}'
         except Exception as e:
@@ -762,7 +762,7 @@ class Report():
             telem_data.seeing = exp_df.seeing
             telem_data.tput = exp_df.transpar
             telem_data.skylevel = exp_df.skylevel
-
+        exp_df = None
         self.telem_source.data = telem_data
 
         if self.save_telem_plots:
