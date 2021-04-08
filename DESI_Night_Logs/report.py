@@ -38,8 +38,8 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['NL_DIR'] = '/software/www2/html/nightlogs'
-os.environ['NW_DIR'] = '/exposures/nightwatch/'
+#os.environ['NL_DIR'] = '/software/www2/html/nightlogs'
+#os.environ['NW_DIR'] = '/exposures/nightwatch/'
 
 #os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
 #os.environ['NW_DIR'] = '/exposures/nightwatch/'
@@ -92,7 +92,7 @@ class Report():
         self.full_time = None
 
         self.DESI_Log = None
-        self.save_telem_plots =True 
+        self.save_telem_plots = False
         self.buffer = Div(text=' ')
 
 
@@ -663,13 +663,12 @@ class Report():
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
             self.get_exp_list()
             self.get_weather()
-            #self.get_seeing()
-            #try:
-            #    self.make_telem_plots()
-            #    return True
-            #except:
+            try:
+                self.make_telem_plots()
+                return True
+            except:
                 #print('Something wrong with making telemetry plots')
-            #    return True 
+                return True 
         except Exception as e:
             print('current_nl Exception: %s' % str(e))
             self.nl_alert.text = 'You are not connected to a Night Log'
@@ -681,7 +680,7 @@ class Report():
             if len(exp_df.date_obs) >  0:
                 time = exp_df.date_obs.dt.tz_convert('US/Arizona')
                 exp_df['date_obs'] = time
-                explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
+                self.explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
                 exp_df = exp_df.sort_values(by='id')
                 exp_df.to_csv(self.DESI_Log.explist_file, index=False)
             else:
