@@ -38,7 +38,7 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-#os.environ['NL_DIR'] = '/software/www2/html/nightlogs'
+#os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
 #os.environ['NW_DIR'] = '/exposures/nightwatch/'
 
 #os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
@@ -47,7 +47,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = True
+        self.test = False 
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -842,7 +842,7 @@ class Report():
             fig.tight_layout()
 
             plt.savefig(self.DESI_Log.telem_plots_file)
-
+            self.save_telem_plots = False
                 
     def exp_to_html(self):
         exp_df = pd.read_csv(self.DESI_Log.explist_file)
