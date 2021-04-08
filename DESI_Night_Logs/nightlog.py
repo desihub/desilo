@@ -302,7 +302,7 @@ class NightLog(object):
         df = self._combine_compare_csv_files(self.weather)
         if df is not None:
             for index, row in df.iterrows():
-                filen.write("- {} := {}".format(self.write_time(row['Time']), row['desc']))
+                filen.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['desc']))
                 filen.write("; Temp: {:.2f}, Wind Speed: {:.2f}, Humidity: {:.2f}".format(float(row['temp']), float(row['wind']), float(row['humidity'])))
                 filen.write(", Seeing: {:.2f}, Tput: {:.2f}, Sky: {:.2f}".format(float(row['seeing']), float(row['tput']), float(row['skylevel'])))
                 filen.write("\n")
