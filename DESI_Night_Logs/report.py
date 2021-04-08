@@ -47,7 +47,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = False 
+        self.test = True
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -470,6 +470,7 @@ class Report():
         self.nl_text = Div(text=" ", width=800)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
+        self.submit_text = Div(text=' ', width=800)
         
         self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
 
@@ -494,6 +495,7 @@ class Report():
                         self.nl_text,
                         self.exptable_alert,
                         self.exp_table,
+                        self.submit_text,
                         self.nl_submit_btn], width=1000)
         else:
             nl_layout = layout([self.buffer, self.title,
@@ -567,8 +569,12 @@ class Report():
             if self.report_type == 'DQS':
                 self.your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
 
-            self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.2f}'.format(self.full_time)
+            seconds = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds
+            self.full_time = seconds/3600
+            hours = seconds // 3600
+            minutes = (seconds % 3600) // 60
+            sec = seconds % 60
+            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}:{}:{}'.format(hours, minutes, sec)
             self.display_current_header()
             self.nl_file = self.DESI_Log.nightlog_file
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
@@ -622,11 +628,18 @@ class Report():
         meta['time_moonrise'] = self.get_strftime(eph['moonrise'])
         meta['time_moonset'] = self.get_strftime(eph['moonset'])
         meta['illumination'] = eph['illumination']
+        meta['dusk_12_deg'] = self.get_strftime(eph['dusk_nautical'])
         meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
         meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
+        meta['dawn_12_deg'] = self.get_strftime(eph['dawn_nautical'])
 
-        self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'],'%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'],'%Y%m%dT%H:%M')).seconds/3200
-        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self.full_time)
+
+        seconds = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds
+        self.full_time = seconds/3600
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        sec = seconds % 60
+        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}:{}:{}'.format(hours, minutes, sec)
 
         self.DESI_Log.initializing()
         self.DESI_Log.get_started_os(meta)
@@ -1112,6 +1125,12 @@ class Report():
         cont_list = self.contributer_list.value
         self.DESI_Log.add_contributer_list(cont_list)
 
+    # def time_to_decimal(self,value):
+    #     try:
+    #         dt = datetime.datetime.strptime(value,'%H:%M')
+    #         hours = dt.hours
+    #         mi
+
     def add_summary(self):
         now = datetime.datetime.now().strftime("%H:%M")
         data = OrderedDict()
@@ -1197,13 +1216,12 @@ class Report():
                 elconn.close()
                 if response[0] != 200:
                    raise Exception(response)
-                   self.nl_text.text = "You cannot post to the eLog on this machine"
+                   self.submit_text.text = "You cannot post to the eLog on this machine"
 
             self.save_telem_plots = True
             self.current_nl()
 
-            nl_text = "Night Log posted to eLog and emailed to collaboration" + '</br>'
-            self.nl_text.text = nl_text
+            self.submit_text.text = "Night Log posted to eLog and emailed to collaboration at {}".format(datetime.datetime.now().strftime("%Y%m%d %H:%M")) + '</br>'
             if self.test:
                 self.email_nightsum(user_email = ["parfa30@gmail.com","parkerf@berkeley.edu"])
             else:
