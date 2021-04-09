@@ -614,32 +614,31 @@ def sky_calendar(date = None, observer = None):
     obs_info = OrderedDict()
     if observer is None:
         observer= kpno_observer()
-    print(observer)
     # set date to midnight, local time
     #observer.date = (datetime.datetime.now().date()+datetime.timedelta(days=1)).isoformat()
-    print(observer.date)
+
     sun = ephem.Sun()
     sun.compute(observer.date)
     moon = ephem.Moon()
     moon.compute(observer.date)
-    obs_info['sunset'] = observer.next_setting(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None) #Sunset
-    obs_info['sunrise'] = observer.next_rising(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None) #Sunrise
+    obs_info['sunset'] = observer.next_setting(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Sunset
+    obs_info['sunrise'] = observer.next_rising(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Sunrise
 
 
     try:
-        obs_info['moonrise'] = observer.next_rising(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None) #Moonrise
+        obs_info['moonrise'] = observer.next_rising(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Moonrise
     except:
         obs_info['moonrise'] = None
     try:
-        obs_info['moonset'] = observer.next_setting(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None) #Moonset
+        obs_info['moonset'] = observer.next_setting(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Moonset
     except:
         obs_info['moonset'] = None
 
     # twilights
     for horizon, name in [('-6','civil'),('-12','nautical'),('-18','astronomical')]:
         observer.horizon = horizon
-        obs_info[f'dusk_{name}'] = observer.next_setting(sun, use_center=True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
-        obs_info[f'dawn_{name}'] =observer.next_rising(sun, use_center = True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None)
+        obs_info[f'dusk_{name}'] = observer.next_setting(sun, use_center=True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time()
+        obs_info[f'dawn_{name}'] =observer.next_rising(sun, use_center = True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time()
     # moon phase at midnight
     try:
         obs_info['illumination'] = round(moon.moon_phase, 3)
