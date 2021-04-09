@@ -569,12 +569,12 @@ class Report():
             if self.report_type == 'DQS':
                 self.your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
 
-            seconds = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds
-            self.full_time = seconds/3600
-            hours = seconds // 3600
-            minutes = (seconds % 3600) // 60
-            sec = seconds % 60
-            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}:{}:{}'.format(hours, minutes, sec)
+            self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
+            #self.full_time = seconds/3600
+            #hours = seconds // 3600
+            #minutes = (seconds % 3600) // 60
+            #sec = seconds % 60
+            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.3f}'.format(self.full_time)
             self.display_current_header()
             self.nl_file = self.DESI_Log.nightlog_file
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
@@ -634,12 +634,12 @@ class Report():
         meta['dawn_12_deg'] = self.get_strftime(eph['dawn_nautical'])
 
 
-        seconds = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds
-        self.full_time = seconds/3600
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        sec = seconds % 60
-        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}:{}:{}'.format(hours, minutes, sec)
+        self.full_time  = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
+        #self.full_time = seconds/3600
+        #hours = seconds // 3600
+        #minutes = (seconds % 3600) // 60
+        #sec = seconds % 60
+        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.3f}'.format(self.full_time)
 
         self.DESI_Log.initializing()
         self.DESI_Log.get_started_os(meta)
