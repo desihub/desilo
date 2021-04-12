@@ -30,8 +30,8 @@ class OS_Report(Report):
 
         self.title = Div(text="DESI Nightly Intake - Observing Scientist", css_classes=['h1-title-style'], width=1000)# width=800, style={'font-size':'24pt','font-style':'bold'})
         desc = """
-        To begin, connect to an existing Night Log using the list of Existing Night Logs. If today's Night Log does not yet exist, 
-        it is the reponsibility of the Observing Scientist (OS) to initializing the Night Log. 
+        To begin, connect to the observing night Night Log using the list of Existing Night Logs. Add information about the Observers and press the 
+        Update Tonight's Log. 
         Throughout the night, enter information about the exposures, problems that occur, and observing conditions. Complete the 
         OS Checklist at least once every hour. NOTE: If inputs are being made into a DNI for the OS at both KPNO and NERSC, the inputs
         made at KPNO for certain things (meta data, plan, milestones), will be prioritized over those made at NERSC.
@@ -47,9 +47,9 @@ class OS_Report(Report):
         self.contributer_btn = Button(label='Update Contributer List', css_classes=['add_button'], width=300)
 
         self.connect_hdr = Div(text="Connect to Existing Night Log", css_classes=['subt-style'], width=800)
-        self.init_hdr = Div(text="Initialize Tonight's Night Log", css_classes=['subt-style'], width=800)
+        self.init_hdr = Div(text="Update Tonight's Night Log", css_classes=['subt-style'], width=800)
 
-        self.init_btn = Button(label="Initialize Tonight's Log", css_classes=['init_button'], width=200)
+        self.init_btn = Button(label="Update Tonight's Log", css_classes=['init_button'], width=200)
         self.os_name_1 = TextInput(title ='Observing Scientist 1', placeholder = 'Ruth Bader Ginsberg')
         self.os_name_2 = TextInput(title ='Observing Scientist 2', placeholder = "Sandra Day O'Connor")
         self.dqs_name_1 = TextInput(title ='Data Quality Scientist 1', placeholder = 'Sally Ride')

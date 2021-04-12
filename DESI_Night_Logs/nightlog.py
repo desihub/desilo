@@ -119,7 +119,7 @@ class NightLog(object):
         'os_1_firstname','os_1_lastname','os_2_firstname','os_2_lastname',
         'dqs_1_firstname','dqs_1_lastname','dqs_2_firstname','dqs_2_lastname',
         'time_sunset','time_sunrise','time_moonrise','time_moonset','illumination',
-        'dusk_18_deg','dawn_18_deg','dqs_1','dqs_last']
+        'dusk_18_deg','dawn_18_deg','dusk_12_deg','dawn_12_deg','dqs_1','dqs_last']
         meta_dict = {}
         for item in items:
             try:
@@ -426,15 +426,15 @@ class NightLog(object):
                             pass
                         try:
                             if not pd.isna(float(this_exp['exptime'])):
-                                file.write(f"Exptime: {:.2f}, ".format(float(this_exp['exptime'])))
+                                file.write("Exptime: {:.2f}, ".format(float(this_exp['exptime'])))
                         except:
                             pass
                         try:
                             if not pd.isna(float(this_exp['airmass'])):
-                                file.write(f"Airmass: {:.2f}, ".format(float(this_exp['airmass'])))
+                                file.write("Airmass: {:.2f}, ".format(float(this_exp['airmass'])))
                         except:
                             pass
-                        file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program {this_exp['program']}\n")
+                        file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program: {this_exp['program']}\n")
 
                     except:
                         file.write("\n")
@@ -471,15 +471,15 @@ class NightLog(object):
                             pass
                         try:
                             if not pd.isna(float(this_exp['exptime'])):
-                                file.write(f"Exptime: {:.2f}, ".format(float(this_exp['exptime'])))
+                                file.write("Exptime: {:.2f}, ".format(float(this_exp['exptime'])))
                         except:
                             pass
                         try:
                             if not pd.isna(float(this_exp['airmass'])):
-                                file.write(f"Airmass: {:.2f}, ".format(float(this_exp['airmass'])))
+                                file.write("Airmass: {:.2f}, ".format(float(this_exp['airmass'])))
                         except:
                             pass
-                        file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program {this_exp['program']}\n")
+                        file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program: {this_exp['program']}\n")
                     except:
                         file.write("\n")
 
@@ -580,15 +580,15 @@ class NightLog(object):
 
         obs_items  = OrderedDict({'Observing':d['obs_time'],'Testing':d['test_time'],'Loss to Instrument':d['inst_loss'],'Loss to Weather':d['weather_loss'],'Loss to Telescope':d['tel_loss'],'Total Recorded':d['total'],'Time between 18 deg. twilight':d['18deg']})
         file = open(self.summary_file, 'w')
-        file.write("Time Use (hrs):")
-        for name, item in obs_items.values():
+        file.write("Time Use (hrs):\n")
+        for name, item in obs_items.items():
             if not pd.isna(item):
                 try:
-                    file.write("* {}: {:.3f}".format(name, float(item)))
+                    file.write("* {}: {:.2f}\n".format(name, float(item)))
                 except Exception as e:
                     print(e)
         else:
-            file.write("* {}: 0.0".format(name))
+            file.write("* {}: 0.0\n".format(name))
 
         if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_1'])
@@ -618,17 +618,19 @@ class NightLog(object):
             f = self._open_kpno_file_first(self.meta_json)
             meta_dict = json.load(open(f,'r'))
 
-            if (meta_dict['LO_lastname_2'] == meta_dict['LO_lastname_1']) | (meta_dict['LO_firstname_1'] == None):
+            if (meta_dict['LO_lastname_2'] == meta_dict['LO_lastname_1']) | (meta_dict['LO_firstname_2'] == 'None'):
                 file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
             else:
                 file_intro.write("*Lead Observer 1*: {} {}\n".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
-                file_intro.write("*Lead Observer 1*: {} {}\n".format(meta_dict['LO_firstname_2'],meta_dict['LO_lastname_2']))
-            if (meta_dict['os_2_lastname'] == meta_dict['os_1_lastname']) | (meta_dict['os_1_firstname'] == None):
+                file_intro.write("*Lead Observer 2*: {} {}\n".format(meta_dict['LO_firstname_2'],meta_dict['LO_lastname_2']))
+            if (meta_dict['os_2_lastname'] == meta_dict['os_1_lastname']) | (meta_dict['os_2_firstname'] == None):
+                print('here')
+                print(meta_dict['os_2_lastname'],meta_dict['os_1_lastname'],meta_dict['os_1_firstname'])
                 file_intro.write("*Observing Scientist (OS)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
             else:
                 file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
                 file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
-            if (meta_dict['dqs_2_lastname'] == meta_dict['dqs_1_lastname']) | (meta_dict['dqs_1_firstname'] == None):
+            if (meta_dict['dqs_2_lastname'] == meta_dict['dqs_1_lastname']) | (meta_dict['dqs_2_firstname'] == None):
                 file_intro.write("*Data Quality Scientist (DQS)*: {} {}\n".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
             else:
                 file_intro.write("*Observer (DQS-1)*: {} {}\n".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
@@ -674,7 +676,7 @@ class NightLog(object):
                     file_nl.write("\n")
                     file_nl.write("\n")
         except Exception as e:
-            print("Exception with nightlog header: {}".format(e))
+            print("Nightlog Header has not been created: {}".format(e))
 
         #Contributers
         self.write_file(self._open_kpno_file_first(self.contributer_file), "h3. Contributers\n", file_nl)
