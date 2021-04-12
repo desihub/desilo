@@ -38,8 +38,8 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['NL_DIR'] = '/software/www2/html/nightlogs'
-os.environ['NW_DIR'] = '/exposures/nightwatch/'
+#os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
+#os.environ['NW_DIR'] = '/exposures/nightwatch/'
 
 #os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
 #os.environ['NW_DIR'] = '/exposures/nightwatch/'
@@ -92,7 +92,7 @@ class Report():
         self.full_time = None
 
         self.DESI_Log = None
-        self.save_telem_plots =True 
+        self.save_telem_plots = False
         self.buffer = Div(text=' ')
 
 
@@ -470,6 +470,7 @@ class Report():
         self.nl_text = Div(text=" ", width=800)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
+        self.submit_text = Div(text=' ', width=800)
         
         self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
 
@@ -494,6 +495,7 @@ class Report():
                         self.nl_text,
                         self.exptable_alert,
                         self.exp_table,
+                        self.submit_text,
                         self.nl_submit_btn], width=1000)
         else:
             nl_layout = layout([self.buffer, self.title,
@@ -568,7 +570,11 @@ class Report():
                 self.your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
 
             self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.2f}'.format(self.full_time)
+            #self.full_time = seconds/3600
+            #hours = seconds // 3600
+            #minutes = (seconds % 3600) // 60
+            #sec = seconds % 60
+            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.3f}'.format(self.full_time)
             self.display_current_header()
             self.nl_file = self.DESI_Log.nightlog_file
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
@@ -622,11 +628,18 @@ class Report():
         meta['time_moonrise'] = self.get_strftime(eph['moonrise'])
         meta['time_moonset'] = self.get_strftime(eph['moonset'])
         meta['illumination'] = eph['illumination']
+        meta['dusk_12_deg'] = self.get_strftime(eph['dusk_nautical'])
         meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
         meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
+        meta['dawn_12_deg'] = self.get_strftime(eph['dawn_nautical'])
 
-        self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'],'%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'],'%Y%m%dT%H:%M')).seconds/3200
-        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self.full_time)
+
+        self.full_time  = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
+        #self.full_time = seconds/3600
+        #hours = seconds // 3600
+        #minutes = (seconds % 3600) // 60
+        #sec = seconds % 60
+        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.3f}'.format(self.full_time)
 
         self.DESI_Log.initializing()
         self.DESI_Log.get_started_os(meta)
@@ -663,7 +676,6 @@ class Report():
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(path)
             self.get_exp_list()
             self.get_weather()
-            #self.get_seeing()
             try:
                 self.make_telem_plots()
                 return True
@@ -681,7 +693,9 @@ class Report():
             if len(exp_df.date_obs) >  0:
                 time = exp_df.date_obs.dt.tz_convert('US/Arizona')
                 exp_df['date_obs'] = time
-                explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
+
+                self.explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
+
                 exp_df = exp_df.sort_values(by='id')
                 exp_df.to_csv(self.DESI_Log.explist_file, index=False)
             else:
@@ -831,7 +845,7 @@ class Report():
             fig.tight_layout()
 
             plt.savefig(self.DESI_Log.telem_plots_file)
-
+            self.save_telem_plots = False
                 
     def exp_to_html(self):
         exp_df = pd.read_csv(self.DESI_Log.explist_file)
@@ -1114,6 +1128,12 @@ class Report():
         cont_list = self.contributer_list.value
         self.DESI_Log.add_contributer_list(cont_list)
 
+    # def time_to_decimal(self,value):
+    #     try:
+    #         dt = datetime.datetime.strptime(value,'%H:%M')
+    #         hours = dt.hours
+    #         mi
+
     def add_summary(self):
         now = datetime.datetime.now().strftime("%H:%M")
         data = OrderedDict()
@@ -1199,13 +1219,12 @@ class Report():
                 elconn.close()
                 if response[0] != 200:
                    raise Exception(response)
-                   self.nl_text.text = "You cannot post to the eLog on this machine"
+                   self.submit_text.text = "You cannot post to the eLog on this machine"
 
             self.save_telem_plots = True
             self.current_nl()
 
-            nl_text = "Night Log posted to eLog and emailed to collaboration" + '</br>'
-            self.nl_text.text = nl_text
+            self.submit_text.text = "Night Log posted to eLog and emailed to collaboration at {}".format(datetime.datetime.now().strftime("%Y%m%d %H:%M")) + '</br>'
             if self.test:
                 self.email_nightsum(user_email = ["parfa30@gmail.com","parkerf@berkeley.edu"])
             else:
