@@ -115,8 +115,10 @@ class NightLog(object):
         """
             Operations Scientist lists the personal present, ephemerids and weather conditions at sunset.
         """
-        items = ['LO_firstname','LO_lastname','OA_firstname','OA_lastname','os_1_firstname','os_1_lastname',
-        'os_2_firstname','os_2_lastname','time_sunset','time_sunrise','time_moonrise','time_moonset','illumination',
+        items = ['LO_firstname_1','LO_lastname_1','LO_firstname_2','LO_lastname_2','OA_firstname','OA_lastname',
+        'os_1_firstname','os_1_lastname','os_2_firstname','os_2_lastname',
+        'dqs_1_firstname','dqs_1_lastname','dqs_2_firstname','dqs_2_lastname',
+        'time_sunset','time_sunrise','time_moonrise','time_moonset','illumination',
         'dusk_18_deg','dawn_18_deg','dqs_1','dqs_last']
         meta_dict = {}
         for item in items:
@@ -135,18 +137,18 @@ class NightLog(object):
         else:
             return filen
 
-    def add_dqs_observer(self, dqs_firstname, dqs_lastname):
-        filen = self._open_kpno_file_first(self.meta_json)
-        if filen is not None:
-            with open(filen, 'r') as f:
-                meta_dict = json.load(f)
-                meta_dict['dqs_1'] = dqs_firstname
-                meta_dict['dqs_last'] = dqs_lastname
-                os.remove(self.meta_json)
-                with open(self.meta_json, 'w') as ff:
-                    json.dump(meta_dict, ff)
+    # def add_dqs_observer(self, dqs_firstname, dqs_lastname):
+    #     filen = self._open_kpno_file_first(self.meta_json)
+    #     if filen is not None:
+    #         with open(filen, 'r') as f:
+    #             meta_dict = json.load(f)
+    #             meta_dict['dqs_1'] = dqs_firstname
+    #             meta_dict['dqs_last'] = dqs_lastname
+    #             os.remove(self.meta_json)
+    #             with open(self.meta_json, 'w') as ff:
+    #                 json.dump(meta_dict, ff)
 
-        self.write_intro()
+    #     self.write_intro()
 
 
     def _combine_compare_csv_files(self, filen):
@@ -615,15 +617,30 @@ class NightLog(object):
         try:
             f = self._open_kpno_file_first(self.meta_json)
             meta_dict = json.load(open(f,'r'))
-            file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
-            file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
-            file_intro.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
-            file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['LO_firstname'],meta_dict['LO_lastname']))
+
+            if (meta_dict['LO_lastname_2'] == meta_dict['LO_lastname_1']) | (meta_dict['LO_firstname_1'] == None):
+                file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
+            else:
+                file_intro.write("*Lead Observer 1*: {} {}\n".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
+                file_intro.write("*Lead Observer 1*: {} {}\n".format(meta_dict['LO_firstname_2'],meta_dict['LO_lastname_2']))
+            if (meta_dict['os_2_lastname'] == meta_dict['os_1_lastname']) | (meta_dict['os_1_firstname'] == None):
+                file_intro.write("*Observing Scientist (OS)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
+            else:
+                file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
+                file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
+            if (meta_dict['dqs_2_lastname'] == meta_dict['dqs_1_lastname']) | (meta_dict['dqs_1_firstname'] == None):
+                file_intro.write("*Data Quality Scientist (DQS)*: {} {}\n".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
+            else:
+                file_intro.write("*Observer (DQS-1)*: {} {}\n".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
+                file_intro.write("*Observer (DQS-2)*: {} {}\n".format(meta_dict['dqs_2_firstname'],meta_dict['dqs_2_lastname']))
+
             file_intro.write("*Telescope Operator*: {} {}\n".format(meta_dict['OA_firstname'],meta_dict['OA_lastname']))
             file_intro.write("*Ephemerides in local time [UTC]*:\n")
             file_intro.write("* sunset: {}\n".format(self.write_time(meta_dict['time_sunset'])))
+            file_intro.write("* 12(o) twilight ends: {}\n".format(self.write_time(meta_dict['dusk_12_deg'])))
             file_intro.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['dusk_18_deg'])))
             file_intro.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['dawn_18_deg'])))
+            file_intro.write("* 12(o) twilight starts: {}\n".format(self.write_time(meta_dict['dawn_12_deg'])))
             file_intro.write("* sunrise: {}\n".format(self.write_time(meta_dict['time_sunrise'])))
             file_intro.write("* moonrise: {}\n".format(self.write_time(meta_dict['time_moonrise'])))
             file_intro.write("* moonset: {}\n".format(self.write_time(meta_dict['time_moonset'])))

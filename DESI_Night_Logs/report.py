@@ -550,6 +550,23 @@ class Report():
         self.night = date.strftime("%Y%m%d")
         self.DESI_Log = nl.NightLog(self.night, self.location)
 
+    def _dec_to_hm(self,seconds):
+        #dec in seconds
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        sec = seconds % 60
+        tt = datetime.datetime(hour=hours, minutes=minutes, seconds=sec)
+        dt = tt - datetime.datetime(hour=0, minutes=0, seconds=0)
+        return '{}:{}'.format(dt.hour, dt.minute)
+
+    def _hm_to_dec(self,hm):
+        #hm is a str H:M
+        tt = datetime.datetime.strptime(hm,'%H:%M')
+        dt = tt - datetime.datetime(hour=0, minutes=0, seconds=0)
+        seconds = dt.total_seconds()
+        dec = seconds/3600
+        return dec
+
     def connect_log(self):
         """Connect to Existing Night Log with Input Date
         """
@@ -559,70 +576,74 @@ class Report():
         your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
         if exists:
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
-
-            if self.report_type == 'DQS':
-                self.DESI_Log.add_dqs_observer(your_firstname, your_lastname)
-                
-            meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
-            meta_dict = json.load(open(meta_dict_file,'r'))
-                
-            if self.report_type == 'DQS':
-                self.your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
-
-            self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-            #self.full_time = seconds/3600
-            #hours = seconds // 3600
-            #minutes = (seconds % 3600) // 60
-            #sec = seconds % 60
-            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.3f}'.format(self.full_time)
-            self.display_current_header()
+       
             self.nl_file = self.DESI_Log.nightlog_file
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
             if self.report_type == 'OS':
+                meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
+                meta_dict = json.load(open(meta_dict_file,'r'))
                 plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}".format(self.night)
                 self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
-                self.os_name_1.value = meta_dict['{}_1_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_1_lastname'.format(self.report_type.lower())]
-                self.os_name_2.value = meta_dict['{}_2_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_2_lastname'.format(self.report_type.lower())]
-                self.LO.value = meta_dict['LO_firstname']+' '+meta_dict['LO_lastname']
+                self.os_name_1.value = meta_dict['os_1_firstname']+' '+meta_dict['os_1_lastname']
+                self.os_name_2.value = meta_dict['os_2_firstname']+' '+meta_dict['os_2_lastname']
+                self.dqs_name_1.value = meta_dict['dqs_1_firstname']+' '+meta_dict['dqs_1_lastname']
+                self.dqs_name_2.value = meta_dict['dqs_2_firstname']+' '+meta_dict['dqs_2_lastname']
+                self.LO_1.value = meta_dict['LO_firstname_1']+' '+meta_dict['LO_lastname_1']
+                self.LO_2.value = meta_dict['LO_firstname_2']+' '+meta_dict['LO_lastname_2']
                 self.OA.value = meta_dict['OA_firstname']+' '+meta_dict['OA_lastname']
-                cont_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.contributer_file)
+
+                contributer_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.contributer_file)
                 if os.path.exists(cont_file):
                     cont_txt = ''
-                    f =  open(cont_file, "r")
+                    f =  open(contributer_file, "r")
                     for line in f:
                         cont_txt += line
                     self.contributer_list.value = cont_txt
+
                 time_use_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.time_use)
                 if os.path.exists(time_use_file):
-                    df = pd.read_csv(time_use_file)
-                    data = df.iloc[0]
-                    self.summary_1.value = str(data['summary_1'])
-                    self.summary_2.value = str(data['summary_2'])
-                    self.obs_time.value =  str(data['obs_time'])
-                    self.test_time.value = str(data['test_time'])
-                    self.inst_loss_time.value = str(data['inst_loss'])
-                    self.weather_loss_time.value = str(data['weather_loss'])
-                    self.tel_loss_time.value = str(data['tel_loss'])
-                    self.total_time.text = 'Time Documented (hrs): %.2f' % float(data['total'])
+                    try:
+                        df = pd.read_csv(time_use_file)
+                        data = df.iloc[0]
+                        self.summary_1.value = str(data['summary_1'])
+                        self.summary_2.value = str(data['summary_2'])
+                        self.obs_time.value =  self._dec_to_hm(data['obs_time'])
+                        self.test_time.value = self._dec_to_hm(data['test_time'])
+                        self.inst_loss_time.value = self._dec_to_hm(data['inst_loss'])
+                        self.weather_loss_time.value = self._dec_to_hm(data['weather_loss'])
+                        self.tel_loss_time.value = self._dec_to_hm(data['tel_loss'])
+                        self.total_time.text = 'Time Documented (hrs): {}'.format(self._dec_to_hm(data['total']))
+                        seconds = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds
+                        self.full_time = seconds/3600
+                        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}:{}'.format(self._dec_to_hm())
+                    except Exception as e:
+                        self.milestone_alert.text = 'Issue with Time Use Data: {}'.format(e)
+
+                
+                self.display_current_header()
+
             self.current_nl()
             self.get_exposure_list()
 
         else:
             self.connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(self.date_init.value)
 
-    def initialize_log(self):
+    def add_observer_info(self):
         """ Initialize Night Log with Input Date
         """
         self.get_night('init')
         meta = OrderedDict()
-        meta['LO_firstname'], meta['LO_lastname'] = self.LO.value.split(' ')[0], ' '.join(self.LO.value.split(' ')[1:])
-        meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
+        meta['LO_firstname_1'], meta['LO_lastname_1'] = self.LO_1.value.split(' ')[0], ' '.join(self.LO_1.value.split(' ')[1:])
+        meta['LO_firstname_2'], meta['LO_lastname_2'] = self.LO_2.value.split(' ')[0], ' '.join(self.LO_2.value.split(' ')[1:])
         meta['os_1_firstname'], meta['os_1_lastname'] = self.os_name_1.value.split(' ')[0], ' '.join(self.os_name_1.value.split(' ')[1:])
         meta['os_2_firstname'], meta['os_2_lastname'] = self.os_name_2.value.split(' ')[0], ' '.join(self.os_name_2.value.split(' ')[1:])
+        meta['dqs_1_firstname'], meta['dqs_1_lastname'] = self.dqs_name_1.value.split(' ')[0], ' '.join(self.dqs_name_1.value.split(' ')[1:])
+        meta['dqs_2_firstname'], meta['dqs_2_lastname'] = self.dqs_name_2.value.split(' ')[0], ' '.join(self.dqs_name_2.value.split(' ')[1:])
+        meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
+
 
         eph = sky_calendar()
-
         meta['time_sunset'] = self.get_strftime(eph['sunset'])
         meta['time_sunrise'] = self.get_strftime(eph['sunrise'])
         meta['time_moonrise'] = self.get_strftime(eph['moonrise'])
@@ -634,22 +655,15 @@ class Report():
         meta['dawn_12_deg'] = self.get_strftime(eph['dawn_nautical'])
 
 
-        self.full_time  = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-        #self.full_time = seconds/3600
-        #hours = seconds // 3600
-        #minutes = (seconds % 3600) // 60
-        #sec = seconds % 60
-        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.3f}'.format(self.full_time)
+        seconds = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds
+        self.full_time = seconds/3600
+        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}:{}'.format(self._dec_to_hm())
 
-        self.DESI_Log.initializing()
         self.DESI_Log.get_started_os(meta)
 
-        self.connect_txt.text = 'Night Log is Initialized'
+        self.connect_txt.text = 'Night Log Observer Data is Updated'
         self.DESI_Log.write_intro()
         self.display_current_header()
-        self.current_nl()
-
-        self.update_nl_list()
 
 
     def display_current_header(self):
@@ -1128,36 +1142,34 @@ class Report():
         cont_list = self.contributer_list.value
         self.DESI_Log.add_contributer_list(cont_list)
 
-    # def time_to_decimal(self,value):
-    #     try:
-    #         dt = datetime.datetime.strptime(value,'%H:%M')
-    #         hours = dt.hours
-    #         mi
 
     def add_summary(self):
         now = datetime.datetime.now().strftime("%H:%M")
         data = OrderedDict()
         data['summary_1'] = self.summary_1.value
         data['summary_2'] = self.summary_2.value
-        data['obs_time'] = self.obs_time.value
-        data['test_time'] = self.test_time.value
-        data['inst_loss'] = self.inst_loss_time.value
-        data['weather_loss'] = self.weather_loss_time.value
-        data['tel_loss'] = self.tel_loss_time.value
+        time_items = OrderedDict({'obs_time':self.obs_time,'test_time':self.test_time,'inst_loss':self.inst_loss_time,
+            'weather_loss':self.weather_loss_time,'tel_loss':self.tel_loss_time})
+        for name, item in time_times.values():
+            try:
+                data[name] = float(item.value)
+            except:
+                try:
+                    data[name] = self._hm_to_dec(str(item.value))
+                except:
+                    data[name] = 0
+
         data['18deg'] = self.full_time
 
         total = 0
         for i in ['obs_time','test_time','inst_loss','weather_loss','tel_loss']:
             try:
-                if data[i] not in ['',' ','nan',np.nan]:
-                    total += float(data[i])
-                else:
-                    data[i] = 0
-                    total+=0
-            except:
+                total += float(data[i])
+            except Exception as e:
+                print(e)
                 total += 0
         data['total'] = total
-        self.total_time.text = 'Time Documented (hrs): %.2f' % total
+        self.total_time.text = 'Time Documented (hrs): {}'.format(self._dec_to_hm(total))
         self.DESI_Log.add_summary(data)
         self.milestone_alert.text = 'Summary Information Entered at {}'.format(now)
 

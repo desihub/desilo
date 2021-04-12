@@ -52,9 +52,12 @@ class OS_Report(Report):
         self.init_btn = Button(label="Initialize Tonight's Log", css_classes=['init_button'], width=200)
         self.os_name_1 = TextInput(title ='Observing Scientist 1', placeholder = 'Ruth Bader Ginsberg')
         self.os_name_2 = TextInput(title ='Observing Scientist 2', placeholder = "Sandra Day O'Connor")
+        self.dqs_name_1 = TextInput(title ='Data Quality Scientist 1', placeholder = 'Sally Ride')
+        self.dqs_name_2 = TextInput(title ='Data Quality Scientist 2', placeholder = "Mae Jemison")
         self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
         self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
-        self.LO = Select(title='Lead Observer', value='Choose One', options=self.lo_names)
+        self.LO_1 = Select(title='Lead Observer 1', value='Choose One', options=self.lo_names)
+        self.LO_2 = Select(title='Lead Observer 2', value='Choose One', options=self.lo_names)
         self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names)
 
         self.get_intro_layout()
@@ -75,7 +78,7 @@ class OS_Report(Report):
                             self.connect_txt,
                             self.line,
                             self.init_hdr,
-                            [[self.os_name_1, self.os_name_2], self.LO, self.OA],
+                            [[self.os_name_1, self.os_name_2], [self.dqs_name_1, self.dqs_name_2], [self.LO_1, self.LO_2], self.OA],
                             self.init_btn,
                             self.line2,
                             self.contributer_list,
@@ -91,7 +94,7 @@ class OS_Report(Report):
         self.time_tabs = [None, None, None, self.exp_time, self.prob_time, None, None, None]
 
         self.now_btn.on_click(self.time_is_now)
-        self.init_btn.on_click(self.initialize_log)
+        self.init_btn.on_click(self.add_observer_info)
         self.connect_bt.on_click(self.connect_log)
         self.exp_btn.on_click(self.progress_add)
         self.exp_load_btn.on_click(self.load_exposure)
