@@ -9,6 +9,7 @@ import json
 import pandas as pd
 import numpy as np
 from datetime import datetime,timezone
+from collections import OrderedDict
 
 from astropy.time import TimezoneInfo
 import astropy.units.si as u
@@ -574,9 +575,18 @@ class NightLog(object):
         df.to_csv(self.time_use,index=False)
         df = df.fillna(value=0)
         d = df.iloc[0]
-        obs_time, test_time, inst_loss, weather_loss, tel_loss, total, deg_18 = d['obs_time'], d['test_time'], d['inst_loss'], d['weather_loss'], d['tel_loss'], d['total'], d['18deg']
 
+        obs_items  = OrderedDict({'Observing':d['obs_time'],'Testing':d['test_time'],'Loss to Instrument':d['inst_loss'],'Loss to Weather':d['weather_loss'],'Loss to Telescope':d['tel_loss'],'Total Recorded':d['total'],'Time between 18 deg. twilight':d['18deg']})
         file = open(self.summary_file, 'w')
+        file.write("Time Use (hrs):")
+        for name, item in obs_items.values():
+            if not pd.isna(item):
+                try:
+                    file.write("* {}: {:.3f}".format(name, float(item)))
+                except Exception as e:
+                    print(e)
+        else:
+            file.write("* {}: 0.0".format(name))
 
         if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_1'])
@@ -584,10 +594,7 @@ class NightLog(object):
         if d['summary_2'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_2'])
             file.write("\n")
-        file.write("Time Use (hrs):")
-        file.write(" Observing: {:.2f}, Testing: {:.2f}, Loss to Instrument: {:.2f}, Loss to Weather: {:.2f}, Loss to Telescope: {:.2f}, Total: {:.2f}, Time between 18 deg. twilight: {:.2f}\n".format(float(obs_time), float(test_time), float(inst_loss), float(weather_loss), float(tel_loss), float(total), float(deg_18)))
-
-        file.write("\n")
+        
         file.close()
 
     def write_file(self, the_path, header,file_nl):
