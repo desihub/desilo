@@ -470,7 +470,7 @@ class Report():
         self.nl_text = Div(text=" ", width=800)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
-        self.submit_text = Div(text=' ', width=800)
+        self.submit_text = Div(text=' ', css_classes=['alert-style'], width=800)
         
         self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
 

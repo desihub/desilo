@@ -417,14 +417,21 @@ class NightLog(object):
                         this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
                         this_exp = this_exp.fillna(value=np.nan)
                         this_exp = this_exp.iloc[0]
-                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass'] #, this_exp['etc']['seeing'], this_exp['etc']['transp']
-                        for x in [tile, exptime, airmass]:
-                            try:
-                                x = float(x)
-                            except:
-                                x = np.nan
-                        file.write("Tile {:.1f}, Exptime: {:.2f}, Airmass: {:.2f}, Sequence: {}, Flavor: {}, Program {}\n".format(float(tile), float(exptime),
-                    float(airmass), this_exp['sequence'], this_exp['flavor'], this_exp['program']))
+                        try:
+                            file.write(f"Tile {int(this_exp['tileid'])}, ")
+                        except:
+                            pass
+                        try:
+                            if not pd.isna(float(this_exp['exptime'])):
+                                file.write(f"Exptime: {:.2f}, ".format(float(this_exp['exptime'])))
+                        except:
+                            pass
+                        try:
+                            if not pd.isna(float(this_exp['airmass'])):
+                                file.write(f"Airmass: {:.2f}, ".format(float(this_exp['airmass'])))
+                        except:
+                            pass
+                        file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program {this_exp['program']}\n")
 
                     except:
                         file.write("\n")
@@ -455,14 +462,21 @@ class NightLog(object):
                         this_exp = exp_df[exp_df.id == dqs_['Exp_Start']]
                         this_exp = this_exp.fillna(value=np.nan)
                         this_exp = this_exp.iloc[0]
-                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass']
-                        for x in [tile, exptime, airmass]:
-                            try:
-                                x = float(x)
-                            except:
-                                x = np.nan
-                        file.write("Tile: %.1f, Exptime: %.2f, Airmass: %.2f, Sequence: %s, Flavor: %s, Program: %s\n" %
-                        (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
+                        try:
+                            file.write(f"Tile {int(this_exp['tileid'])}, ")
+                        except:
+                            pass
+                        try:
+                            if not pd.isna(float(this_exp['exptime'])):
+                                file.write(f"Exptime: {:.2f}, ".format(float(this_exp['exptime'])))
+                        except:
+                            pass
+                        try:
+                            if not pd.isna(float(this_exp['airmass'])):
+                                file.write(f"Airmass: {:.2f}, ".format(float(this_exp['airmass'])))
+                        except:
+                            pass
+                        file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program {this_exp['program']}\n")
                     except:
                         file.write("\n")
 
