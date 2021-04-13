@@ -960,16 +960,22 @@ class Report():
             if self.report_type == 'DQS':
                 if hasattr(self, 'img_upload_comments_dqs') and self.img_upload_comments_dqs.filename not in [None,'',np.nan,'nan']:
                     img_data = self.img_upload_comments_dqs.value.encode('utf-8')
-                    img_name = str(self.img_upload_comments_dqs.filename)
+                    input_name = os.path.splitext(str(self.img_upload_comments_dqs.filename))
+                    img_name = input_name[0] + '_{}.'.format(self.location) + input_name[1]
+                    self.img_comments_dqs.filename = None
             else:
                 if self.exp_comment.value not in [None, ''] and hasattr(self, 'img_upload_comments_os') and self.img_upload_comments_os.filename not in [None,'','nan',np.nan]:
                     img_data = self.img_upload_comments_os.value.encode('utf-8')
-                    img_name = str(self.img_upload_comments_os.filename)
+                    input_name = os.path.splitext(str(self.img_upload_comments_os.filename))
+                    img_name = input_name[0] + '_{}.'.format(self.location) + input_name[1]
+                    self.img_upload_comments_os.filename = None
 
         elif mode == 'problem':
             if hasattr(self, 'img_upload_problems') and self.img_upload_problems.filename not in [None, '',np.nan, 'nan']:
                 img_data = self.img_upload_problems.value.encode('utf-8')
-                img_name = str(self.img_upload_problems.filename)
+                input_name = os.path.splitext(str(self.img_upload_problems.filename))
+                img_name = input_name[0] + '_{}.'.format(self.location) + input_name[1]
+                self.img_upload_problems.filename = None
 
         self.image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/{self.night}/images/{img_name}'
         width=400
