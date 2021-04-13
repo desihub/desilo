@@ -106,7 +106,6 @@ class Report():
             items.value = ' '
 
     def get_exposure_list(self):
-        
         try:
             current_exp = self.exp_select.value
             dir_ = os.path.join(self.nw_dir,self.night)
@@ -117,7 +116,10 @@ class Report():
             x = list([str(int(e)) for e in list(exposures)])
             x = np.sort(x)[::-1]
             self.exp_select.options = list(x) 
-            self.exp_select.value = current_exp 
+            if current_exp in ['',' ',np.nan,None]:
+                self.exp_select.value = x[0]
+            else:
+                self.exp_select.value = current_exp
         except:
             self.exp_select.options = []
 
@@ -248,7 +250,7 @@ class Report():
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
         self.dqs_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
 
-        self.exp_select = Select(title='(1) Select Exposure',options=['None'],width=150)
+        self.exp_select = Select(title='(1) Select Exposure', options=['None'],width=150)
         self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', width=150)
         self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
         self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
@@ -1000,18 +1002,28 @@ class Report():
     def progress_add(self):
         if self.os_exp_option.active == 0:
             if self.exp_time.value not in [None, 'None'," ", ""]:
-                time = self.get_time(self.exp_time.value.strip())
-                comment = self.exp_comment.value.strip()
-                exp = None
+                try:
+                    time = self.get_time(self.exp_time.value.strip())
+                    comment = self.exp_comment.value.strip()
+                    exp = None
+                except Exception as e:
+                    self.exp_alert.text = 'There is something wrong with your input: {}'.format(e)
             else:
                 self.exp_alert.text = 'Fill in the time'
                 
 
         elif self.os_exp_option.active == 1:
             if self.exp_option.active == 0:
-                exp = int(self.exp_select.value)
+                try:
+                    exp = int(self.exp_select.value)
+                except Exception as e:
+                    self.exp_alert.text = "Problem with the Exposure you Selected: {}".format(e)
+
             elif self.exp_option.active ==1:
-                exp = int(self.exp_enter.value.strip())
+                try:
+                    exp = int(self.exp_enter.value.strip())
+                except Exception as e:
+                    self.exp_alert.text = "Problem with the Exposure you Entered: {}".format(e)
             comment = self.exp_comment.value.strip()
             time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
@@ -1025,11 +1037,11 @@ class Report():
                 self.exp_alert.text = preview
                 self.img_upload_comments_os=FileInput(accept=".png")
             else:
-                self.exp_alert.text = 'Last Input was at {}'.format(datetime.datetime.now().strftime("%H:%M"))
+                self.exp_alert.text = 'Last Input was made at {}'.format(datetime.datetime.now().strftime("%H:%M"))
+            self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
         except Exception as e:
-            self.exp_alert.text = 'Error with your input: {}'.format(e)
+            self.exp_alert.text = 'Error with your Input: {}'.format(e)
 
-        self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
     
     def comment_add(self):
         if self.your_name.value in [None,' ','']:
@@ -1037,59 +1049,73 @@ class Report():
         else:
             if self.os_exp_option.active == 0:
                 if self.exp_time.value not in [None, 'None'," ", ""]:
-                    time = self.get_time(self.exp_time.value.strip())
-                    comment = self.exp_comment.value.strip()
-                    exp = None
+                    try:
+                        time = self.get_time(self.exp_time.value.strip())
+                        comment = self.exp_comment.value.strip()
+                        exp = None
+                    except Exception as e:
+                        self.exp_alert.text = self.exp_alert.text = 'There is something wrong with your input: {}'.format(e)
                 else:
                     self.exp_alert.text = 'Fill in the time'
             elif self.os_exp_option.active == 1:
                 if self.exp_option.active == 0:
                     try:
                         exp = int(self.exp_select.value)
-                    except:
-                        self.exp_alert.text = 'Check your exposure input'
+                    except Exception as e:
+                        self.exp_alert.text = "Problem with the Exposure you Selected: {}".format(e)
                 elif self.exp_option.active ==1:
                     try:
                         exp = int(self.exp_enter.value.strip())
-                    except:
-                        self.exp_alert.text = 'Check your exposure input'
+                    except Exception as e:
+                        self.exp_alert.text = "Problem with the Exposure you Entered: {}".format(e)
                 comment = self.exp_comment.value.strip()
                 time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
+            try:
+                img_name, img_data, preview = self.image_uploaded('comment')
+                data = [time, comment, exp, self.your_name.value.strip()]
+                self.DESI_Log.add_input(data, 'other_exp',img_name=img_name, img_data=img_data)
 
+                if img_name is not None:
+                    preview += "<br>"
+                    preview += "A comment was added at {}".format(self.exp_time.value.strip())
+                    self.exp_alert.text = preview
+                    self.img_upload_comments=FileInput(accept=".png")
+                else:
+                    self.exp_alert.text = "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
+                self.clear_input([self.exp_time, self.exp_comment])
+            except Exception as e:
+                self.exp_alert.text = 'Error with your Input: {}'.format(e)
+
+    def exp_add(self):
+        quality = self.quality_list[self.quality_btns.active]
+        if self.exp_option.active == 0:
+            try:
+                exp_val = int(self.exp_select.value)
+            except Exception as e:
+                self.exp_alert.text = "Problem with the Exposure you Selected: {}".format(e)
+        elif self.exp_option.active ==1:
+            try:
+                exp_val = int(self.exp_enter.value.strip())
+            except Exception as e:
+                self.exp_alert.text = "Problem with the Exposure you Entered: {}".format(e)
+        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
+
+        try:
             img_name, img_data, preview = self.image_uploaded('comment')
-            data = [time, comment, exp, self.your_name.value.strip()]
-            self.DESI_Log.add_input(data, 'other_exp',img_name=img_name, img_data=img_data)
+            data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
+            self.DESI_Log.add_input(data, 'dqs_exp',img_name=img_name, img_data=img_data)
 
             if img_name is not None:
                 preview += "<br>"
                 preview += "A comment was added at {}".format(self.exp_time.value.strip())
                 self.exp_alert.text = preview
-                self.img_upload_comments=FileInput(accept=".png")
+                self.img_upload_comments_dqs=FileInput(accept=".png")
             else:
-                self.exp_alert.text = "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
-            self.clear_input([self.exp_time, self.exp_comment])
-
-    def exp_add(self):
-        quality = self.quality_list[self.quality_btns.active]
-        if self.exp_option.active == 0:
-            exp_val = int(self.exp_select.value)
-        elif self.exp_option.active ==1:
-            exp_val = int(self.exp_enter.value.strip())
-        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
-
-        img_name, img_data, preview = self.image_uploaded('comment')
-        data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
-        self.DESI_Log.add_input(data, 'dqs_exp',img_name=img_name, img_data=img_data)
-
-        if img_name is not None:
-            preview += "<br>"
-            preview += "A comment was added at {}".format(self.exp_time.value.strip())
-            self.exp_alert.text = preview
-            self.img_upload_comments_dqs=FileInput(accept=".png")
-        else:
-            self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now)
-        self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
+                self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now)
+            self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
+        except Exception as e:
+            self.exp_alert.text = 'Error with your Input: {}'.format(e)
 
     def plan_load(self):
         b, item = self.DESI_Log.load_index(self.plan_order.value, 'plan')

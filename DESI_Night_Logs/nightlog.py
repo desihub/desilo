@@ -587,8 +587,8 @@ class NightLog(object):
                     file.write("* {}: {:.2f}\n".format(name, float(item)))
                 except Exception as e:
                     print(e)
-        else:
-            file.write("* {}: 0.0\n".format(name))
+            else:
+                file.write("* {}: 0.0\n".format(name))
 
         if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_1'])
