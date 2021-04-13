@@ -333,7 +333,10 @@ class NightLog(object):
                     filen.write("{}".format(row['Problem']))
                 if not pd.isna(row['alarm_id']): # not in [float(np.nan), 'nan',None, 'None', " ", ""]:
                     if str(row['alarm_id']) not in ['nan','None','',' ']:
-                        filen.write('; AlarmID: {}'.format(int(row['alarm_id'])))
+                        try:
+                            filen.write('; AlarmID: {}'.format(int(row['alarm_id'])))
+                        except:
+                            filen.write('; AlarmID: {}'.format(str(row['alarm_id'])))
                 if not pd.isna(row['action']):
                     if str(row['action']) not in ['nan','None', " ", ""]:
                         filen.write('; Action: {}'.format(row['action']))
@@ -398,7 +401,10 @@ class NightLog(object):
             if len(os_) > 0:
                 os_ = os_.iloc[0]
                 if str(os_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
-                    file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
+                    try:
+                        file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
+                    except:
+                        file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), str(os_['Exp_Start']), os_['Comment']))
 
                     if str(os_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                         self._write_image_tag(file, os_['img_name'])
@@ -448,7 +454,10 @@ class NightLog(object):
             else:
                 if len(dqs_) > 0:
                     dqs_ = dqs_.iloc[0]
-                    file.write("- {} Exp. {} := *Data Quality:* {}, {}\n".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                    try:
+                        file.write("- {} Exp. {} := *Data Quality:* {}, {}\n".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                    except:
+                        file.write("- {} Exp. {} := *Data Quality:* {}, {}\n".format(self.write_time(dqs_['Time']), str(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
 
                     if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                             self._write_image_tag(file, dqs_['img_name'])
@@ -487,7 +496,10 @@ class NightLog(object):
                     if len(other_) > 0:
                         other_ = other_.iloc[0]
                         if str(other_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
-                            file.write("- {} Exp: {}:= _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
+                            try:
+                                file.write("- {} Exp: {}:= _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
+                            except:
+                                file.write("- {} Exp: {}:= _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), str(other_['Exp_Start']), other_['Comment'], other_['Name']))
                         else:
                             file.write("- {} := _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
                         if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
@@ -624,8 +636,6 @@ class NightLog(object):
                 file_intro.write("*Lead Observer 1*: {} {}\n".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
                 file_intro.write("*Lead Observer 2*: {} {}\n".format(meta_dict['LO_firstname_2'],meta_dict['LO_lastname_2']))
             if (meta_dict['os_2_lastname'] == meta_dict['os_1_lastname']) | (meta_dict['os_2_firstname'] == None):
-                print('here')
-                print(meta_dict['os_2_lastname'],meta_dict['os_1_lastname'],meta_dict['os_1_firstname'])
                 file_intro.write("*Observing Scientist (OS)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
             else:
                 file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
