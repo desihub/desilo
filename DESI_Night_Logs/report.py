@@ -994,6 +994,7 @@ class Report():
                 if self.prob_time.value not in [None, 'None'," ",""]:
                     note = 'Enter a time'
                 else:
+                    print(self.get_time(self.prob_time.value.strip()))
                     img_name, img_data, preview = self.image_uploaded('problem')
                     data = [self.report_type, self.get_time(self.prob_time.value.strip()), self.prob_input.value.strip(), self.prob_alarm.value.strip(),
                     self.prob_action.value.strip(), name]
@@ -1004,7 +1005,7 @@ class Report():
                     preview += "<br>"
                     preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
                     self.prob_alert.text = preview
-                    self.img_upload_problems = FileInput(accept=".png")
+
                 else:
                     self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
                 self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
@@ -1047,7 +1048,7 @@ class Report():
                 preview += "<br>"
                 preview += "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
                 self.exp_alert.text = preview
-                self.img_upload_comments_os=FileInput(accept=".png")
+
             else:
                 self.exp_alert.text = 'Last Input was made at {}'.format(datetime.datetime.now().strftime("%H:%M"))
             self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
@@ -1092,7 +1093,6 @@ class Report():
                     preview += "<br>"
                     preview += "A comment was added at {}".format(self.exp_time.value.strip())
                     self.exp_alert.text = preview
-                    self.img_upload_comments=FileInput(accept=".png")
                 else:
                     self.exp_alert.text = "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
                 self.clear_input([self.exp_time, self.exp_comment])
@@ -1122,7 +1122,6 @@ class Report():
                 preview += "<br>"
                 preview += "A comment was added at {}".format(self.exp_time.value.strip())
                 self.exp_alert.text = preview
-                self.img_upload_comments_dqs=FileInput(accept=".png")
             else:
                 self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now)
             self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
