@@ -106,7 +106,6 @@ class Report():
             items.value = ' '
 
     def get_exposure_list(self):
-        
         try:
             current_exp = self.exp_select.value
             dir_ = os.path.join(self.nw_dir,self.night)
@@ -117,7 +116,10 @@ class Report():
             x = list([str(int(e)) for e in list(exposures)])
             x = np.sort(x)[::-1]
             self.exp_select.options = list(x) 
-            self.exp_select.value = current_exp 
+            if current_exp in ['',' ',np.nan,None]:
+                self.exp_select.value = x[0]
+            else:
+                self.exp_select.value = current_exp
         except:
             self.exp_select.options = []
 
@@ -159,7 +161,7 @@ class Report():
                             self.connect_txt,
                             self.nl_info,
                             self.intro_txt], width=1000)
-        self.intro_tab = Panel(child=intro_layout, title="Initialization")
+        self.intro_tab = Panel(child=intro_layout, title="Connect")
 
     def get_plan_layout(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
@@ -248,7 +250,7 @@ class Report():
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
         self.dqs_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
 
-        self.exp_select = Select(title='(1) Select Exposure',options=['None'],width=150)
+        self.exp_select = Select(title='(1) Select Exposure', options=['None'],width=150)
         self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', width=150)
         self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
         self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
@@ -470,7 +472,7 @@ class Report():
         self.nl_text = Div(text=" ", width=800)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
-        self.submit_text = Div(text=' ', width=800)
+        self.submit_text = Div(text=' ', css_classes=['alert-style'], width=800)
         
         self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
 
@@ -550,6 +552,23 @@ class Report():
         self.night = date.strftime("%Y%m%d")
         self.DESI_Log = nl.NightLog(self.night, self.location)
 
+    def _dec_to_hm(self,hours):
+        #dec in seconds
+        seconds = hours*3600
+        hour = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        sec = seconds % 60
+        str_ = '{}:{}'.format(int(hours), int(minutes))
+        return str_
+
+    def _hm_to_dec(self,hm):
+        #hm is a str H:M
+        tt = datetime.datetime.strptime(hm,'%H:%M')
+        dt = tt - datetime.datetime.strptime('00:00','%H:%M')
+        seconds = dt.total_seconds()
+        dec = seconds/3600
+        return dec
+
     def connect_log(self):
         """Connect to Existing Night Log with Input Date
         """
@@ -559,70 +578,82 @@ class Report():
         your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
         if exists:
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
-
-            if self.report_type == 'DQS':
-                self.DESI_Log.add_dqs_observer(your_firstname, your_lastname)
-                
-            meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
-            meta_dict = json.load(open(meta_dict_file,'r'))
-                
-            if self.report_type == 'DQS':
-                self.your_name.value = meta_dict['dqs_1']+' '+meta_dict['dqs_last']
-
-            self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-            #self.full_time = seconds/3600
-            #hours = seconds // 3600
-            #minutes = (seconds % 3600) // 60
-            #sec = seconds % 60
-            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.3f}'.format(self.full_time)
-            self.display_current_header()
+       
             self.nl_file = self.DESI_Log.nightlog_file
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
             if self.report_type == 'OS':
-                plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}".format(self.night)
-                self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
-                self.os_name_1.value = meta_dict['{}_1_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_1_lastname'.format(self.report_type.lower())]
-                self.os_name_2.value = meta_dict['{}_2_firstname'.format(self.report_type.lower())]+' '+meta_dict['{}_2_lastname'.format(self.report_type.lower())]
-                self.LO.value = meta_dict['LO_firstname']+' '+meta_dict['LO_lastname']
-                self.OA.value = meta_dict['OA_firstname']+' '+meta_dict['OA_lastname']
-                cont_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.contributer_file)
-                if os.path.exists(cont_file):
-                    cont_txt = ''
-                    f =  open(cont_file, "r")
-                    for line in f:
-                        cont_txt += line
-                    self.contributer_list.value = cont_txt
+                meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
+                if os.path.exists(meta_dict_file):
+                    try:
+                        meta_dict = json.load(open(meta_dict_file,'r'))
+                        plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}".format(self.night)
+                        self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
+                        self.os_name_1.value = meta_dict['os_1_firstname']+' '+meta_dict['os_1_lastname']
+                        self.os_name_2.value = meta_dict['os_2_firstname']+' '+meta_dict['os_2_lastname']
+                        self.dqs_name_1.value = meta_dict['dqs_1_firstname']+' '+meta_dict['dqs_1_lastname']
+                        self.dqs_name_2.value = meta_dict['dqs_2_firstname']+' '+meta_dict['dqs_2_lastname']
+                        self.LO_1.value = meta_dict['LO_firstname_1']+' '+meta_dict['LO_lastname_1']
+                        self.LO_2.value = meta_dict['LO_firstname_2']+' '+meta_dict['LO_lastname_2']
+                        self.OA.value = meta_dict['OA_firstname']+' '+meta_dict['OA_lastname']
+                        self.display_current_header()
+                    except Exception as e:
+                        self.connect_txt.text = 'Error with Meta Data File: {}'.format(e)
+                else:
+                    self.connect_txt.text = "Update Tonight's Log!"
+
+                contributer_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.contributer_file)
+                if os.path.exists(contributer_file):
+                    try:
+                        cont_txt = ''
+                        f =  open(contributer_file, "r")
+                        for line in f:
+                            cont_txt += line
+                        self.contributer_list.value = cont_txt
+                    except Exception as e:
+                        self.connect_txt.text = 'Error with Contributer File: {}'.format(e)
+
                 time_use_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.time_use)
                 if os.path.exists(time_use_file):
-                    df = pd.read_csv(time_use_file)
-                    data = df.iloc[0]
-                    self.summary_1.value = str(data['summary_1'])
-                    self.summary_2.value = str(data['summary_2'])
-                    self.obs_time.value =  str(data['obs_time'])
-                    self.test_time.value = str(data['test_time'])
-                    self.inst_loss_time.value = str(data['inst_loss'])
-                    self.weather_loss_time.value = str(data['weather_loss'])
-                    self.tel_loss_time.value = str(data['tel_loss'])
-                    self.total_time.text = 'Time Documented (hrs): %.2f' % float(data['total'])
+                    try:
+                        df = pd.read_csv(time_use_file)
+                        data = df.iloc[0]
+                        self.summary_1.value = str(data['summary_1'])
+                        self.summary_2.value = str(data['summary_2'])
+                        self.obs_time.value =  self._dec_to_hm(data['obs_time'])
+                        self.test_time.value = self._dec_to_hm(data['test_time'])
+                        self.inst_loss_time.value = self._dec_to_hm(data['inst_loss'])
+                        self.weather_loss_time.value = self._dec_to_hm(data['weather_loss'])
+                        self.tel_loss_time.value = self._dec_to_hm(data['tel_loss'])
+                        self.total_time.text = 'Time Documented (hrs): {}'.format(self._dec_to_hm(data['total']))
+                        self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
+                        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
+                    except Exception as e:
+                        self.milestone_alert.text = 'Issue with Time Use Data: {}'.format(e)
+ 
+                
+
             self.current_nl()
             self.get_exposure_list()
 
         else:
             self.connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(self.date_init.value)
 
-    def initialize_log(self):
+    def add_observer_info(self):
         """ Initialize Night Log with Input Date
         """
         self.get_night('init')
         meta = OrderedDict()
-        meta['LO_firstname'], meta['LO_lastname'] = self.LO.value.split(' ')[0], ' '.join(self.LO.value.split(' ')[1:])
-        meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
+        meta['LO_firstname_1'], meta['LO_lastname_1'] = self.LO_1.value.split(' ')[0], ' '.join(self.LO_1.value.split(' ')[1:])
+        meta['LO_firstname_2'], meta['LO_lastname_2'] = self.LO_2.value.split(' ')[0], ' '.join(self.LO_2.value.split(' ')[1:])
         meta['os_1_firstname'], meta['os_1_lastname'] = self.os_name_1.value.split(' ')[0], ' '.join(self.os_name_1.value.split(' ')[1:])
         meta['os_2_firstname'], meta['os_2_lastname'] = self.os_name_2.value.split(' ')[0], ' '.join(self.os_name_2.value.split(' ')[1:])
+        meta['dqs_1_firstname'], meta['dqs_1_lastname'] = self.dqs_name_1.value.split(' ')[0], ' '.join(self.dqs_name_1.value.split(' ')[1:])
+        meta['dqs_2_firstname'], meta['dqs_2_lastname'] = self.dqs_name_2.value.split(' ')[0], ' '.join(self.dqs_name_2.value.split(' ')[1:])
+        meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
+
 
         eph = sky_calendar()
-
         meta['time_sunset'] = self.get_strftime(eph['sunset'])
         meta['time_sunrise'] = self.get_strftime(eph['sunrise'])
         meta['time_moonrise'] = self.get_strftime(eph['moonrise'])
@@ -634,22 +665,14 @@ class Report():
         meta['dawn_12_deg'] = self.get_strftime(eph['dawn_nautical'])
 
 
-        self.full_time  = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-        #self.full_time = seconds/3600
-        #hours = seconds // 3600
-        #minutes = (seconds % 3600) // 60
-        #sec = seconds % 60
-        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {:.3f}'.format(self.full_time)
+        self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
+        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
 
-        self.DESI_Log.initializing()
         self.DESI_Log.get_started_os(meta)
 
-        self.connect_txt.text = 'Night Log is Initialized'
+        self.connect_txt.text = 'Night Log Observer Data is Updated'
         self.DESI_Log.write_intro()
         self.display_current_header()
-        self.current_nl()
-
-        self.update_nl_list()
 
 
     def display_current_header(self):
@@ -693,7 +716,9 @@ class Report():
             if len(exp_df.date_obs) >  0:
                 time = exp_df.date_obs.dt.tz_convert('US/Arizona')
                 exp_df['date_obs'] = time
+
                 self.explist_source.data = exp_df[['date_obs','id','tileid','program','sequence','flavor','exptime','airmass','seeing']].sort_values(by='id',ascending=False) 
+
                 exp_df = exp_df.sort_values(by='id')
                 exp_df.to_csv(self.DESI_Log.explist_file, index=False)
             else:
@@ -781,6 +806,7 @@ class Report():
             telem_data.seeing = exp_df.seeing
             telem_data.tput = exp_df.transpar
             telem_data.skylevel = exp_df.skylevel
+
         self.telem_source.data = telem_data
 
         if self.save_telem_plots:
@@ -934,16 +960,22 @@ class Report():
             if self.report_type == 'DQS':
                 if hasattr(self, 'img_upload_comments_dqs') and self.img_upload_comments_dqs.filename not in [None,'',np.nan,'nan']:
                     img_data = self.img_upload_comments_dqs.value.encode('utf-8')
-                    img_name = str(self.img_upload_comments_dqs.filename)
+                    input_name = os.path.splitext(str(self.img_upload_comments_dqs.filename))
+                    img_name = input_name[0] + '_{}.'.format(self.location) + input_name[1]
+                    self.img_comments_dqs.filename = None
             else:
                 if self.exp_comment.value not in [None, ''] and hasattr(self, 'img_upload_comments_os') and self.img_upload_comments_os.filename not in [None,'','nan',np.nan]:
                     img_data = self.img_upload_comments_os.value.encode('utf-8')
-                    img_name = str(self.img_upload_comments_os.filename)
+                    input_name = os.path.splitext(str(self.img_upload_comments_os.filename))
+                    img_name = input_name[0] + '_{}.'.format(self.location) + input_name[1]
+                    self.img_upload_comments_os.filename = None
 
         elif mode == 'problem':
             if hasattr(self, 'img_upload_problems') and self.img_upload_problems.filename not in [None, '',np.nan, 'nan']:
                 img_data = self.img_upload_problems.value.encode('utf-8')
-                img_name = str(self.img_upload_problems.filename)
+                input_name = os.path.splitext(str(self.img_upload_problems.filename))
+                img_name = input_name[0] + '_{}.'.format(self.location) + input_name[1]
+                self.img_upload_problems.filename = None
 
         self.image_location_on_server = f'http://desi-www.kpno.noao.edu:8090/{self.night}/images/{img_name}'
         width=400
@@ -958,36 +990,53 @@ class Report():
         if (self.report_type == 'Other') & (name in [None,' ','']):
                 self.prob_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
-            img_name, img_data, preview = self.image_uploaded('problem')
-            data = [self.report_type, self.get_time(self.prob_time.value.strip()), self.prob_input.value.strip(), self.prob_alarm.value.strip(),
-            self.prob_action.value.strip(), name]
-            self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
+            try:
+                if self.prob_time.value not in [None, 'None'," ",""]:
+                    note = 'Enter a time'
+                else:
+                    print(self.get_time(self.prob_time.value.strip()))
+                    img_name, img_data, preview = self.image_uploaded('problem')
+                    data = [self.report_type, self.get_time(self.prob_time.value.strip()), self.prob_input.value.strip(), self.prob_alarm.value.strip(),
+                    self.prob_action.value.strip(), name]
+                    self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
 
-            # Preview
-            if img_name not in [None,'',' ','nan']:
-                preview += "<br>"
-                preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
-                self.prob_alert.text = preview
-                self.img_upload_problems = FileInput(accept=".png")
-            else:
-                self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
-            self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+                # Preview
+                if img_name not in [None,'',' ','nan']:
+                    preview += "<br>"
+                    preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
+                    self.prob_alert.text = preview
+
+                else:
+                    self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
+                self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+            except Exception as e:
+                self.prob_alert.text = "Problem with you Input: {} - {}".format(note, e)
 
     def progress_add(self):
         if self.os_exp_option.active == 0:
             if self.exp_time.value not in [None, 'None'," ", ""]:
-                time = self.get_time(self.exp_time.value.strip())
-                comment = self.exp_comment.value.strip()
-                exp = None
+                try:
+                    time = self.get_time(self.exp_time.value.strip())
+                    comment = self.exp_comment.value.strip()
+                    exp = None
+                except Exception as e:
+                    self.exp_alert.text = 'There is something wrong with your input: {}'.format(e)
             else:
                 self.exp_alert.text = 'Fill in the time'
                 
 
         elif self.os_exp_option.active == 1:
             if self.exp_option.active == 0:
-                exp = int(self.exp_select.value)
+                try:
+                    exp = int(self.exp_select.value)
+                except Exception as e:
+                    self.exp_alert.text = "Problem with the Exposure you Selected: {}".format(e)
+
             elif self.exp_option.active ==1:
-                exp = int(self.exp_enter.value.strip())
+                try:
+                    exp = int(self.exp_enter.value.strip())
+                except Exception as e:
+                    self.exp_alert.text = "Problem with the Exposure you Entered: {}".format(e)
             comment = self.exp_comment.value.strip()
             time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
@@ -999,13 +1048,13 @@ class Report():
                 preview += "<br>"
                 preview += "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
                 self.exp_alert.text = preview
-                self.img_upload_comments_os=FileInput(accept=".png")
-            else:
-                self.exp_alert.text = 'Last Input was at {}'.format(datetime.datetime.now().strftime("%H:%M"))
-        except Exception as e:
-            self.exp_alert.text = 'Error with your input: {}'.format(e)
 
-        self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
+            else:
+                self.exp_alert.text = 'Last Input was made at {}'.format(datetime.datetime.now().strftime("%H:%M"))
+            self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
+        except Exception as e:
+            self.exp_alert.text = 'Error with your Input: {}'.format(e)
+
     
     def comment_add(self):
         if self.your_name.value in [None,' ','']:
@@ -1013,59 +1062,71 @@ class Report():
         else:
             if self.os_exp_option.active == 0:
                 if self.exp_time.value not in [None, 'None'," ", ""]:
-                    time = self.get_time(self.exp_time.value.strip())
-                    comment = self.exp_comment.value.strip()
-                    exp = None
+                    try:
+                        time = self.get_time(self.exp_time.value.strip())
+                        comment = self.exp_comment.value.strip()
+                        exp = None
+                    except Exception as e:
+                        self.exp_alert.text = self.exp_alert.text = 'There is something wrong with your input: {}'.format(e)
                 else:
                     self.exp_alert.text = 'Fill in the time'
             elif self.os_exp_option.active == 1:
                 if self.exp_option.active == 0:
                     try:
                         exp = int(self.exp_select.value)
-                    except:
-                        self.exp_alert.text = 'Check your exposure input'
+                    except Exception as e:
+                        self.exp_alert.text = "Problem with the Exposure you Selected: {}".format(e)
                 elif self.exp_option.active ==1:
                     try:
                         exp = int(self.exp_enter.value.strip())
-                    except:
-                        self.exp_alert.text = 'Check your exposure input'
+                    except Exception as e:
+                        self.exp_alert.text = "Problem with the Exposure you Entered: {}".format(e)
                 comment = self.exp_comment.value.strip()
                 time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
+            try:
+                img_name, img_data, preview = self.image_uploaded('comment')
+                data = [time, comment, exp, self.your_name.value.strip()]
+                self.DESI_Log.add_input(data, 'other_exp',img_name=img_name, img_data=img_data)
 
+                if img_name is not None:
+                    preview += "<br>"
+                    preview += "A comment was added at {}".format(self.exp_time.value.strip())
+                    self.exp_alert.text = preview
+                else:
+                    self.exp_alert.text = "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
+                self.clear_input([self.exp_time, self.exp_comment])
+            except Exception as e:
+                self.exp_alert.text = 'Error with your Input: {}'.format(e)
+
+    def exp_add(self):
+        quality = self.quality_list[self.quality_btns.active]
+        if self.exp_option.active == 0:
+            try:
+                exp_val = int(self.exp_select.value)
+            except Exception as e:
+                self.exp_alert.text = "Problem with the Exposure you Selected: {}".format(e)
+        elif self.exp_option.active ==1:
+            try:
+                exp_val = int(self.exp_enter.value.strip())
+            except Exception as e:
+                self.exp_alert.text = "Problem with the Exposure you Entered: {}".format(e)
+        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
+
+        try:
             img_name, img_data, preview = self.image_uploaded('comment')
-            data = [time, comment, exp, self.your_name.value.strip()]
-            self.DESI_Log.add_input(data, 'other_exp',img_name=img_name, img_data=img_data)
+            data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
+            self.DESI_Log.add_input(data, 'dqs_exp',img_name=img_name, img_data=img_data)
 
             if img_name is not None:
                 preview += "<br>"
                 preview += "A comment was added at {}".format(self.exp_time.value.strip())
                 self.exp_alert.text = preview
-                self.img_upload_comments=FileInput(accept=".png")
             else:
-                self.exp_alert.text = "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
-            self.clear_input([self.exp_time, self.exp_comment])
-
-    def exp_add(self):
-        quality = self.quality_list[self.quality_btns.active]
-        if self.exp_option.active == 0:
-            exp_val = int(self.exp_select.value)
-        elif self.exp_option.active ==1:
-            exp_val = int(self.exp_enter.value.strip())
-        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
-
-        img_name, img_data, preview = self.image_uploaded('comment')
-        data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
-        self.DESI_Log.add_input(data, 'dqs_exp',img_name=img_name, img_data=img_data)
-
-        if img_name is not None:
-            preview += "<br>"
-            preview += "A comment was added at {}".format(self.exp_time.value.strip())
-            self.exp_alert.text = preview
-            self.img_upload_comments_dqs=FileInput(accept=".png")
-        else:
-            self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now)
-        self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
+                self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now)
+            self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
+        except Exception as e:
+            self.exp_alert.text = 'Error with your Input: {}'.format(e)
 
     def plan_load(self):
         b, item = self.DESI_Log.load_index(self.plan_order.value, 'plan')
@@ -1125,36 +1186,33 @@ class Report():
         cont_list = self.contributer_list.value
         self.DESI_Log.add_contributer_list(cont_list)
 
-    # def time_to_decimal(self,value):
-    #     try:
-    #         dt = datetime.datetime.strptime(value,'%H:%M')
-    #         hours = dt.hours
-    #         mi
 
     def add_summary(self):
         now = datetime.datetime.now().strftime("%H:%M")
         data = OrderedDict()
         data['summary_1'] = self.summary_1.value
         data['summary_2'] = self.summary_2.value
-        data['obs_time'] = self.obs_time.value
-        data['test_time'] = self.test_time.value
-        data['inst_loss'] = self.inst_loss_time.value
-        data['weather_loss'] = self.weather_loss_time.value
-        data['tel_loss'] = self.tel_loss_time.value
-        data['18deg'] = self.full_time
+        time_items = OrderedDict({'obs_time':self.obs_time,'test_time':self.test_time,'inst_loss':self.inst_loss_time,
+            'weather_loss':self.weather_loss_time,'tel_loss':self.tel_loss_time})
 
         total = 0
-        for i in ['obs_time','test_time','inst_loss','weather_loss','tel_loss']:
+        for name, item in time_items.items():
             try:
-                if data[i] not in ['',' ','nan',np.nan]:
-                    total += float(data[i])
-                else:
-                    data[i] = 0
-                    total+=0
+                data[name] = float(item.value)
+                total += float(item.value)
             except:
-                total += 0
+                try:
+                    dec = self._hm_to_dec(str(item.value))
+                    data[name] = dec
+                    total += float(dec)
+                except:
+                    data[name] = 0
+                    total += 0
+
+        data['18deg'] = self.full_time
+
         data['total'] = total
-        self.total_time.text = 'Time Documented (hrs): %.2f' % total
+        self.total_time.text = 'Time Documented (hrs): {}'.format(str(self._dec_to_hm(total)))
         self.DESI_Log.add_summary(data)
         self.milestone_alert.text = 'Summary Information Entered at {}'.format(now)
 

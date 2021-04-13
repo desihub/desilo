@@ -9,6 +9,7 @@ import json
 import pandas as pd
 import numpy as np
 from datetime import datetime,timezone
+from collections import OrderedDict
 
 from astropy.time import TimezoneInfo
 import astropy.units.si as u
@@ -114,9 +115,11 @@ class NightLog(object):
         """
             Operations Scientist lists the personal present, ephemerids and weather conditions at sunset.
         """
-        items = ['LO_firstname','LO_lastname','OA_firstname','OA_lastname','os_1_firstname','os_1_lastname',
-        'os_2_firstname','os_2_lastname','time_sunset','time_sunrise','time_moonrise','time_moonset','illumination',
-        'dusk_18_deg','dawn_18_deg','dqs_1','dqs_last']
+        items = ['LO_firstname_1','LO_lastname_1','LO_firstname_2','LO_lastname_2','OA_firstname','OA_lastname',
+        'os_1_firstname','os_1_lastname','os_2_firstname','os_2_lastname',
+        'dqs_1_firstname','dqs_1_lastname','dqs_2_firstname','dqs_2_lastname',
+        'time_sunset','time_sunrise','time_moonrise','time_moonset','illumination',
+        'dusk_18_deg','dawn_18_deg','dusk_12_deg','dawn_12_deg','dqs_1','dqs_last']
         meta_dict = {}
         for item in items:
             try:
@@ -134,18 +137,18 @@ class NightLog(object):
         else:
             return filen
 
-    def add_dqs_observer(self, dqs_firstname, dqs_lastname):
-        filen = self._open_kpno_file_first(self.meta_json)
-        if filen is not None:
-            with open(filen, 'r') as f:
-                meta_dict = json.load(f)
-                meta_dict['dqs_1'] = dqs_firstname
-                meta_dict['dqs_last'] = dqs_lastname
-                os.remove(self.meta_json)
-                with open(self.meta_json, 'w') as ff:
-                    json.dump(meta_dict, ff)
+    # def add_dqs_observer(self, dqs_firstname, dqs_lastname):
+    #     filen = self._open_kpno_file_first(self.meta_json)
+    #     if filen is not None:
+    #         with open(filen, 'r') as f:
+    #             meta_dict = json.load(f)
+    #             meta_dict['dqs_1'] = dqs_firstname
+    #             meta_dict['dqs_last'] = dqs_lastname
+    #             os.remove(self.meta_json)
+    #             with open(self.meta_json, 'w') as ff:
+    #                 json.dump(meta_dict, ff)
 
-        self.write_intro()
+    #     self.write_intro()
 
 
     def _combine_compare_csv_files(self, filen):
@@ -330,7 +333,10 @@ class NightLog(object):
                     filen.write("{}".format(row['Problem']))
                 if not pd.isna(row['alarm_id']): # not in [float(np.nan), 'nan',None, 'None', " ", ""]:
                     if str(row['alarm_id']) not in ['nan','None','',' ']:
-                        filen.write('; AlarmID: {}'.format(int(row['alarm_id'])))
+                        try:
+                            filen.write('; AlarmID: {}'.format(int(row['alarm_id'])))
+                        except:
+                            filen.write('; AlarmID: {}'.format(str(row['alarm_id'])))
                 if not pd.isna(row['action']):
                     if str(row['action']) not in ['nan','None', " ", ""]:
                         filen.write('; Action: {}'.format(row['action']))
@@ -395,7 +401,10 @@ class NightLog(object):
             if len(os_) > 0:
                 os_ = os_.iloc[0]
                 if str(os_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
-                    file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
+                    try:
+                        file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
+                    except:
+                        file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), str(os_['Exp_Start']), os_['Comment']))
 
                     if str(os_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                         self._write_image_tag(file, os_['img_name'])
@@ -417,14 +426,21 @@ class NightLog(object):
                         this_exp = exp_df[exp_df.id == int(os_['Exp_Start'])]
                         this_exp = this_exp.fillna(value=np.nan)
                         this_exp = this_exp.iloc[0]
-                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass'] #, this_exp['etc']['seeing'], this_exp['etc']['transp']
-                        for x in [tile, exptime, airmass]:
-                            try:
-                                x = float(x)
-                            except:
-                                x = np.nan
-                        file.write("Tile {:.1f}, Exptime: {:.2f}, Airmass: {:.2f}, Sequence: {}, Flavor: {}, Program {}\n".format(float(tile), float(exptime),
-                    float(airmass), this_exp['sequence'], this_exp['flavor'], this_exp['program']))
+                        try:
+                            file.write(f"Tile {int(this_exp['tileid'])}, ")
+                        except:
+                            pass
+                        try:
+                            if not pd.isna(float(this_exp['exptime'])):
+                                file.write("Exptime: {:.2f}, ".format(float(this_exp['exptime'])))
+                        except:
+                            pass
+                        try:
+                            if not pd.isna(float(this_exp['airmass'])):
+                                file.write("Airmass: {:.2f}, ".format(float(this_exp['airmass'])))
+                        except:
+                            pass
+                        file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program: {this_exp['program']}\n")
 
                     except:
                         file.write("\n")
@@ -438,7 +454,10 @@ class NightLog(object):
             else:
                 if len(dqs_) > 0:
                     dqs_ = dqs_.iloc[0]
-                    file.write("- {} Exp. {} := *Data Quality:* {}, {}\n".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                    try:
+                        file.write("- {} Exp. {} := *Data Quality:* {}, {}\n".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                    except:
+                        file.write("- {} Exp. {} := *Data Quality:* {}, {}\n".format(self.write_time(dqs_['Time']), str(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
 
                     if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                             self._write_image_tag(file, dqs_['img_name'])
@@ -455,14 +474,21 @@ class NightLog(object):
                         this_exp = exp_df[exp_df.id == dqs_['Exp_Start']]
                         this_exp = this_exp.fillna(value=np.nan)
                         this_exp = this_exp.iloc[0]
-                        tile, exptime, airmass = this_exp['tileid'], this_exp['exptime'], this_exp['airmass']
-                        for x in [tile, exptime, airmass]:
-                            try:
-                                x = float(x)
-                            except:
-                                x = np.nan
-                        file.write("Tile: %.1f, Exptime: %.2f, Airmass: %.2f, Sequence: %s, Flavor: %s, Program: %s\n" %
-                        (tile,exptime,airmass,this_exp['sequence'],this_exp['flavor'],this_exp['program']))
+                        try:
+                            file.write(f"Tile {int(this_exp['tileid'])}, ")
+                        except:
+                            pass
+                        try:
+                            if not pd.isna(float(this_exp['exptime'])):
+                                file.write("Exptime: {:.2f}, ".format(float(this_exp['exptime'])))
+                        except:
+                            pass
+                        try:
+                            if not pd.isna(float(this_exp['airmass'])):
+                                file.write("Airmass: {:.2f}, ".format(float(this_exp['airmass'])))
+                        except:
+                            pass
+                        file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program: {this_exp['program']}\n")
                     except:
                         file.write("\n")
 
@@ -470,7 +496,10 @@ class NightLog(object):
                     if len(other_) > 0:
                         other_ = other_.iloc[0]
                         if str(other_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
-                            file.write("- {} Exp: {}:= _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
+                            try:
+                                file.write("- {} Exp: {}:= _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
+                            except:
+                                file.write("- {} Exp: {}:= _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), str(other_['Exp_Start']), other_['Comment'], other_['Name']))
                         else:
                             file.write("- {} := _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
                         if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
@@ -560,9 +589,18 @@ class NightLog(object):
         df.to_csv(self.time_use,index=False)
         df = df.fillna(value=0)
         d = df.iloc[0]
-        obs_time, test_time, inst_loss, weather_loss, tel_loss, total, deg_18 = d['obs_time'], d['test_time'], d['inst_loss'], d['weather_loss'], d['tel_loss'], d['total'], d['18deg']
 
+        obs_items  = OrderedDict({'Observing':d['obs_time'],'Testing':d['test_time'],'Loss to Instrument':d['inst_loss'],'Loss to Weather':d['weather_loss'],'Loss to Telescope':d['tel_loss'],'Total Recorded':d['total'],'Time between 18 deg. twilight':d['18deg']})
         file = open(self.summary_file, 'w')
+        file.write("Time Use (hrs):\n")
+        for name, item in obs_items.items():
+            if not pd.isna(item):
+                try:
+                    file.write("* {}: {:.2f}\n".format(name, float(item)))
+                except Exception as e:
+                    print(e)
+            else:
+                file.write("* {}: 0.0\n".format(name))
 
         if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_1'])
@@ -570,10 +608,7 @@ class NightLog(object):
         if d['summary_2'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_2'])
             file.write("\n")
-        file.write("Time Use (hrs):")
-        file.write(" Observing: {:.2f}, Testing: {:.2f}, Loss to Instrument: {:.2f}, Loss to Weather: {:.2f}, Loss to Telescope: {:.2f}, Total: {:.2f}, Time between 18 deg. twilight: {:.2f}\n".format(float(obs_time), float(test_time), float(inst_loss), float(weather_loss), float(tel_loss), float(total), float(deg_18)))
-
-        file.write("\n")
+        
         file.close()
 
     def write_file(self, the_path, header,file_nl):
@@ -594,15 +629,30 @@ class NightLog(object):
         try:
             f = self._open_kpno_file_first(self.meta_json)
             meta_dict = json.load(open(f,'r'))
-            file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
-            file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
-            file_intro.write("*Observer (DQS)*: {} {}\n".format(meta_dict['dqs_1'],meta_dict['dqs_last']))
-            file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['LO_firstname'],meta_dict['LO_lastname']))
+
+            if (meta_dict['LO_lastname_2'] == meta_dict['LO_lastname_1']) | (meta_dict['LO_firstname_2'] == 'None'):
+                file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
+            else:
+                file_intro.write("*Lead Observer 1*: {} {}\n".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
+                file_intro.write("*Lead Observer 2*: {} {}\n".format(meta_dict['LO_firstname_2'],meta_dict['LO_lastname_2']))
+            if (meta_dict['os_2_lastname'] == meta_dict['os_1_lastname']) | (meta_dict['os_2_firstname'] == None):
+                file_intro.write("*Observing Scientist (OS)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
+            else:
+                file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
+                file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
+            if (meta_dict['dqs_2_lastname'] == meta_dict['dqs_1_lastname']) | (meta_dict['dqs_2_firstname'] == None):
+                file_intro.write("*Data Quality Scientist (DQS)*: {} {}\n".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
+            else:
+                file_intro.write("*Observer (DQS-1)*: {} {}\n".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
+                file_intro.write("*Observer (DQS-2)*: {} {}\n".format(meta_dict['dqs_2_firstname'],meta_dict['dqs_2_lastname']))
+
             file_intro.write("*Telescope Operator*: {} {}\n".format(meta_dict['OA_firstname'],meta_dict['OA_lastname']))
             file_intro.write("*Ephemerides in local time [UTC]*:\n")
             file_intro.write("* sunset: {}\n".format(self.write_time(meta_dict['time_sunset'])))
+            file_intro.write("* 12(o) twilight ends: {}\n".format(self.write_time(meta_dict['dusk_12_deg'])))
             file_intro.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['dusk_18_deg'])))
             file_intro.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['dawn_18_deg'])))
+            file_intro.write("* 12(o) twilight starts: {}\n".format(self.write_time(meta_dict['dawn_12_deg'])))
             file_intro.write("* sunrise: {}\n".format(self.write_time(meta_dict['time_sunrise'])))
             file_intro.write("* moonrise: {}\n".format(self.write_time(meta_dict['time_moonrise'])))
             file_intro.write("* moonset: {}\n".format(self.write_time(meta_dict['time_moonset'])))
@@ -636,7 +686,7 @@ class NightLog(object):
                     file_nl.write("\n")
                     file_nl.write("\n")
         except Exception as e:
-            print("Exception with nightlog header: {}".format(e))
+            print("Nightlog Header has not been created: {}".format(e))
 
         #Contributers
         self.write_file(self._open_kpno_file_first(self.contributer_file), "h3. Contributers\n", file_nl)
