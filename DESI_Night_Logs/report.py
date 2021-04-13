@@ -984,20 +984,26 @@ class Report():
         if (self.report_type == 'Other') & (name in [None,' ','']):
                 self.prob_alert.text = 'You need to enter your name on first page before submitting a comment'
         else:
-            img_name, img_data, preview = self.image_uploaded('problem')
-            data = [self.report_type, self.get_time(self.prob_time.value.strip()), self.prob_input.value.strip(), self.prob_alarm.value.strip(),
-            self.prob_action.value.strip(), name]
-            self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
+            try:
+                if self.prob_time.value not in [None, 'None'," ",""]:
+                    note = 'Enter a time'
+                else:
+                    img_name, img_data, preview = self.image_uploaded('problem')
+                    data = [self.report_type, self.get_time(self.prob_time.value.strip()), self.prob_input.value.strip(), self.prob_alarm.value.strip(),
+                    self.prob_action.value.strip(), name]
+                    self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
 
-            # Preview
-            if img_name not in [None,'',' ','nan']:
-                preview += "<br>"
-                preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
-                self.prob_alert.text = preview
-                self.img_upload_problems = FileInput(accept=".png")
-            else:
-                self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
-            self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+                # Preview
+                if img_name not in [None,'',' ','nan']:
+                    preview += "<br>"
+                    preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
+                    self.prob_alert.text = preview
+                    self.img_upload_problems = FileInput(accept=".png")
+                else:
+                    self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
+                self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+            except Exception as e:
+                self.prob_alert.text = "Problem with you Input: {} - {}".format(note, e)
 
     def progress_add(self):
         if self.os_exp_option.active == 0:
