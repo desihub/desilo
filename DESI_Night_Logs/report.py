@@ -551,6 +551,7 @@ class Report():
             date = datetime.datetime.now().date()
         self.night = date.strftime("%Y%m%d")
         self.DESI_Log = nl.NightLog(self.night, self.location)
+        print('Obsday is {}'.format(self.night))
 
     def _dec_to_hm(self,hours):
         #dec in seconds
@@ -642,7 +643,7 @@ class Report():
     def add_observer_info(self):
         """ Initialize Night Log with Input Date
         """
-        self.get_night('init')
+        #self.get_night('init')
         meta = OrderedDict()
         meta['LO_firstname_1'], meta['LO_lastname_1'] = self.LO_1.value.split(' ')[0], ' '.join(self.LO_1.value.split(' ')[1:])
         meta['LO_firstname_2'], meta['LO_lastname_2'] = self.LO_2.value.split(' ')[0], ' '.join(self.LO_2.value.split(' ')[1:])
@@ -1007,7 +1008,9 @@ class Report():
 
                     else:
                         self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
-                    self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+
+                self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+
             except Exception as e:
                 self.prob_alert.text = "Problem with your Input: {} - {}".format(note, e)
 
