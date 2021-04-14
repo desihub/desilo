@@ -304,11 +304,15 @@ class NightLog(object):
         """
         df = self._combine_compare_csv_files(self.weather)
         if df is not None:
-            for index, row in df.iterrows():
-                filen.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['desc']))
-                filen.write("; Temp: {:.2f}, Wind Speed: {:.2f}, Humidity: {:.2f}".format(float(row['temp']), float(row['wind']), float(row['humidity'])))
-                filen.write(", Seeing: {:.2f}, Tput: {:.2f}, Sky: {:.2f}".format(float(row['seeing']), float(row['tput']), float(row['skylevel'])))
-                filen.write("\n")
+            df = df.rename(columns={'desc':'Description','temp':'Temp.','wind':'Wind Speed (mph)','humidity':'Humidity','seeing':'Seeing','tput':'Transparency','skylevel':'SkyLevel'})
+            df_list = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-')
+            for line in df_list:
+                filen.write(line)
+            #for index, row in df.iterrows():
+            #    filen.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['desc']))
+            #    filen.write("; Temp: {:.2f}, Wind Speed: {:.2f}, Humidity: {:.2f}".format(float(row['temp']), float(row['wind']), float(row['humidity'])))
+            #    filen.write(", Seeing: {:.2f}, Tput: {:.2f}, Sky: {:.2f}".format(float(row['seeing']), float(row['tput']), float(row['skylevel'])))
+            #    filen.write("\n")
 
     def write_problem(self, filen):
         df_os = self._combine_compare_csv_files(self.os_pb)
@@ -363,15 +367,14 @@ class NightLog(object):
         for f in [self.os_exp, self.dqs_exp, self.other_exp]:
             self.check_exp_times(f)
 
-        os_, dqs_, other_, prob_ = None
         os_df = self._combine_compare_csv_files(self.os_exp)
         dqs_df = self._combine_compare_csv_files(self.dqs_exp)
         other_df = self._combine_compare_csv_files(self.other_exp)
 
-        df_ = {os_:os_df,dqs_:dqs_df,other_:other_df,prob_:self.prob_df}
+        df_full = {'os':os_df,'dqs':dqs_df,'other':other_df,'prob':self.prob_df}
 
         times = []
-        for df in df_.values():
+        for df in df_full.values():
             if df is not None:
                 tt = list(df.Time)
                 for t in tt:
@@ -379,17 +382,17 @@ class NightLog(object):
                         times.append(t)
         times = np.unique(times)
         #times = np.unique([x.Time for x in np.hstack([os_df, dqs_df, other_df]) if x is not None])
-
         for time in times:
-            for x, d in df_.items():
+            df_ = {}
+            for x, d in df_full.items():
                 if d is not None:
-                    x = d[d.Time == time]
+                    df_[x] = d[d.Time == time]
                 else:
-                    x = []
-
+                    df_[x] = []
+            #print(df_)
             got_exp = None
-            if len(os_) > 0:
-                os_ = os_.iloc[0]
+            if len(df_['os']) > 0:
+                os_ = df_['os'].iloc[0]
                 if str(os_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
                     got_exp = str(os_['Exp_Start'])
                     try:
@@ -403,8 +406,8 @@ class NightLog(object):
                         self._write_image_tag(file, os_['img_name'])
                         file.write('\n')
 
-            if len(dqs_) > 0:
-                dqs_ = dqs_.iloc[0]
+            if len(df_['dqs']) > 0:
+                dqs_ = df_['dqs'].iloc[0]
                 if got_exp is not None:
                     file.write(f"*Data Quality:* {dqs_['Quality']}; {dqs_['Comment']}\n")
                 else:
@@ -418,8 +421,8 @@ class NightLog(object):
                     self._write_image_tag(file, dqs_['img_name'])
                     file.write('\n')
 
-            if len(other_) > 0:
-                other_ = other_.iloc[0]
+            if len(df_['other']) > 0:
+                other_ = df_['other'].iloc[0]
                 if got_exp is not None:
                     file.write("_Comment:_ {} ({})\n".format(other_['Comment'], other_['Name']))
                 else:
@@ -436,25 +439,25 @@ class NightLog(object):
                     self._write_image_tag(file, other_['img_name'])
                     file.write('\n')
 
-            if len(prob_) > 0:
-                prob_ = prob_.iloc[0]
-                filen.write("- {} := ".format(self.write_time(prob_['Time'])))
+            if len(df_['prob']) > 0:
+                prob_ = df_['prob'].iloc[0]
+                file.write("- {} := ".format(self.write_time(prob_['Time'])))
                 if not pd.isna(prob_['Problem']): # not in [np.nan, 'nan',None, 'None', " ", ""]:
-                    filen.write("{}".format(prob_['Problem']))
+                    file.write("{}".format(prob_['Problem']))
                 if not pd.isna(prob_['alarm_id']): # not in [float(np.nan), 'nan',None, 'None', " ", ""]:
                     if str(prob_['alarm_id']) not in ['nan','None','',' ']:
                         try:
-                            filen.write('; AlarmID: {}'.format(int(prob_['alarm_id'])))
+                            file.write('; AlarmID: {}'.format(int(prob_['alarm_id'])))
                         except:
-                            filen.write('; AlarmID: {}'.format(str(prob_['alarm_id'])))
+                            file.write('; AlarmID: {}'.format(str(prob_['alarm_id'])))
                 if not pd.isna(prob_['action']):
                     if str(prob_['action']) not in ['nan','None', " ", ""]:
-                        filen.write('; Action: {}'.format(prob_['action']))
+                        file.write('; Action: {}'.format(prob_['action']))
                 if prob_['user'] == 'Other':
-                    filen.write(' ({})'.format(prob_['name']))
+                    file.write(' ({})'.format(prob_['name']))
                 if str(prob_['img_name']) not in [None,np.nan,'nan','',' ']:
-                    self._write_image_tag(filen, prob_['img_name'])
-                filen.write('\n')
+                    self._write_image_tag(file, prob_['img_name'])
+                file.write('\n')
 
             if got_exp is not None:
                 try:
@@ -664,13 +667,10 @@ class NightLog(object):
                     file_nl.write("\n")
         except Exception as e:
             print("Nightlog Header has not been created: {}".format(e))
-
         #Contributers
         self.write_file(self._open_kpno_file_first(self.contributer_file), "h3. Contributers\n", file_nl)
-
         #Night Summary
         self.write_file(self._open_kpno_file_first(self.summary_file), "h3. Night Summary\n", file_nl)
-
         #Plan for the night
         file_nl.write("\n")
         file_nl.write("\n")
@@ -680,7 +680,6 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("Main items are listed below:\n")
         self.write_plan(file_nl)
-
         #Milestones/Accomplishments
         file_nl.write("\n")
         file_nl.write("\n")
@@ -688,13 +687,11 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("\n")
         self.write_milestone(file_nl)
-
         #Problems
         file_nl.write("\n")
         file_nl.write("\n")
         file_nl.write("h3. Problems and Operations Issues\n")
         self.write_problem(file_nl)
-
         #Weather
         file_nl.write("\n")
         file_nl.write("\n")
@@ -702,7 +699,6 @@ class NightLog(object):
         self.write_weather(file_nl)
         file_nl.write("\n")
         file_nl.write("\n")
-
         #Checklists
         file_nl.write("\n")
         file_nl.write("\n")
@@ -710,7 +706,6 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("\n")
         self.write_checklist(file_nl)
-
         #Nightly Progress
         file_nl.write("h3. Details on the Night Progress\n")
         file_nl.write("\n")
