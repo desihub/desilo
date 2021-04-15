@@ -805,7 +805,13 @@ class Report():
             telem_data.airmass = exp_df.airmass
             telem_data.exptime = exp_df.exptime
             telem_data.seeing = exp_df.seeing
-            telem_data.tput = exp_df.transpar
+            tput = []
+            for x in exp_df['etc']:
+               if x is not None:
+                   tput.append(x['transp'])
+               else:
+                   tput.append(None)
+            telem_data.tput = tput #exp_df['etc']['transp']
             telem_data.skylevel = exp_df.skylevel
 
         self.telem_source.data = telem_data
@@ -816,7 +822,7 @@ class Report():
             ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','mirror_temp'), s=5, label='mirror temp')    
             ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','truss_temp'), s=5, label='truss temp')  
             ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','air_temp'), s=5, label='air temp') 
-            ax1.set_ylabel("Telescop Temperature (C)")
+            ax1.set_ylabel("Telescope Temperature (C)")
             ax1.legend()
             ax1.grid(True)
             ax1.tick_params(labelbottom=False)
