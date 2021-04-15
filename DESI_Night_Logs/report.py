@@ -1014,7 +1014,9 @@ class Report():
 
                     else:
                         self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
+
                 self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+
             except Exception as e:
                 self.prob_alert.text = "Problem with your Input: {} - {}".format(note, e)
 
