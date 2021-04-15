@@ -17,7 +17,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-from bokeh.io import curdoc  # , output_file, save
+from bokeh.io import curdoc, save, export_png  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, RadioGroup,Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup, DateFormatter)
 from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
@@ -39,7 +39,7 @@ sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
 #os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
-#os.environ['NW_DIR'] = '/exposures/nightwatch/'
+os.environ['NW_DIR'] = '/exposures/nightwatch/'
 
 #os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
 #os.environ['NW_DIR'] = '/exposures/nightwatch/'
@@ -388,27 +388,28 @@ class Report():
         self.telem_source = ColumnDataSource(telem_data)
 
         plot_tools = 'pan,wheel_zoom,lasso_select,reset,undo,save'
-        p1 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Temp (C)',x_axis_type="datetime", tools=plot_tools)
-        p2 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=p1.x_range, y_axis_label='Humidity (%)', x_axis_type="datetime",tools=plot_tools)
-        p3 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=p1.x_range, y_axis_label='Wind Speed (mph)', x_axis_type="datetime",tools=plot_tools)
-        p4 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=p1.x_range, y_axis_label='Airmass', x_axis_type="datetime",tools=plot_tools)
-        p5 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=p1.x_range, y_axis_label='Exptime (sec)', x_axis_type="datetime",tools=plot_tools)
-        p6 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Seeing (arcsec)', tools=plot_tools)
-        p7 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Transparency', tools=plot_tools, x_range = p6.x_range)
-        p8 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Sky Level', tools=plot_tools, x_range=p6.x_range)
+        self.p1 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Temp (C)',x_axis_type="datetime", tools=plot_tools)
+        self.p2 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=self.p1.x_range, y_axis_label='Humidity (%)', x_axis_type="datetime",tools=plot_tools)
+        self.p3 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=self.p1.x_range, y_axis_label='Wind Speed (mph)', x_axis_type="datetime",tools=plot_tools)
+        self.p4 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=self.p1.x_range, y_axis_label='Airmass', x_axis_type="datetime",tools=plot_tools)
+        self.p5 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=self.p1.x_range, y_axis_label='Exptime (sec)', x_axis_type="datetime",tools=plot_tools)
+        self.p6 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Seeing (arcsec)', tools=plot_tools)
+        self.p7 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Transparency', tools=plot_tools, x_range = self.p6.x_range)
+        self.p8 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Sky Level', tools=plot_tools, x_range=self.p6.x_range)
 
-        p1.circle(x = 'time',y='mirror_temp',source=self.telem_source,color='orange', size=10, alpha=0.5) #
-        p1.circle(x = 'time',y='truss_temp',source=self.telem_source, size=10, alpha=0.5, ) #legend_label = 'Truss'
-        p1.circle(x = 'time',y='air_temp',source=self.telem_source, color='green', size=10, alpha=0.5) #, legend_label = 'Air'
-        p1.legend.location = "top_right"
+        self.p1.circle(x = 'time',y='mirror_temp',source=self.telem_source,color='orange', size=10, alpha=0.5) #
+        self.p1.circle(x = 'time',y='truss_temp',source=self.telem_source, size=10, alpha=0.5, ) #legend_label = 'Truss'
+        self.p1.circle(x = 'time',y='air_temp',source=self.telem_source, color='green', size=10, alpha=0.5) #, legend_label = 'Air'
+        self.p1.legend.location = "top_right"
 
-        p2.circle(x = 'time',y='humidity',source=self.telem_source, size=10, alpha=0.5)
-        p3.circle(x = 'time',y='wind_speed',source=self.telem_source, size=10, alpha=0.5)
-        p4.circle(x = 'time',y='airmass',source=self.telem_source, size=10, alpha=0.5)
-        p5.circle(x = 'time',y='exptime',source=self.telem_source, size=10, alpha=0.5)
-        p6.circle(x = 'exp',y='seeing',source=self.telem_source, size=10, alpha=0.5)
-        p7.circle(x = 'exp',y='tput',source=self.telem_source, size=10, alpha=0.5)
-        p8.circle(x = 'exp',y='skylevel',source=self.telem_source, size=10, alpha=0.5)
+        self.p2.circle(x = 'time',y='humidity',source=self.telem_source, size=10, alpha=0.5)
+        self.p3.circle(x = 'time',y='wind_speed',source=self.telem_source, size=10, alpha=0.5)
+        self.p4.circle(x = 'time',y='airmass',source=self.telem_source, size=10, alpha=0.5)
+        self.p5.circle(x = 'time',y='exptime',source=self.telem_source, size=10, alpha=0.5)
+        self.p6.circle(x = 'exp',y='seeing',source=self.telem_source, size=10, alpha=0.5)
+        self.p7.circle(x = 'exp',y='tput',source=self.telem_source, size=10, alpha=0.5)
+        self.p8.circle(x = 'exp',y='skylevel',source=self.telem_source, size=10, alpha=0.5)
+        self.bk_plots = column(self.p1, self.p2, self.p3, self.p4, self.p5, self.p6, self.p7, self.p8)
 
         self.weather_desc = TextInput(title='Weather Description', placeholder='description', width=500)
         self.weather_btn = Button(label='Add Weather Description', css_classes=['add_button'], width=100)
@@ -423,14 +424,14 @@ class Report():
                             self.weather_alert,
                             self.weather_table,
                             self.plots_subtitle,
-                            p1,p2,p3,p4,p5,p6,p7,p8], width=1000)
+                            self.bk_plots], width=1000)
         else:
             weather_layout = layout([self.buffer,self.title,
                 self.weather_subtitle,
                 self.weather_inst,
                 self.weather_table,
                 self.plots_subtitle,
-                p1,p2,p3,p4,p5,p6,p7,p8], width=1000)
+                self.bk_plots], width=1000)
         self.weather_tab = Panel(child=weather_layout, title="Observing Conditions")
 
     def get_checklist_layout(self):
@@ -805,11 +806,13 @@ class Report():
             telem_data.airmass = exp_df.airmass
             telem_data.exptime = exp_df.exptime
             telem_data.seeing = exp_df.seeing
-            telem_data.tput = exp_df.transpar
+            telem_data.tput = exp_df['etc']['transp']
             telem_data.skylevel = exp_df.skylevel
 
         self.telem_source.data = telem_data
-
+        print('here')
+        export_png(self.bk_plots)
+        print('hhhh')
         if self.save_telem_plots:
             fig = plt.figure(figsize=(8,20))
             ax1 = fig.add_subplot(8,1,1)
@@ -852,6 +855,7 @@ class Report():
             ax6.tick_params(labelbottom=False)
 
             ax7 = fig.add_subplot(8,1,7,sharex=ax1)
+            tput = 
             ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
             ax7.set_ylabel("Transparency (%)")
             ax7.grid(True)
