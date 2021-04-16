@@ -178,6 +178,7 @@ class Report():
         self.plan_btn = Button(label='Update', css_classes=['add_button'], width=75)
         self.plan_new_btn = Button(label='Add New', css_classes=['add_button'])
         self.plan_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.plan_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
         self.plan_alert = Div(text=' ', css_classes=['alert-style'])
 
         plan_layout = layout([self.buffer,
@@ -185,7 +186,7 @@ class Report():
                     self.plan_subtitle,
                     self.plan_inst,
                     self.plan_txt,
-                    [self.plan_input, [self.plan_order, self.plan_load_btn, self.plan_btn]],
+                    [self.plan_input, [self.plan_order, self.plan_load_btn, self.plan_btn, self.plan_delete_btn]],
                     [self.plan_new_btn],
                     self.plan_alert], width=1000)
         self.plan_tab = Panel(child=plan_layout, title="Night Plan")
@@ -215,6 +216,7 @@ class Report():
         self.milestone_new_btn = Button(label='Add New Milestone', css_classes=['add_button'], width=300)
         self.milestone_load_num = TextInput(title='Milestone Index', placeholder='0',  width=75)
         self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.milestone_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
         self.summary_1 = TextAreaInput(rows=10, placeholder='End of Night Summary for first half', title='End of Night Summary',max_length=5000)
         self.summary_2 = TextAreaInput(rows=10, placeholder='End of Night Summary for second half', max_length=5000)
@@ -230,7 +232,7 @@ class Report():
                         self.title,
                         self.milestone_subtitle,
                         self.milestone_inst,
-                        [self.milestone_input,[self.milestone_load_num, self.milestone_load_btn, self.milestone_btn]] ,
+                        [self.milestone_input,[self.milestone_load_num, self.milestone_load_btn, self.milestone_btn, self.milestone_delete_btn]] ,
                         [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl],
                         [self.milestone_new_btn],
                         self.milestone_alert,
@@ -247,6 +249,7 @@ class Report():
         self.exp_time = TextInput(placeholder = '20:07', width=100) #title ='Time in Kitt Peak local time*', 
         self.exp_btn = Button(label='Add/Update', css_classes=['add_button'])
         self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.exp_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
         self.exp_alert = Div(text=' ', css_classes=['alert-style'])
         self.dqs_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
 
@@ -284,7 +287,7 @@ class Report():
                         exp_inst,
                         self.time_note,
                         self.os_exp_option,
-                        [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn],
+                        [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn, self.exp_delete_btn],
                         [self.exp_option],
                         [self.exp_select, self.exp_enter],
                         [self.exp_comment],
@@ -341,6 +344,7 @@ class Report():
         self.prob_action = TextAreaInput(title='Resolution/Action',placeholder='description',rows=10, cols=5,width=400,max_length=10000)
         self.prob_btn = Button(label='Add/Update', css_classes=['add_button'])
         self.prob_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.prob_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
 
         prob_layout = layout([self.buffer,self.title,
@@ -348,7 +352,7 @@ class Report():
                             self.prob_inst,
                             self.time_note,
                             self.exp_info,
-                            [self.time_title, self.prob_time, self.now_btn, self.prob_load_btn], 
+                            [self.time_title, self.prob_time, self.now_btn, self.prob_load_btn, self.prob_delete_btn], 
                             self.prob_alarm,
                             [self.prob_input, self.prob_action],
                             [self.img_upinst2, self.img_upload_problems],
@@ -903,7 +907,7 @@ class Report():
 
     def plan_add(self):
         if self.plan_time is None:
-            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M")
+            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M:%S")
         else: 
             ts = self.plan_time
         self.DESI_Log.add_input([ts, self.plan_input.value], 'plan')
@@ -913,7 +917,7 @@ class Report():
 
     def milestone_add(self):
         if self.milestone_time is None:
-            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M")
+            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M:%S")
         else:
             ts = self.milestone_time
         self.DESI_Log.add_input([ts, self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value],'milestone')
@@ -1130,6 +1134,33 @@ class Report():
         except Exception as e:
             self.exp_alert.text = 'Error with your Input: {}'.format(e)
 
+    def plan_delete(self):
+        time = self.plan_time
+        self.DESI_Log.delete_item(time, 'plan')
+        self.plan_alert.text = 'Deleted item: {}'.format(self.plan_input.value)
+        self.clear_input([self.plan_input, self.plan_order])
+        self.plan_time = None
+
+    def milestone_delete(self):
+        time = self.milestone_time
+        self.DESI_Log.delete_item(time, 'milestone')
+        self.milestone_alert.text = 'Deleted item: {}'.format(self.milestone_input.value)
+        self.clear_input([self.milestone_input, self.milestone_load_num])
+        self.milestone_time = None
+
+    def progress_delete(self):
+        time = self.get_time(self.exp_time.value.strip())
+        self.DESI_Log.delete_item(time, 'progress', self.report_type)
+        self.exp_alert.text = 'Deleted item: {}'.format(self.exp_comment.value)
+        self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start])
+
+    def problem_delete(self):
+        time = self.get_time(self.prob_time.value.strip())
+        self.DESI_Log.delete_item(time, 'problem',self.report_type)
+        self.prob_alert.text = 'Deleted item: {}'.format(self.prob_input.value)
+        self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+
+        
     def plan_load(self):
         b, item = self.DESI_Log.load_index(self.plan_order.value, 'plan')
         if b:

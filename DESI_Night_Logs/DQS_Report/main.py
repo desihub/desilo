@@ -57,6 +57,7 @@ class DQS_Report(Report):
         self.check_btn.on_click(self.check_add)
         self.dqs_load_btn.on_click(self.dqs_load)
         self.prob_load_btn.on_click(self.load_problem)
+        self.prob_delete_btn.on_click(self.problem_delete)
 
 
 DQS = DQS_Report()
