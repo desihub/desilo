@@ -39,7 +39,7 @@ from email.mime.image import MIMEImage
 class OpsTool(object):
     def __init__(self):
         self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
-        self.credentials = "/Users/pfagrelius/Research/DESI/Operations/ops_tool/google_access_account.json"
+        self.credentials = "/n/home/desiobserver/parkerf/desilo/ops_tool/google_access_account.json"
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
         self.client = gspread.authorize(self.creds)
 
@@ -122,55 +122,65 @@ class OpsTool(object):
         self.report.text = text
 
     def email_one_month(self):
-        name = self.one_month_email.value
-        print(name)
-        # get email
-
-        # get message
-        #send the email
+        name = self.one_month_name.value
+        email = self.one_month_email.value
+        print('This is not quite set up',name)
 
     def email_two_weeks(self):
-        name = self.two_weeks_email.value
-        print(name)
-        # get email
-
-        # get message
-        #send the email
+        email = self.two_weeks_email.value
+        name = self.two_weeks_name.value
+        print('This is not quite ready',name)
 
     def email_night_before(self):
-        name = self.night_before_email.value
-        print(name)
-        # get email
+        email = self.night_before_email.value
+        name = self.night_before_name.value
+        
+        subject = 'DESI Observing Tomorrow'
+        msg = 'Hello {},<br>'.format(name)
+        msg += """You are signed up to start your observing shift tomorrow. Please attend
+        the planning meeting at 4pm MT/PST where you will meet the rest of your observing team.
+        If you'd like to sign on tonight to shadow the current observers for a couple hours, you 
+        are certainly welcome. Please let us know if you would like to do that. <br>
+        <br>
+        Before starting your shift tomorrow, make sure that you are able to connect to all the tools 
+        you will need. We recommmend reading through the wiki: https://desi.lbl.gov/trac/wiki/DESIOperations.
+        Please let us know if you have any questions.<br>
+        <br>
 
-        # get message
-        #send the email
+        Cheers,<br>
+        Parker & Arjun<br>
+        """
+        self.send_email(subject, email, msg)
+        self.night_before_email.value = ''
+        self.night_before_name.value = ''
 
     def email_follow_up(self):
         email = self.follow_up_email.value
         name = self.follow_up_name.value
         # get email
         subject = 'DESI Observing Feedback'
-        msg = 'Hello {},\n'.format(name)
+        msg = 'Hello {},<br>'.format(name)
         msg += """Thank you very much for recently observing for DESI! We would like to collect feedback from all 
         observers after their shift so we might identify areas of improvement. 
-        Please take 5 minutes to give us some feedback on your recent observing shift!
-
-        https://forms.gle/N246QVnU5tDBcroY8
-
-        Cheers,
-        Parker & Arjun
+        Please take 5 minutes to give us some feedback on your recent observing shift!<br>
+        <br>
+        https://forms.gle/N246QVnU5tDBcroY8<br>
+        <br>
+        Cheers,<br>
+        Parker & Arjun<br>
         """
         self.send_email(subject, email, msg)
         self.follow_up_email.value = ''
         self.follow_up_name.value = ''
 
     def send_email(self, subject, user_email, message):
-        sender = "parker.fagrelius@noirlab.edu" 
+        sender = "pfagrelius@noao.edu" 
 
         # Create message container - the correct MIME type is multipart/alternative.
         msg = MIMEMultipart('html')
         msg['Subject'] = subject
         msg['From'] = sender
+        msg['CC'] = 'dey@noao.edu'
 
         msg['To'] = user_email
 
@@ -186,7 +196,6 @@ class OpsTool(object):
         s = smtplib.SMTP('localhost')
         s.sendmail(sender, user_email, text)
         s.quit()
-        print('email was sent')
 
     def layout(self):
         self.report = PreText(text=' ')
