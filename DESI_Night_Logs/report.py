@@ -1,5 +1,6 @@
 #Imports
 import os, sys
+import base64
 import glob
 import time, sched
 import datetime 
@@ -1346,27 +1347,29 @@ class Report():
 
         nl_text = MIMEText(nl_html, 'html')
         msg.attach(nl_text)
-        Html_file = open(os.path.join(self.DESI_Log.root_dir,'NightSummary{}'.format(self.night)),"w")
+        Html_file = open(os.path.join(self.DESI_Log.root_dir,'NightSummary{}.html'.format(self.night)),"w")
         Html_file.write(nl_html)
 
         # Add Paul's plot
         try:
-            f = open(os.path.join(os.environ['DESINIGHTSTATS'],'nightstats{}.png'.format(self.night)),'rb')
-            msgImage = MIMEImage(f.read())
-            f.close()
+            nightops = open(os.path.join(os.environ['DESINIGHTSTATS'],'nightstats{}.png'.format(self.night)),'rb').read()
+            msgImage = MIMEImage(nightops)
+            data_uri = base64.b64encode(nightops).decode('utf-8')
+            img_tag = '<img src="data:image/png;base64,%s" \>' % data_uri
             msgImage.add_header('Content-Disposition', 'attachment; filename=nightstats{}.png'.format(self.night))
             msg.attach(msgImage)
-            Html_file.write('<img src="{}>\n'.format(os.path.join(os.environ['DESINIGHTSTATS'],'nightstats{}.png'.format(self.night))))
+            Html_file.write(img_tag)
         except Exception as e:
             print(e)
         # Add images
         if os.path.exists(self.DESI_Log.telem_plots_file):
-            fp = open(self.DESI_Log.telem_plots_file, 'rb')
-            msgImage = MIMEImage(fp.read())
-            fp.close()
+            telemplot = open(self.DESI_Log.telem_plots_file, 'rb').read()
+            msgImage = MIMEImage(telemplot)
+            data_uri = base64.b64encode(telemplot).decode('utf-8')
+            img_tag = '<img src="data:image/png;base64,%s" \>' % data_uri
             msgImage.add_header('Content-Disposition', 'attachment; filename=telem_plots_{}.png'.format(self.night))
             msg.attach(msgImage)
-            Html_file.write('<img src="{}>\n'.format(self.DESI_Log.telem_plots_file))
+            Html_file.write(img_tag)
         Html_file.close()
         
         text = msg.as_string()
