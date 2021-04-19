@@ -35,10 +35,11 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
 sys.path.append(os.getcwd())
+sys.path.append('/n/home/desiobserver/parkerf/desisurveyops/py/desisurveyops/')
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-#os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
+os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
 os.environ['NW_DIR'] = '/exposures/nightwatch/'
 
 #os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
@@ -47,7 +48,7 @@ os.environ['NW_DIR'] = '/exposures/nightwatch/'
 class Report():
     def __init__(self, type):
 
-        self.test = False 
+        self.test = True 
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -818,9 +819,7 @@ class Report():
             telem_data.skylevel = exp_df.skylevel
 
         self.telem_source.data = telem_data
-        print('here')
         export_png(self.bk_plots)
-        print('hhhh')
         if self.save_telem_plots:
             fig = plt.figure(figsize=(8,20))
             ax1 = fig.add_subplot(8,1,1)
@@ -863,8 +862,7 @@ class Report():
             ax6.tick_params(labelbottom=False)
 
             ax7 = fig.add_subplot(8,1,7,sharex=ax1)
-            tput = 
-            ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
+            ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), tput, s=5, label='transparency')
             ax7.set_ylabel("Transparency (%)")
             ax7.grid(True)
             ax7.tick_params(labelbottom=False)
@@ -915,7 +913,7 @@ class Report():
 
     def plan_add(self):
         if self.plan_time is None:
-            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M")
+            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M:%S")
         else: 
             ts = self.plan_time
         self.DESI_Log.add_input([ts, self.plan_input.value], 'plan')
@@ -925,7 +923,7 @@ class Report():
 
     def milestone_add(self):
         if self.milestone_time is None:
-            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M")
+            ts = datetime.datetime.now().strftime("%Y%m%dT%H:%M:%S")
         else:
             ts = self.milestone_time
         self.DESI_Log.add_input([ts, self.milestone_input.value, self.milestone_exp_start.value, self.milestone_exp_end.value, self.milestone_exp_excl.value],'milestone')
@@ -1280,6 +1278,18 @@ class Report():
             url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
             user = 'dos'
             pw = 'dosuser'
+
+            #make Paul's plot
+            try:
+                os.environ['DESI_SPECTRO_DATA'] = '/exposures/desi/'
+                os.environ['DESINIGHTSTATS'] = '/n/home/desiobserver/nightlogs' 
+                os.environ['PGPASSWORD'] = 'reader'
+                os.environ['PGPORT'] = '5442'
+                os.environ['PGHOST'] = 'desi-db'
+                #import plotnightobs
+                os.system("./plotnightobs -n {}".format(self.night)) 
+            except Exception as e:
+                print(e)
             if self.test:
                 pass
             else:
@@ -1318,7 +1328,7 @@ class Report():
             msg['To'] = ', '.join(user_email)
 
         # Create the body of the message (a plain-text and an HTML version).
-        f = f = self.DESI_Log._open_kpno_file_first(self.DESI_Log.nightlog_html)
+        f = self.DESI_Log._open_kpno_file_first(self.DESI_Log.nightlog_html)
         nl_file=open(f,'r')
         lines = nl_file.readlines()
         nl_html = ' '
@@ -1355,18 +1365,21 @@ class Report():
         #msg.attach(part1)
         msg.attach(part2)
 
+        # Add Paul's plot
+        try:
+            f = open(os.path.join(os.environ['DESINIGHTSTATS'],'nightstats{}.png'.format(self.night)),'rb')
+            msgImage = MIMEImage(f.read())
+            f.close()
+            msgImage.add_header('Content-Disposition', 'attachment; filename=nightstats{}.png'.format(self.night))
+            msg.attach(msgImage)
+        except Exception as e:
+            print(e)
         # Add images
-        if os.path.exists(self.DESI_Log.image_file):
-            for i, img in enumerate(images):
-                fp = open(os.path.join(self.DESI_Log.image_dir,img), 'rb')
-                msgImage = MIMEImage(fp.read())
-                fp.close()
-                msgImage.add_header('Content-ID', '<image{}>'.format(i))
-                msg.attach(msgImage)
         if os.path.exists(self.DESI_Log.telem_plots_file):
             fp = open(self.DESI_Log.telem_plots_file, 'rb')
             msgImage = MIMEImage(fp.read())
             fp.close()
+            msgImage.add_header('Content-Disposition', 'attachment; filename=telem_plots_{}.png'.format(self.night))
             msg.attach(msgImage)
         
         text = msg.as_string()
