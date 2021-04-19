@@ -38,6 +38,7 @@ from email.mime.image import MIMEImage
 
 class OpsTool(object):
     def __init__(self):
+        self.test = False 
         self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
         self.credentials = "/n/home/desiobserver/parkerf/desilo/ops_tool/google_access_account.json"
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
@@ -57,6 +58,12 @@ class OpsTool(object):
             TableColumn(field='DQS', title='Data Quality Scientist')]
 
         self.data_table = DataTable(source = self.today_source, columns = today_columns, width=1000,height=100)
+
+    def new_day(self):
+        self.today = self.enter_date.value
+        self.today_df = self.df[self.df.Date == self.today]
+        self.today_source.data = self.today_df
+        self.daily_report()
 
     def sched_load(self):
         sheet = client.open_by_url(url).sheet1
@@ -137,22 +144,12 @@ class OpsTool(object):
         
         subject = 'DESI Observing Tomorrow'
         msg = 'Hello {},<br>'.format(name)
-        msg += """You are signed up to start your observing shift tomorrow. Please attend
-        the planning meeting at 4pm MT/PST where you will meet the rest of your observing team.
-        If you'd like to sign on tonight to shadow the current observers for a couple hours, you 
-        are certainly welcome. Please let us know if you would like to do that. <br>
-        <br>
-        Before starting your shift tomorrow, make sure that you are able to connect to all the tools 
-        you will need. We recommmend reading through the wiki: https://desi.lbl.gov/trac/wiki/DESIOperations.
-        Please let us know if you have any questions.<br>
-        <br>
-
-        Cheers,<br>
-        Parker & Arjun<br>
-        """
+        msgfile = open('./OpsTool/static/night_before_msg.html')
+        msg += msgfile.read()
         self.send_email(subject, email, msg)
         self.night_before_email.value = ''
         self.night_before_name.value = ''
+        msgfile.close()
 
     def email_follow_up(self):
         email = self.follow_up_email.value
@@ -160,27 +157,29 @@ class OpsTool(object):
         # get email
         subject = 'DESI Observing Feedback'
         msg = 'Hello {},<br>'.format(name)
-        msg += """Thank you very much for recently observing for DESI! We would like to collect feedback from all 
-        observers after their shift so we might identify areas of improvement. 
-        Please take 5 minutes to give us some feedback on your recent observing shift!<br>
-        <br>
-        https://forms.gle/N246QVnU5tDBcroY8<br>
-        <br>
-        Cheers,<br>
-        Parker & Arjun<br>
-        """
+        msgfile = open('./OpsTool/static/follow_up_msg.html')
+        msg += msgfile.read()
         self.send_email(subject, email, msg)
         self.follow_up_email.value = ''
         self.follow_up_name.value = ''
+        msgfile.close()
 
     def send_email(self, subject, user_email, message):
         sender = "pfagrelius@noao.edu" 
 
+        toaddrs = [user_email]
         # Create message container - the correct MIME type is multipart/alternative.
         msg = MIMEMultipart('html')
         msg['Subject'] = subject
         msg['From'] = sender
-        msg['CC'] = 'dey@noao.edu'
+        if self.test == False:
+            recipients = ['pfagrelius@noao.edu','dey@noao.edu']
+            msg['CC'] = ", ".join(recipients)
+            toaddrs.append('pfagrelius@noao.edu')
+            toaddrs.append('dey@noao.edu')
+        else:
+            msg['CC'] = 'pfagrelius@noao.edu'
+            toaddrs.append('pfagrelius@noao.edu')
 
         msg['To'] = user_email
 
@@ -194,7 +193,7 @@ class OpsTool(object):
         #     server.quit()
         
         s = smtplib.SMTP('localhost')
-        s.sendmail(sender, user_email, text)
+        s.sendmail(sender, toaddrs, text)
         s.quit()
 
     def layout(self):
@@ -203,6 +202,8 @@ class OpsTool(object):
         title = Div(text='Operations Planning Tool')
         today_title = Div(text="Today's Observers: ")
         night_report_title = Div(text='Daily Report: ')
+        self.enter_date = TextInput(title='Date', placeholder = 'YYYY-MM-DD', width=200)
+        self.date_btn = Button(label='Change date', width=200)
         self.one_month_email = TextInput(title='Email: ', placeholder='Serena Williams', width=200)
         self.two_weeks_email = TextInput(title='Email: ', placeholder='Lindsay Vonn', width=200)
         self.night_before_email = TextInput(title='Email: ', placeholder='Mia Hamm', width=200)
@@ -219,6 +220,7 @@ class OpsTool(object):
 
         self.layout = layout([title,today_title,
                   self.data_table,
+                  [self.enter_date, self.date_btn],
                   self.update_df_btn,
                   night_report_title,
                   self.report,
@@ -228,6 +230,7 @@ class OpsTool(object):
     def run(self):
         self.layout()
         self.daily_report()
+        self.date_btn.on_click(self.new_day)
         self.update_df_btn.on_click(self.sched_load)
         self.one_month_btn.on_click(self.email_one_month)
         self.two_weeks_btn.on_click(self.email_two_weeks)
