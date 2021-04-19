@@ -1026,7 +1026,7 @@ class Report():
                     comment = self.exp_comment.value.strip()
                     exp = None
                 except Exception as e:
-                    self.exp_alert.text = 'There is something wrong with your input: {}'.format(e)
+                    self.exp_alert.text = 'There is something wrong with your input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'),e)
             else:
                 self.exp_alert.text = 'Fill in the time'
                 
@@ -1036,13 +1036,13 @@ class Report():
                 try:
                     exp = int(self.exp_select.value)
                 except Exception as e:
-                    self.exp_alert.text = "Problem with the Exposure you Selected: {}".format(e)
+                    self.exp_alert.text = "Problem with the Exposure you Selected @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'), e)
 
             elif self.exp_option.active ==1:
                 try:
                     exp = int(self.exp_enter.value.strip())
                 except Exception as e:
-                    self.exp_alert.text = "Problem with the Exposure you Entered: {}".format(e)
+                    self.exp_alert.text = "Problem with the Exposure you Entered @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'), e)
             comment = self.exp_comment.value.strip()
             time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
@@ -1052,14 +1052,14 @@ class Report():
             self.DESI_Log.add_input(data, 'os_exp',img_name=img_name, img_data=img_data)
             if img_name is not None:
                 preview += "<br>"
-                preview += "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
+                preview += "A comment was added @ {}".format(datetime.datetime.now().strftime("%H:%M"))
                 self.exp_alert.text = preview
 
             else:
-                self.exp_alert.text = 'Last Input was made at {}'.format(datetime.datetime.now().strftime("%H:%M"))
+                self.exp_alert.text = 'Last Input was made @ {}: {}'.format(datetime.datetime.now().strftime("%H:%M"),self.exp_comment.value)
             self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
         except Exception as e:
-            self.exp_alert.text = 'Error with your Input: {}'.format(e)
+            self.exp_alert.text = 'Error with your Input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
 
     
     def comment_add(self):
@@ -1073,20 +1073,20 @@ class Report():
                         comment = self.exp_comment.value.strip()
                         exp = None
                     except Exception as e:
-                        self.exp_alert.text = self.exp_alert.text = 'There is something wrong with your input: {}'.format(e)
+                        self.exp_alert.text = 'There is something wrong with your input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
                 else:
-                    self.exp_alert.text = 'Fill in the time'
+                    self.exp_alert.text = 'Fill in the Time'
             elif self.os_exp_option.active == 1:
                 if self.exp_option.active == 0:
                     try:
                         exp = int(self.exp_select.value)
                     except Exception as e:
-                        self.exp_alert.text = "Problem with the Exposure you Selected: {}".format(e)
+                        self.exp_alert.text = "Problem with the Exposure you Selected @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'),e)
                 elif self.exp_option.active ==1:
                     try:
                         exp = int(self.exp_enter.value.strip())
                     except Exception as e:
-                        self.exp_alert.text = "Problem with the Exposure you Entered: {}".format(e)
+                        self.exp_alert.text = "Problem with the Exposure you Entered @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'), e)
                 comment = self.exp_comment.value.strip()
                 time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
@@ -1097,13 +1097,13 @@ class Report():
 
                 if img_name is not None:
                     preview += "<br>"
-                    preview += "A comment was added at {}".format(self.exp_time.value.strip())
+                    preview += "A comment was added @ {}: {}".format(self.exp_time.value.strip(), self.exp_comment.value)
                     self.exp_alert.text = preview
                 else:
-                    self.exp_alert.text = "A comment was added at {}".format(datetime.datetime.now().strftime("%H:%M"))
+                    self.exp_alert.text = "A comment was added at {}: {}".format(datetime.datetime.now().strftime("%H:%M"), self.exp_comment.value)
                 self.clear_input([self.exp_time, self.exp_comment])
             except Exception as e:
-                self.exp_alert.text = 'Error with your Input: {}'.format(e)
+                self.exp_alert.text = 'Error with your Input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
 
     def exp_add(self):
         quality = self.quality_list[self.quality_btns.active]
@@ -1111,12 +1111,12 @@ class Report():
             try:
                 exp_val = int(self.exp_select.value)
             except Exception as e:
-                self.exp_alert.text = "Problem with the Exposure you Selected: {}".format(e)
+                self.exp_alert.text = "Problem with the Exposure you Selected @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'), e)
         elif self.exp_option.active ==1:
             try:
                 exp_val = int(self.exp_enter.value.strip())
             except Exception as e:
-                self.exp_alert.text = "Problem with the Exposure you Entered: {}".format(e)
+                self.exp_alert.text = "Problem with the Exposure you Entered @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'), e)
         now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
 
         try:
@@ -1126,38 +1126,38 @@ class Report():
 
             if img_name is not None:
                 preview += "<br>"
-                preview += "A comment was added at {}".format(self.exp_time.value.strip())
+                preview += "A comment was added @ {} for Exp. {}".format(self.exp_time.value.strip(), exp_val)
                 self.exp_alert.text = preview
             else:
-                self.exp_alert.text = 'Last Exposure input {} at {}'.format(exp_val, now)
+                self.exp_alert.text = 'Last Exposure input @ {} for Exp. {}'.format(now, exp_val)
             self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
         except Exception as e:
-            self.exp_alert.text = 'Error with your Input: {}'.format(e)
+            self.exp_alert.text = 'Error with your Input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
 
     def plan_delete(self):
         time = self.plan_time
         self.DESI_Log.delete_item(time, 'plan')
-        self.plan_alert.text = 'Deleted item: {}'.format(self.plan_input.value)
+        self.plan_alert.text = 'Deleted item @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'),self.plan_input.value)
         self.clear_input([self.plan_input, self.plan_order])
         self.plan_time = None
 
     def milestone_delete(self):
         time = self.milestone_time
         self.DESI_Log.delete_item(time, 'milestone')
-        self.milestone_alert.text = 'Deleted item: {}'.format(self.milestone_input.value)
+        self.milestone_alert.text = 'Deleted item @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), self.milestone_input.value)
         self.clear_input([self.milestone_input, self.milestone_load_num])
         self.milestone_time = None
 
     def progress_delete(self):
         time = self.get_time(self.exp_time.value.strip())
         self.DESI_Log.delete_item(time, 'progress', self.report_type)
-        self.exp_alert.text = 'Deleted item: {}'.format(self.exp_comment.value)
+        self.exp_alert.text = 'Deleted item @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), self.exp_comment.value)
         self.clear_input([self.exp_time, self.exp_comment, self.exp_exposure_start])
 
     def problem_delete(self):
         time = self.get_time(self.prob_time.value.strip())
         self.DESI_Log.delete_item(time, 'problem',self.report_type)
-        self.prob_alert.text = 'Deleted item: {}'.format(self.prob_input.value)
+        self.prob_alert.text = 'Deleted item @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), self.prob_input.value)
         self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
 
         
