@@ -35,12 +35,18 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
 sys.path.append(os.getcwd())
-sys.path.append('/n/home/desiobserver/parkerf/desisurveyops/py/desisurveyops/')
+sys.path.append('/n/home/desiobserver/parkerf/desisurveyops/bin/')
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
 os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
 os.environ['NW_DIR'] = '/exposures/nightwatch/'
+os.environ['DESI_SPECTRO_DATA'] = '/exposures/desi/'
+os.environ['DESINIGHTSTATS'] = os.environ['NL_DIR']
+os.environ['PGPASSWORD'] = 'reader'
+os.environ['PGPORT'] = '5442'
+os.environ['PGHOST'] = 'desi-db'
+os.environ['SURVEYOPSDIR'] = '/n/home/desiobserver/parkerf/desisurveyops/'
 
 #os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
 #os.environ['NW_DIR'] = '/exposures/nightwatch/'
@@ -1273,7 +1279,7 @@ class Report():
 
             e = ECLEntry('Synopsis_Night', text=nl_html, textile=True)
 
-            subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
+            subject = 'Night Summary {}'.format(self.night)
             e.addSubject(subject)
             url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
             user = 'dos'
@@ -1281,13 +1287,7 @@ class Report():
 
             #make Paul's plot
             try:
-                os.environ['DESI_SPECTRO_DATA'] = '/exposures/desi/'
-                os.environ['DESINIGHTSTATS'] = '/n/home/desiobserver/nightlogs' 
-                os.environ['PGPASSWORD'] = 'reader'
-                os.environ['PGPORT'] = '5442'
-                os.environ['PGHOST'] = 'desi-db'
-                #import plotnightobs
-                os.system("./plotnightobs -n {}".format(self.night)) 
+                os.system("{}/bin/plotnightobs -n {}".format(os.environ['SURVEYOPSDIR'],self.night)) 
             except Exception as e:
                 print(e)
             if self.test:
@@ -1303,11 +1303,12 @@ class Report():
             self.save_telem_plots = True
             self.current_nl()
 
-            self.submit_text.text = "Night Log posted to eLog and emailed to collaboration at {}".format(datetime.datetime.now().strftime("%Y%m%d %H:%M")) + '</br>'
             if self.test:
                 self.email_nightsum(user_email = ["parfa30@gmail.com","parkerf@berkeley.edu"])
             else:
                 self.email_nightsum(user_email = ["parfa30@gmail.com","satya.gontcho@gmail.com","desi-nightlog@desi.lbl.gov"])
+
+            self.submit_text.text = "Night Log posted to eLog and emailed to collaboration at {}".format(datetime.datetime.now().strftime("%Y%m%d%H:%M")) + '</br>'
 
     def email_nightsum(self,user_email = None):
 
@@ -1343,27 +1344,10 @@ class Report():
             for line in exp_list:
                 nl_html += line
 
-        # Add telem plots
-        nl_html += "<h3 id='telem_plots'>Night Telemetry</h3>"
-        nl_html += '\n'
-        
-        #if os.path.exists(self.DESI_Log.telem_plots_file):
-        #    nl_html += '<img src="{}"> alt="Telemetry Plots"'.format(self.DESI_Log.telem_plots_file)
-        #    nl_html += '\n'
-
+        nl_text = MIMEText(nl_html, 'html')
+        msg.attach(nl_text)
         Html_file = open(os.path.join(self.DESI_Log.root_dir,'NightSummary{}'.format(self.night)),"w")
         Html_file.write(nl_html)
-        Html_file.close()
-
-        # Record the MIME types of both parts - text/plain and text/html.
-        part1 = MIMEText(nl_html, 'plain')
-        part2 = MIMEText(nl_html, 'html')
-
-        # Attach parts into message container.
-        # According to RFC 2046, the last part of a multipart message, in this case
-        # the HTML message, is best and preferred.
-        #msg.attach(part1)
-        msg.attach(part2)
 
         # Add Paul's plot
         try:
@@ -1372,6 +1356,7 @@ class Report():
             f.close()
             msgImage.add_header('Content-Disposition', 'attachment; filename=nightstats{}.png'.format(self.night))
             msg.attach(msgImage)
+            Html_file.write('<img src="{}>\n'.format(os.path.join(os.environ['DESINIGHTSTATS'],'nightstats{}.png'.format(self.night))))
         except Exception as e:
             print(e)
         # Add images
@@ -1381,8 +1366,11 @@ class Report():
             fp.close()
             msgImage.add_header('Content-Disposition', 'attachment; filename=telem_plots_{}.png'.format(self.night))
             msg.attach(msgImage)
+            Html_file.write('<img src="{}>\n'.format(self.DESI_Log.telem_plots_file))
+        Html_file.close()
         
         text = msg.as_string()
+
         # Send the message via local SMTP server.
         #yag = yagmail.SMTP(sender)
         #yag.send("parfa30@gmail.com",nl_html,self.DESI_Log.telem_plots_file)
