@@ -519,27 +519,32 @@ class Report():
 
     def get_ns_layout(self):
         self.ns_subtitle = Div(text='Night Summaries', css_classes=['subt-style'])
+        self.ns_inst = Div(text='Enter a date to get old NightLogs', css_classes=['inst-style'])
+        self.ns_date_input = TextInput(title='Date',placeholder='YYYYMMDD')
+        self.ns_date_btn = Button(label='Get NightLog', css_classes=['add_button'])
         self.ns_html = Div(text='',width=800)
 
         ns_layout = layout([self.buffer,
                             self.ns_subtitle,
+                            self.ns_inst,
+                            [self.ns_date_input, self.ns_date_btn],
                             self.ns_html], width=1000)
         self.ns_tab = Panel(child=ns_layout, title='Night Summary Index')
 
     def get_nightsum(self):
-        ns_html = ''
-        ns = {}                                                                                                                          
+        ns = {}          
+        ns_html = ''                                                                                                                
         for dir_, sdir, f in os.walk(self.nl_dir): 
             for x in f: 
                 if 'NightSummary' in x: 
                     date = dir_.split('/')[-1]
                     ns[date] = os.path.join(dir_,x)
-        dates = np.sort(list(ns.keys()))
-        for date in dates:
-            link = ns[date]
-            ns_html += '<a href=file://{}>{}</a>'.format(link, date)
-            ns_html += '<br>'
-        self.ns_html.text = ns_html
+        try:
+            filen = ns[date]
+            ns_html += open(filen).read()
+            self.ns_html.text = ns_html
+        else:
+            self.ns_html.text = 'Cannot find NightSummary for this date'
 
 
     def get_time(self, time):
@@ -669,7 +674,6 @@ class Report():
 
             self.current_nl()
             self.get_exposure_list()
-            self.get_nightsum()
 
         else:
             self.connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(self.date_init.value)

@@ -113,6 +113,7 @@ class OS_Report(Report):
         #self.img_btn.on_click(self.image_add)
         self.contributer_btn.on_click(self.add_contributer_list)
         self.summary_btn.on_click(self.add_summary)
+        self.ns_date_btn.on_click(self.get_nightsum)
         
 OS = OS_Report()
 OS.run()
