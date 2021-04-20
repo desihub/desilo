@@ -40,7 +40,7 @@ sys.path.append('/n/home/desiobserver/parkerf/desisurveyops/bin/')
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
+os.environ['NL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs/'
 os.environ['NW_DIR'] = '/exposures/nightwatch/'
 os.environ['DESI_SPECTRO_DATA'] = '/exposures/desi/'
 os.environ['DESINIGHTSTATS'] = os.environ['NL_DIR']
@@ -517,6 +517,30 @@ class Report():
                         self.exp_table], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
+    def get_ns_layout(self):
+        self.ns_subtitle = Div(text='Night Summaries', css_classes=['subt-style'])
+        self.ns_html = Div(text='',width=800)
+
+        ns_layout = layout([self.buffer,
+                            self.ns_subtitle,
+                            self.ns_html], width=1000)
+        self.ns_tab = Panel(child=ns_layout, title='Night Summary Index')
+
+    def get_nightsum(self):
+        ns_html = ''
+        ns = {}                                                                                                                          
+        for dir_, sdir, f in os.walk(self.nl_dir): 
+            for x in f: 
+                if 'NightSummary' in x: 
+                    date = dir_.split('/')[-1]
+                    ns[date] = os.path.join(dir_,x)
+        dates = np.sort(list(ns.keys()))
+        for date in dates:
+            link = ns[date]
+            ns_html += '<a href=file://{}>{}</a>'.format(link, date)
+            ns_html += '<br>'
+        self.ns_html.text = ns_html
+
 
     def get_time(self, time):
         """Returns strptime with utc. Takes time zone selection
@@ -645,6 +669,7 @@ class Report():
 
             self.current_nl()
             self.get_exposure_list()
+            self.get_nightsum()
 
         else:
             self.connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(self.date_init.value)

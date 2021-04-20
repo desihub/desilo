@@ -44,8 +44,9 @@ class DQS_Report(Report):
         self.get_checklist_layout()
         self.get_nl_layout()
         self.get_weather_layout()
+        self.get_ns_layout()
 
-        self.layout = Tabs(tabs=[self.intro_tab, self.exp_tab, self.prob_tab, self.check_tab, self.weather_tab, self.nl_tab])
+        self.layout = Tabs(tabs=[self.intro_tab, self.exp_tab, self.prob_tab, self.check_tab, self.weather_tab, self.nl_tab, self.ns_tab])
 
     def run(self):
         self.get_layout()
