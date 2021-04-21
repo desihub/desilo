@@ -64,6 +64,7 @@ class NightLog(object):
         self.other_exp = os.path.join(self.other_dir,'exposures_{}.csv'.format(self.location))
 
         self.weather = os.path.join(self.os_dir,'weather_{}.csv'.format(self.location))
+        self.bad_exp_list = os.path.join(self.root_dir,'bad_exp_list_{}.csv'.format(self.location))
 
         self.meta_json = os.path.join(self.root_dir,'nightlog_meta_{}.json'.format(self.location))
         self.image_file = os.path.join(self.image_dir, 'image_list_{}'.format(self.location))
@@ -305,14 +306,9 @@ class NightLog(object):
         df = self._combine_compare_csv_files(self.weather)
         if df is not None:
             df = df.rename(columns={'desc':'Description','temp':'Temp.','wind':'Wind Speed (mph)','humidity':'Humidity','seeing':'Seeing','tput':'Transparency','skylevel':'SkyLevel'})
-            df_list = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-')
+            df_list = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='weathertable',max_cols=8)
             for line in df_list:
                 filen.write(line)
-            #for index, row in df.iterrows():
-            #    filen.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['desc']))
-            #    filen.write("; Temp: {:.2f}, Wind Speed: {:.2f}, Humidity: {:.2f}".format(float(row['temp']), float(row['wind']), float(row['humidity'])))
-            #    filen.write(", Seeing: {:.2f}, Tput: {:.2f}, Sky: {:.2f}".format(float(row['seeing']), float(row['tput']), float(row['skylevel'])))
-            #    filen.write("\n")
 
     def write_problem(self, filen):
         df_os = self._combine_compare_csv_files(self.os_pb)
@@ -591,8 +587,32 @@ class NightLog(object):
         
         file.close()
 
+    def add_bad_exp(self, data):
+        if not os.path.exists(self.bad_exp_list):
+            df = pd.DataFrame(columns=['EXPID','BAD','CAMS','COMMENT'])
+            df.to_csv(self.bad_exp_list, index=False)
+        else:
+            df = pd.read_csv(self.bad_exp_list)
+
+        this_df = pd.DataFrame.from_dict(data)
+
+        df = pd.concat([df, this_df])
+        df.to_csv(self.bad_exp_list, index=False)
+
+    def write_bad_exp(self, file_nl):
+        if os.path.exists(self.bad_exp_list):
+            file_nl.write("h3. Bad Exposures\n")
+            file_nl.write("\n")
+            file_nl.write("\n")
+            df = pd.read_csv(self.bad_exp_list)
+            df_html = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='badtable',max_cols=4)
+
+            for line in df_html:
+                file_nl.write(line)
+
     def write_file(self, the_path, header,file_nl):
         if os.path.exists(the_path):
+
             with open(the_path, 'r') as f:
                 if header is not None:
                     file_nl.write(header)
@@ -711,6 +731,8 @@ class NightLog(object):
         file_nl.write("\n")
         file_nl.write("\n")
         self.write_exposure(file_nl)
+
+        self.write_bad_exp(file_nl)
 
         file_nl.close()
         cmd = "pandoc  --resource-path={} --metadata pagetitle=report -s {} -f textile -t html -o {}".format(self.root_dir,

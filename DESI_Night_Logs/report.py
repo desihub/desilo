@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 from bokeh.io import curdoc, save, export_png  # , output_file, save
-from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, RadioGroup,Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup, DateFormatter)
+from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, RadioGroup,CheckboxButtonGroup,Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup, DateFormatter,CheckboxGroup)
 from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs, FileInput
@@ -317,6 +317,25 @@ class Report():
 
         self.exp_comment.placeholder = 'CCD4 has some bright columns'
         self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
+
+        #bad exposures
+        self.bad_subt = Div(text='Bad Exposures',css_classes=['subt-style'],width=500)
+        self.bad_exp = TextInput(title='Exposure',placeholder='12345',width=200)
+        self.bad_comment = TextInput(title='Comment',placeholder='light leakage',width=300)
+        self.all_or_partial = RadioButtonGroup(labels=['All Bad','Select Cameras'],active=0)
+        hdrs = [Div(text='Spectrograph {}: '.format(i),width=150) for i in range(10)]
+        self.bad_cams_0 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_1 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_2 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_3 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_4 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_5 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_6 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_7 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_8 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_9 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+
+        self.bad_add = Button(label='Add Bad Exposure',css_classes=['add_button'],width=200)
         
         
         self.exp_layout = layout(self.buffer,self.title,
@@ -328,7 +347,22 @@ class Report():
                             self.exp_comment,
                             [self.img_upinst2, self.img_upload_comments_dqs],
                             [self.exp_btn],
-                            [self.exp_alert], width=1000)
+                            [self.exp_alert],
+                            self.line,
+                            self.bad_subt,
+                            [self.bad_exp, self.all_or_partial], 
+                            [hdrs[0], self.bad_cams_0],
+                            [hdrs[1], self.bad_cams_1],
+                            [hdrs[2], self.bad_cams_2],
+                            [hdrs[3], self.bad_cams_3],
+                            [hdrs[4], self.bad_cams_4],
+                            [hdrs[5], self.bad_cams_5],
+                            [hdrs[6], self.bad_cams_6],
+                            [hdrs[7], self.bad_cams_7],
+                            [hdrs[8], self.bad_cams_8],
+                            [hdrs[9], self.bad_cams_9],
+                            self.bad_comment,
+                            self.bad_add, width=1000)
         self.exp_tab = Panel(child=self.exp_layout, title="Exposures") 
 
     def get_prob_layout(self):
@@ -543,7 +577,7 @@ class Report():
             filen = ns[date]
             ns_html += open(filen).read()
             self.ns_html.text = ns_html
-        else:
+        except:
             self.ns_html.text = 'Cannot find NightSummary for this date'
 
 
@@ -925,6 +959,32 @@ class Report():
         exp_html = exp_df.to_html()
         return exp_html
 
+    def bad_exp_add(self):
+        exp = self.bad_exp.value
+        cams_dict = {0:'a',1:'b',2:'r',3:'z'}
+        print
+        if self.all_or_partial.active == 0:
+            bad = True
+            cameras = None
+        elif self.all_or_partial.active == 1:
+            bad = False
+            cameras = ''
+            for i, cams in enumerate([self.bad_cams_0, self.bad_cams_1, self.bad_cams_2, self.bad_cams_3, self.bad_cams_4, self.bad_cams_5, self.bad_cams_6, self.bad_cams_7, self.bad_cams_8, self.bad_cams_9]):
+                if len(cams.active) == 0:
+                    pass
+                else:
+                    print(cams.active)
+                    for c in cams.active:
+                        cameras += '{}{}'.format(cams_dict[int(c)],i)
+
+        comment = self.bad_comment.value
+        data = {}
+        data['EXPID'] = [exp]
+        data['BAD'] = [bad]
+        data['CAMS'] = [cameras]
+        data['COMMENT'] = [comment]
+
+        self.DESI_Log.add_bad_exp(data)
 
     def check_add(self):
         """add checklist time to Night Log
