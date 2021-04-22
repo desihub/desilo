@@ -173,13 +173,13 @@ class OpsTool(object):
         msg['Subject'] = subject
         msg['From'] = sender
         if self.test == False:
-            recipients = ['pfagrelius@noao.edu','dey@noao.edu']
+            recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu']
             msg['CC'] = ", ".join(recipients)
-            toaddrs.append('pfagrelius@noao.edu')
-            toaddrs.append('dey@noao.edu')
+            toaddrs.append('parker.fagrelius@noirlab.edu')
+            toaddrs.append('arjun.dey@noirlab.edu')
         else:
-            msg['CC'] = 'pfagrelius@noao.edu'
-            toaddrs.append('pfagrelius@noao.edu')
+            msg['CC'] = 'parker.fagrelius@noirlab.edu'
+            toaddrs.append('parker.fagrelius@noirlab.edu')
 
         msg['To'] = user_email
 
