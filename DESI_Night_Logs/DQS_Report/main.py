@@ -27,7 +27,8 @@ class DQS_Report(Report):
         self.title = Div(text="DESI Nightly Intake - Data QA Scientist", css_classes=['h1-title-style'], width=1000)
         inst = """
         The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality.
-        You can connect to an existing Night Log that was created by the Observing Scientist.
+        Submit problems as they arise throughout the night and complete the DQS checklist once an hour. Let the Lead Observer
+        know if you encounter any issues. 
         """
         self.instructions = Div(text=inst, css_classes=['inst-style'], width=500)
         self.page_logo = Div(text="<img src='DQS_Report/static/logo.png'>", width=350, height=300)

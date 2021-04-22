@@ -40,7 +40,7 @@ sys.path.append('/n/home/desiobserver/parkerf/desisurveyops/bin/')
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['NL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs/'
+os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs' #'/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs/'
 os.environ['NW_DIR'] = '/exposures/nightwatch/'
 os.environ['DESI_SPECTRO_DATA'] = '/exposures/desi/'
 os.environ['DESINIGHTSTATS'] = os.environ['NL_DIR']
@@ -311,6 +311,8 @@ class Report():
         <li>The exposure list is updated every 30 seconds. It might take some time for the exposure to transfer to Night Watch.</li> 
         <li>If you'd like to modify a submitted comment or quality assingment, you can recall a submission by selecting or entering the exposure number and using the <b>Load</b> button. 
         After making your modifications, resubmit using the <b>Add/Update</b> button.</li>
+        <li>If you identify an exposure that should not be processed, e.g. a "bad" exposure, submit it below. If all cameras/spectrographs are bad, select <b>All Bad</b>. If
+        only a few cameras have problems, select <b>Select Cameras</b> and identify which have the problem.</li> 
         </ul>
         """
         exp_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
@@ -322,6 +324,7 @@ class Report():
         self.bad_subt = Div(text='Bad Exposures',css_classes=['subt-style'],width=500)
         self.bad_exp = TextInput(title='Exposure',placeholder='12345',width=200)
         self.bad_comment = TextInput(title='Comment',placeholder='light leakage',width=300)
+        self.bad_alert = Div(text='',css_classes=['alert-style'],width=500)
         self.all_or_partial = RadioButtonGroup(labels=['All Bad','Select Cameras'],active=0)
         hdrs = [Div(text='Spectrograph {}: '.format(i),width=150) for i in range(10)]
         self.bad_cams_0 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
@@ -553,7 +556,7 @@ class Report():
 
     def get_ns_layout(self):
         self.ns_subtitle = Div(text='Night Summaries', css_classes=['subt-style'])
-        self.ns_inst = Div(text='Enter a date to get old NightLogs', css_classes=['inst-style'])
+        self.ns_inst = Div(text='Enter a date to get previously submitted NightLogs', css_classes=['inst-style'])
         self.ns_date_input = TextInput(title='Date',placeholder='YYYYMMDD')
         self.ns_date_btn = Button(label='Get NightLog', css_classes=['add_button'])
         self.ns_html = Div(text='',width=800)
@@ -566,6 +569,7 @@ class Report():
         self.ns_tab = Panel(child=ns_layout, title='Night Summary Index')
 
     def get_nightsum(self):
+        ns_date = self.ns_date_input.value
         ns = {}          
         ns_html = ''                                                                                                                
         for dir_, sdir, f in os.walk(self.nl_dir): 
@@ -574,7 +578,7 @@ class Report():
                     date = dir_.split('/')[-1]
                     ns[date] = os.path.join(dir_,x)
         try:
-            filen = ns[date]
+            filen = ns[ns_date]
             ns_html += open(filen).read()
             self.ns_html.text = ns_html
         except:
@@ -705,7 +709,11 @@ class Report():
                         self.milestone_alert.text = 'Issue with Time Use Data: {}'.format(e)
  
                 
-
+            else:
+                try:
+                    self.display_current_header()
+                except Exception as e:
+                    print('Header not displaying',e)
             self.current_nl()
             self.get_exposure_list()
 
@@ -962,7 +970,6 @@ class Report():
     def bad_exp_add(self):
         exp = self.bad_exp.value
         cams_dict = {0:'a',1:'b',2:'r',3:'z'}
-        print
         if self.all_or_partial.active == 0:
             bad = True
             cameras = None
@@ -983,9 +990,23 @@ class Report():
         data['BAD'] = [bad]
         data['CAMS'] = [cameras]
         data['COMMENT'] = [comment]
+        self.bad_alert.text = 'Submitted Bad Exposure {} @ {}'.format(exp, datetime.datetime.now().strftime('%H:%M.%S'))
+        self.bad_comment.value = ''
+        self.bad_exp.value = ''
+        self.all_or_partial.active = 0
+        self.bad_cams_0.active = []
+        self.bad_cams_1.active = []
+        self.bad_cams_2.active = []
+        self.bad_cams_3.active = []
+        self.bad_cams_4.active = []
+        self.bad_cams_5.active = []
+        self.bad_cams_6.active = []
+        self.bad_cams_7.active = []
+        self.bad_cams_8.active = []
+        self.bad_cams_9.active = []
+
 
         self.DESI_Log.add_bad_exp(data)
-
     def check_add(self):
         """add checklist time to Night Log
         """
@@ -1422,7 +1443,7 @@ class Report():
         f = self.DESI_Log._open_kpno_file_first(self.DESI_Log.nightlog_html)
         nl_file=open(f,'r')
         lines = nl_file.readlines()
-        nl_html = ' '
+        nl_html = "<h1>DESI Night Summary %s</h1>" % str(self.night)
         img_names = []
         for line in lines:
             nl_html += line
