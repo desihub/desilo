@@ -695,7 +695,7 @@ class Report():
                         self.tel_loss_time.value = self._dec_to_hm(data['tel_loss'])
                         self.total_time.text = 'Time Documented (hrs): {}'.format(self._dec_to_hm(data['total']))
                         self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-                        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(float(self._dec_to_hm(self.full_time)))
+                        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
                     except Exception as e:
                         self.milestone_alert.text = 'Issue with Time Use Data: {}'.format(e)
  
@@ -738,7 +738,7 @@ class Report():
 
 
         self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(float(self._dec_to_hm(self.full_time)))
+        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
 
         self.DESI_Log.get_started_os(meta)
 

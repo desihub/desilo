@@ -295,12 +295,10 @@ class NightLog(object):
                 else:
                     filen.write("<li> {}</li>".format(self.write_time(row['Time'],kp_only=True)))
             filen.write("</ul>")
-            filen.write("<br/>")
-            filen.write("<br/>")
 
         if df_dqs is not None:
             filen.write("DQS checklist completed at (Local time):")
-            filen.write("<br/><br/>")
+            filen.write("<br/>")
             filen.write("<ul>")
             for index, row in df_dqs.iterrows():
                 if not pd.isna(row['Comment']):
@@ -309,8 +307,6 @@ class NightLog(object):
                 else:
                     filen.write("<li> {}</li>".format(self.write_time(row['Time'],kp_only=True)))
             filen.write("</ul>")
-            filen.write("<br/>")
-            filen.write("<br/>")
 
     def write_weather(self, filen):
         """Operations Scientist adds information regarding the weather.
@@ -416,14 +412,16 @@ class NightLog(object):
 
             if len(df_['dqs']) > 0:
                 dqs_ = df_['dqs'].iloc[0]
+                if str(dqs_['Comment']) == 'nan':
+                    dqs_['Comment'] = ''
                 if got_exp is not None:
-                    file.write(f"*Data Quality:* {dqs_['Quality']}; {dqs_['Comment']}<br/>")
+                    file.write(f"<b><em>Data Quality:</em></b> {dqs_['Quality']}; {dqs_['Comment']}<br/>")
                 else:
                     got_exp = str(dqs_['Exp_Start'])
                     try:
-                        file.write("<b>{} Exp. {}</b> *Data Quality:* {}, {}<br/>".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                        file.write("<b>{} Exp. {}</b> <b><em>Data Quality:</em></b> {}, {}<br/>".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
                     except:
-                        file.write("<b>{} Exp. {}</b> *Data Quality:* {}, {}<br/>".format(self.write_time(dqs_['Time']), str(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                        file.write("<b>{} Exp. {}</b> <b><em>Data Quality:</em></b> {}, {}<br/>".format(self.write_time(dqs_['Time']), str(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
 
                 if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                     self._write_image_tag(file, dqs_['img_name'])
