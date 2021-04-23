@@ -1435,7 +1435,7 @@ class Report():
                 bad_df = bad_df.drop_duplicates(subset=['EXPID'], keep='last')
                 bad_df.to_csv(bad_path,index=False)
             except Exception as e:
-                print('Cant post to the bad exp list: {}'.formta(e))
+                print('Cant post to the bad exp list: {}'.format(e))
 
 
             self.save_telem_plots = True
