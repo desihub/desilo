@@ -61,6 +61,8 @@ class DQS_Report(Report):
         self.prob_load_btn.on_click(self.load_problem)
         self.ns_date_btn.on_click(self.get_nightsum)
         self.bad_add.on_click(self.bad_exp_add)
+        self.prob_delete_btn.on_click(self.problem_delete)
+
 
 
 DQS = DQS_Report()

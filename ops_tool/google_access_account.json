@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "silicon-ids",
+  "private_key_id": "7359526cbff68e97ce60d262fcacb374cf685549",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDEls+jogBurmFN\nIoxVqulkrCgGHvP8wPjfQ62DGjn5y02mk+1sXf+0Iz2lW3Die7H4pa4EEildRYbm\nkgge1MwgvAr/H20bD15R2uKIyRoo2CcxwdtBVwdZaojWXy1qtMYjUZF4GHEIAim5\nwvJx9/mnxLedftpFcKp4jvQEmnKM0b9jr4i8yJzqYhlsr9TeJZMUsCSojWEpH3Ps\nrFKXjx4p3kp2sfvCYBKmT46LGSI+HvDE1BgdA7FFKt+tz018ikbh7jUiZmOdTmk7\nGTlHHfnBtTQvgbPum+k7v6Po5RzEtDuJT/+Jx5+8Rtlj8opXeYpYfG+bJYio146N\nMbe7KyCvAgMBAAECggEAHmYLmYv1cSf518md1almCbEtRzUGGXFlinCWpg0qJdww\nF7AMKJOodJx2bdlj7UGfVYmZDPwZ9VhI8eJm6w2QuwcY1DZx0ptfxFyKZwhhySsT\ndHg7hTEF6+ezXSK+jR+C+/ci/WUaJVjgRt9ESidELZMXqXzyF4bCdX31cbjIOcn3\nqQGLzA4JZ2EOJd1NQ2LQ01YtHugJCul9QhUbCTOPcG/fEEjU25HZ0k8I4U3Np7qg\nd4QS5ynv8gsjG4kdq7BP/lh3L6uih7Sw3R+LiXyOcV4QsJOH4Rf+1MdfXblGRqGU\nr19K9TfhOnUKqx4UWYcUHh5P3lA4FY+eJ+PwnhyJIQKBgQDzQFoRLIL3LEVHR5tL\n72HR6CPzxySGfzRy6PR47HCAUEUJGtdKtZC39z6K41/hFbOHOAVsdq2lsv9zxBAH\n/hGdX0zIvMAtJKa9ry+BR6mNRO3AY67a6jxzY4Xjrd9LMW1DgmOlVaFrstSdSmBH\nGqFzw0czm+qvmSvUlGLUUJCO9wKBgQDO5Gb6bZ4TizltyG9YxFLHoxmK74bduMIg\nZm5PocH95O7nhmWzt7YbrXqG2tXtZw+baaEwcYSzTsuM4zla5TxLkkf1g1YHGO7+\ngo5OVAck8uOXmczf31e7ch0M2KNmXi5hpYP2qRa7YSW26tGU15xHJ92G2zRr4vcq\nGEgUhgI2CQKBgAgtQpnPMDvUziNeQdckndorfoHkUNMAlafDMuyZrhJyIE/1CgWl\n4s58TirnB8MOMrG57Vy/BIlMYg/nKE7MeJUcrf0VczRRRhWcPPGQkh+AkKll8GvF\ncfDDCK4lmxrw92ZMjMLzBPEU2tbKuD/Lol+80bjnZdUvRezobAYNCz7zAoGBAMWs\nkvupKoTv3AIZpNGCWrlmC2yk6Q4Fjm1YkQNCwVAtoVnTHm71E2kkelJI2mdGtjG+\nXgUkIS8VFQTawZ0oM1DdRiW8w8BqQUcpRIBwZpcV/wCFMauhAHkXUcxJXO3dBKHF\ne+17pz2HV3qKp45351hRLabA4DhIlfFBW/VICOrJAoGAfGAEAu2TVVkoEjkiofL5\nKoTbJBVrQiL9yt4vOFETWCaOjP/+XrVkMCCrYYQOTZ2MTi2GfYkAGzmOQuPwxvHu\ngfFf4ZBCPU4yFDPOrEHxb5GbW4gsCllvDM2rz/wY35A8dTwnO7dhu0ZFt3yk5XR6\nW2wqkxLMafnc7l9Q1gLiNok=\n-----END PRIVATE KEY-----\n",
+  "client_email": "desibot@silicon-ids.iam.gserviceaccount.com",
+  "client_id": "115979738717477660633",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://accounts.google.com/o/oauth2/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/desibot%40silicon-ids.iam.gserviceaccount.com"
+}

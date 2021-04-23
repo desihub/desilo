@@ -190,6 +190,24 @@ class NightLog(object):
                 print('ERROR: invalid format for uploading image')
         return file
 
+    def delete_item(self, time, tab, user=None):
+        if tab == 'plan':
+            file = self.objectives
+        if tab == 'milestone':
+            file = self.milestone
+        if tab == 'problem':
+            pb_files = {'OS':self.os_pb,'DQS':self.dqs_pb,'Other':self.other_pb}
+            file = pb_files[user]
+        if tab == 'progress':
+            exp_files = {'OS':self.os_exp,'Other':self.other_exp}
+            file = exp_files[user]
+
+        df = pd.read_csv(file)
+        idx = df[df.Time == time].index[0]
+        df = df.drop([idx])
+        df.reset_index(inplace=True, drop=True)
+        df.to_csv(file, index=False)
+
     def add_input(self, data, tab, img_name=None, img_data=None):
         dqs_exp = False
         if tab == 'plan':
@@ -252,13 +270,16 @@ class NightLog(object):
             for index, row in df.iterrows():
                 filen.write("<li> [{}] {}".format(index, row['Desc']))
                 if not pd.isna(row['Exp_Start']): # not in [np.nan, 'nan',None, 'None', " ", ""]:
-                    filen.write("; Exposure(s): {}".format(row['Exp_Start']))
+                    if str(row['Exp_Start']) not in ['',' ','nan']:
+                        filen.write("; Exposure(s): {}".format(row['Exp_Start']))
                 if not pd.isna(row['Exp_Stop']): #not in [np.nan, 'nan',None, 'None', " ", ""]:   
-                    filen.write(" - {}".format(row['Exp_Stop']))
+                    if str(row['Exp_Stop']) not in ['',' ','nan']:
+                        filen.write(" - {}".format(row['Exp_Stop']))
                 if not pd.isna(row['Exp_Excl']): # not in [np.nan, 'nan',None, 'None', " ", ""]:   
                     filen.write(", excluding {}".format(row['Exp_Excl']))
                 filen.write("</li>")
             filen.write("</ul>")
+
 
     def write_checklist(self, filen):
         df_os = self._combine_compare_csv_files(self.os_cl)
@@ -504,9 +525,9 @@ class NightLog(object):
         if user == 'OS':
             files = {'exposure':self.os_exp, 'problem':self.os_pb}
         elif user == 'DQS':
-            _dir = {'exposure':self.dqs_exp, 'problem':self.dqs_pb}
+            files = {'exposure':self.dqs_exp, 'problem':self.dqs_pb}
         elif user == 'Other':
-            _dir = {'exposure':self.other_exp, 'problem':self.other_pb}
+            files = {'exposure':self.other_exp, 'problem':self.other_pb}
 
         the_path = files[exp_type]
 

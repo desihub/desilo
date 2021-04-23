@@ -52,6 +52,9 @@ class Other_Report(Report):
         self.prob_btn.on_click(self.prob_add)
         self.prob_load_btn.on_click(self.load_problem)
         self.ns_date_btn.on_click(self.get_nightsum)
+        self.exp_delete_btn.on_click(self.progress_delete)
+        self.prob_delete_btn.on_click(self.problem_delete)
+
 
 Other = Other_Report()
 Other.run()
