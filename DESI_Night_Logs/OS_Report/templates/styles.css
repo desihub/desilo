@@ -30,7 +30,7 @@
     border-color: black;
 }
 
-.h1-title-style {
+.bk-root .h1-title-style {
 	color: black;
 	width: 1000px;
 	text-decoration: underline;
@@ -39,12 +39,12 @@
 	font-weight: bold;
 }
 
-.inst-style {
+.bk-root .inst-style {
 	color: black;
 	font-size:12pt;
 }
 
-.subt-style {
+.bk-root .subt-style {
 	color: black;
     width: 1000px;
 	text-decoration: underline;
@@ -52,14 +52,14 @@
 	font-style: bold;
 }
 
-.title-style {
+.bk-root .title-style {
 	color: black;
 	text-decoration: underline;
 	font-size:18pt;
 	font-style: bold;
 }
 
-.alert-style {
+.bk-root .alert-style {
 	color: red;
 	font-size:12pt;
 }

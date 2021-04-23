@@ -36,26 +36,13 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
 sys.path.append(os.getcwd())
-sys.path.append('/n/home/desiobserver/parkerf/desisurveyops/bin/')
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
-
-os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs' #'/Users/pfagrelius/Research/DESI/Operations/NightLog/nightlogs/'
-os.environ['NW_DIR'] = '/exposures/nightwatch/'
-os.environ['DESI_SPECTRO_DATA'] = '/exposures/desi/'
-os.environ['DESINIGHTSTATS'] = os.environ['NL_DIR']
-os.environ['PGPASSWORD'] = 'reader'
-os.environ['PGPORT'] = '5442'
-os.environ['PGHOST'] = 'desi-db'
-os.environ['SURVEYOPSDIR'] = '/n/home/desiobserver/parkerf/desisurveyops/'
-
-#os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
-#os.environ['NW_DIR'] = '/exposures/nightwatch/'
 
 class Report():
     def __init__(self, type):
 
-        self.test = True 
+        self.test = False
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -63,6 +50,7 @@ class Report():
         self.datefmt = DateFormatter(format="%m/%d/%Y %H:%M:%S")
         self.timefmt = DateFormatter(format="%m/%d %H:%M")
 
+        # Figure out where the App is being run: KPNO or NERSC
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
         if 'desi' in hostname:
@@ -74,8 +62,7 @@ class Report():
         else:
             self.location = 'nersc'
 
-        nw_dirs = {'nersc':'/global/cfs/cdirs/desi/spectro/nightwatch/nersc/', 'kpno':'/exposures/nightwatch/', 'other':None}
-        self.nw_dir = os.environ['NW_DIR'] #nw_dirs[self.location]
+        self.nw_dir = os.environ['NW_DIR']
         self.nl_dir = os.environ['NL_DIR']     
 
         self.intro_subtitle = Div(text="Connect to Night Log", css_classes=['subt-style'])
@@ -656,7 +643,7 @@ class Report():
         if exists:
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
        
-            self.nl_file = self.DESI_Log.nightlog_file
+            self.nl_file = self.DESI_Log.nightlog_html
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
             if self.report_type == 'OS':
@@ -1443,7 +1430,7 @@ class Report():
         f = self.DESI_Log._open_kpno_file_first(self.DESI_Log.nightlog_html)
         nl_file=open(f,'r')
         lines = nl_file.readlines()
-        nl_html = "<h1>DESI Night Summary %s</h1>" % str(self.night)
+        nl_html = "" 
         img_names = []
         for line in lines:
             nl_html += line
