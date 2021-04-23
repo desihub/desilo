@@ -606,7 +606,7 @@ class NightLog(object):
 
     def add_bad_exp(self, data):
         if not os.path.exists(self.bad_exp_list):
-            df = pd.DataFrame(columns=['EXPID','BAD','CAMS','COMMENT'])
+            df = pd.DataFrame(columns=['EXPID','BAD','BADCAMS','COMMENT'])
             df.to_csv(self.bad_exp_list, index=False)
         else:
             df = pd.read_csv(self.bad_exp_list)
