@@ -42,7 +42,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = False
+        self.test = False 
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -884,63 +884,77 @@ class Report():
             telem_data.skylevel = exp_df.skylevel
 
         self.telem_source.data = telem_data
-        export_png(self.bk_plots)
+        #export_png(self.bk_plots)
         if self.save_telem_plots:
-            fig = plt.figure(figsize=(8,20))
+            plt.style.use('ggplot')
+            plt.rcParams.update({'axes.labelsize': 'small'})
+            from matplotlib.pyplot import cm
+            color=iter(cm.tab10(np.linspace(0,1,8)))
+
+
+            fig = plt.figure(figsize=(10,15))
             ax1 = fig.add_subplot(8,1,1)
-            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','mirror_temp'), s=5, label='mirror temp')    
-            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','truss_temp'), s=5, label='truss temp')  
-            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','air_temp'), s=5, label='air temp') 
+            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','mirror_temp'), s=10, label='mirror temp')    
+            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','truss_temp'), s=10, label='truss temp')  
+            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','air_temp'), s=10, label='air temp') 
             ax1.set_ylabel("Telescope Temperature (C)")
             ax1.legend()
             ax1.grid(True)
             ax1.tick_params(labelbottom=False)
 
             ax2 = fig.add_subplot(8,1,2, sharex = ax1)
-            ax2.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','humidity'), s=5, label='humidity') 
+            c=next(color)
+            ax2.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','humidity'), s=10, color=c, label='humidity') 
             ax2.set_ylabel("Humidity %")
             ax2.grid(True)
             ax2.tick_params(labelbottom=False)
 
             ax3 = fig.add_subplot(8,1,3, sharex=ax1) 
-            ax3.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','wind_speed'), s=5, label='wind speed')
+            c=next(color)
+            ax3.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','wind_speed'), s=10, color=c, label='wind speed')
             ax3.set_ylabel("Wind Speed (mph)")
             ax3.grid(True)
             ax3.tick_params(labelbottom=False)
 
             ax4 = fig.add_subplot(8,1,4, sharex=ax1)
-            ax4.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
+            c=next(color)
+            ax4.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=10, color=c, label='airmass')
             ax4.set_ylabel("Airmass")
             ax4.grid(True)
             ax4.tick_params(labelbottom=False)
 
             ax5 = fig.add_subplot(8,1,5, sharex=ax1)
-            ax5.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
+            c=next(color)
+            ax5.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=10, color=c, label='exptime')
             ax5.set_ylabel("Exposure time (s)")
             ax5.grid(True)
             ax5.tick_params(labelbottom=False)
 
             ax6 = fig.add_subplot(8,1,6,sharex=ax1)
-            ax6.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
+            c=next(color)
+            ax6.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=10, color=c, label='seeing')   
             ax6.set_ylabel("Seeing")
             ax6.grid(True)
             ax6.tick_params(labelbottom=False)
 
             ax7 = fig.add_subplot(8,1,7,sharex=ax1)
-            ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), tput, s=5, label='transparency')
+            c=next(color)
+            ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), tput, s=10, color=c, label='transparency')
             ax7.set_ylabel("Transparency (%)")
             ax7.grid(True)
             ax7.tick_params(labelbottom=False)
 
             ax8 = fig.add_subplot(8,1,8,sharex=ax1)
-            ax8.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
+            c=next(color)
+            ax8.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=10, color=c, label='Sky Level')      
             ax8.set_ylabel("Sky level (AB/arcsec^2)")
             ax8.grid(True)
 
             ax8.set_xlabel("Local Time (MST)")
             ax8.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M', tz=pytz.timezone("US/Arizona")))
             ax8.tick_params(labelrotation=45)
-            fig.suptitle("Telemetry for obsday={}".format(self.night))
+            fig.suptitle("Telemetry for obsday {}".format(self.night),fontsize=14)
+            plt.subplots_adjust(top=0.85)
             fig.tight_layout()
 
             plt.savefig(self.DESI_Log.telem_plots_file)

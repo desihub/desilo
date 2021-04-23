@@ -81,12 +81,6 @@
     font-size: 11pt; 
     font-family: Arial;
     border: 1px black;
-    align-self: left;
-    box-shadow: 0px 0px 20px rgba(0,0,0,0.10),
-     0px 10px 20px rgba(0,0,0,0.05),
-     0px 20px 20px rgba(0,0,0,0.05),
-     0px 30px 20px rgba(0,0,0,0.05);
-
 }
 
 .badtable  tr:nth-child(even) {
@@ -100,12 +94,6 @@
     font-size: 11pt; 
     font-family: Arial;
     border: 1px black;
-    align-self: left;
-    box-shadow: 0px 0px 20px rgba(0,0,0,0.10),
-     0px 10px 20px rgba(0,0,0,0.05),
-     0px 20px 20px rgba(0,0,0,0.05),
-     0px 30px 20px rgba(0,0,0,0.05);
-
 }
 
 .weathertable  tr:nth-child(even) {

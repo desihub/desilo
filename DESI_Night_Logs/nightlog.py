@@ -674,7 +674,6 @@ class NightLog(object):
         #Night Summary
         try:
             cfile = self._open_kpno_file_first(self.summary_file)
-            print(cfile)
             if cfile is not None:
                 file_nl.write("<h3>Night Summary</h3>")
                 with open(cfile, 'r') as file_cont:
