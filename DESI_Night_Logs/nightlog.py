@@ -580,13 +580,19 @@ class NightLog(object):
         file.write("Time Use (hrs):<br/>")
         file.write("<ul>")
         for name, item in obs_items.items():
-            if not pd.isna(item):
+            if name == 'Time between 18 deg. twilight':
                 try:
-                    file.write("<li> {}: {:.2f}</li>".format(name, float(item)))
+                    file.write("<li> {}: {:.3f}</li>".format(name, float(item)))
                 except Exception as e:
                     print(e)
             else:
-                file.write("<li> {}: 0.0</li>".format(name))
+                if not pd.isna(item):
+                    try:
+                        file.write("<li> {}: {:.2f}</li>".format(name, float(item)))
+                    except Exception as e:
+                        print(e)
+                else:
+                    file.write("<li> {}: 0.0</li>".format(name))
         file.write("</ul>")
         if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_1'])

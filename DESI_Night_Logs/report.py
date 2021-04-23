@@ -695,7 +695,7 @@ class Report():
                         self.tel_loss_time.value = self._dec_to_hm(data['tel_loss'])
                         self.total_time.text = 'Time Documented (hrs): {}'.format(self._dec_to_hm(data['total']))
                         self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-                        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
+                        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(float(self._dec_to_hm(self.full_time)))
                     except Exception as e:
                         self.milestone_alert.text = 'Issue with Time Use Data: {}'.format(e)
  
@@ -738,7 +738,7 @@ class Report():
 
 
         self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
+        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(float(self._dec_to_hm(self.full_time)))
 
         self.DESI_Log.get_started_os(meta)
 
@@ -764,7 +764,8 @@ class Report():
             nl_file = open(path,'r')
             nl_txt = ''
             for line in nl_file:
-                nl_txt =  nl_txt + line + '\n'
+                nl_txt +=  line 
+            nl_txt += '<h3> All Exposures </h3>'
             self.nl_text.text = nl_txt
             nl_file.closed
             self.nl_alert.text = 'Last Updated on this page: {}'.format(now)
@@ -1132,14 +1133,7 @@ class Report():
                     self.prob_action.value.strip(), name]
                     self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
 
-                    # Preview
-                    if img_name not in [None,'',' ','nan']:
-                        preview += "<br>"
-                        preview += "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
-                        self.prob_alert.text = preview
-
-                    else:
-                        self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
+                    self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
 
                 self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
 
@@ -1178,13 +1172,7 @@ class Report():
             img_name, img_data, preview = self.image_uploaded('comment')
             data = [time, comment, exp]
             self.DESI_Log.add_input(data, 'os_exp',img_name=img_name, img_data=img_data)
-            if img_name is not None:
-                preview += "<br>"
-                preview += "A comment was added @ {}".format(datetime.datetime.now().strftime("%H:%M"))
-                self.exp_alert.text = preview
-
-            else:
-                self.exp_alert.text = 'Last Input was made @ {}: {}'.format(datetime.datetime.now().strftime("%H:%M"),self.exp_comment.value)
+            self.exp_alert.text = 'Last Input was made @ {}: {}'.format(datetime.datetime.now().strftime("%H:%M"),self.exp_comment.value)
             self.clear_input([self.exp_time, self.exp_comment, self.exp_enter])
         except Exception as e:
             self.exp_alert.text = 'Error with your Input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
@@ -1223,12 +1211,7 @@ class Report():
                 data = [time, comment, exp, self.your_name.value.strip()]
                 self.DESI_Log.add_input(data, 'other_exp',img_name=img_name, img_data=img_data)
 
-                if img_name is not None:
-                    preview += "<br>"
-                    preview += "A comment was added @ {}: {}".format(self.exp_time.value.strip(), self.exp_comment.value)
-                    self.exp_alert.text = preview
-                else:
-                    self.exp_alert.text = "A comment was added at {}: {}".format(datetime.datetime.now().strftime("%H:%M"), self.exp_comment.value)
+                self.exp_alert.text = "A comment was added at {}: {}".format(datetime.datetime.now().strftime("%H:%M"), self.exp_comment.value)
                 self.clear_input([self.exp_time, self.exp_comment])
             except Exception as e:
                 self.exp_alert.text = 'Error with your Input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
@@ -1252,12 +1235,7 @@ class Report():
             data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
             self.DESI_Log.add_input(data, 'dqs_exp',img_name=img_name, img_data=img_data)
 
-            if img_name is not None:
-                preview += "<br>"
-                preview += "A comment was added @ {} for Exp. {}".format(self.exp_time.value.strip(), exp_val)
-                self.exp_alert.text = preview
-            else:
-                self.exp_alert.text = 'Last Exposure input @ {} for Exp. {}'.format(now, exp_val)
+            self.exp_alert.text = 'Last Exposure input @ {} for Exp. {}'.format(now, exp_val)
             self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
         except Exception as e:
             self.exp_alert.text = 'Error with your Input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
