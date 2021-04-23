@@ -1,5 +1,6 @@
 #Imports
 import os, sys
+import base64
 import glob
 import time, sched
 import datetime 
@@ -17,8 +18,8 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-from bokeh.io import curdoc  # , output_file, save
-from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, RadioGroup,Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup, DateFormatter)
+from bokeh.io import curdoc, save, export_png  # , output_file, save
+from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, RadioGroup,CheckboxButtonGroup,Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup, DateFormatter,CheckboxGroup)
 from bokeh.models.widgets.markups import Div
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs, FileInput
@@ -38,12 +39,6 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-#os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
-#os.environ['NW_DIR'] = '/exposures/nightwatch/'
-
-#os.environ['NL_DIR'] = '/n/home/desiobserver/parkerf/desilo/nightlogs'
-#os.environ['NW_DIR'] = '/exposures/nightwatch/'
-
 class Report():
     def __init__(self, type):
 
@@ -55,6 +50,7 @@ class Report():
         self.datefmt = DateFormatter(format="%m/%d/%Y %H:%M:%S")
         self.timefmt = DateFormatter(format="%m/%d %H:%M")
 
+        # Figure out where the App is being run: KPNO or NERSC
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
         if 'desi' in hostname:
@@ -66,8 +62,7 @@ class Report():
         else:
             self.location = 'nersc'
 
-        nw_dirs = {'nersc':'/global/cfs/cdirs/desi/spectro/nightwatch/nersc/', 'kpno':'/exposures/nightwatch/', 'other':None}
-        self.nw_dir = os.environ['NW_DIR'] #nw_dirs[self.location]
+        self.nw_dir = os.environ['NW_DIR']
         self.nl_dir = os.environ['NL_DIR']     
 
         self.intro_subtitle = Div(text="Connect to Night Log", css_classes=['subt-style'])
@@ -306,12 +301,34 @@ class Report():
         <li>The exposure list is updated every 30 seconds. It might take some time for the exposure to transfer to Night Watch.</li> 
         <li>If you'd like to modify a submitted comment or quality assingment, you can recall a submission by selecting or entering the exposure number and using the <b>Load</b> button. 
         After making your modifications, resubmit using the <b>Add/Update</b> button.</li>
+        <li>If you identify an exposure that should not be processed, e.g. a "bad" exposure, submit it below. If all cameras/spectrographs are bad, select <b>All Bad</b>. If
+        only a few cameras have problems, select <b>Select Cameras</b> and identify which have the problem.</li> 
         </ul>
         """
         exp_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
 
         self.exp_comment.placeholder = 'CCD4 has some bright columns'
         self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
+
+        #bad exposures
+        self.bad_subt = Div(text='Bad Exposures',css_classes=['subt-style'],width=500)
+        self.bad_exp = TextInput(title='Exposure',placeholder='12345',width=200)
+        self.bad_comment = TextInput(title='Comment',placeholder='light leakage',width=300)
+        self.bad_alert = Div(text='',css_classes=['alert-style'],width=500)
+        self.all_or_partial = RadioButtonGroup(labels=['All Bad','Select Cameras'],active=0)
+        hdrs = [Div(text='Spectrograph {}: '.format(i),width=150) for i in range(10)]
+        self.bad_cams_0 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_1 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_2 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_3 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_4 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_5 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_6 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_7 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_8 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+        self.bad_cams_9 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
+
+        self.bad_add = Button(label='Add Bad Exposure',css_classes=['add_button'],width=200)
         
         
         self.exp_layout = layout(self.buffer,self.title,
@@ -323,7 +340,22 @@ class Report():
                             self.exp_comment,
                             [self.img_upinst2, self.img_upload_comments_dqs],
                             [self.exp_btn],
-                            [self.exp_alert], width=1000)
+                            [self.exp_alert],
+                            self.line,
+                            self.bad_subt,
+                            [self.bad_exp, self.all_or_partial], 
+                            [hdrs[0], self.bad_cams_0],
+                            [hdrs[1], self.bad_cams_1],
+                            [hdrs[2], self.bad_cams_2],
+                            [hdrs[3], self.bad_cams_3],
+                            [hdrs[4], self.bad_cams_4],
+                            [hdrs[5], self.bad_cams_5],
+                            [hdrs[6], self.bad_cams_6],
+                            [hdrs[7], self.bad_cams_7],
+                            [hdrs[8], self.bad_cams_8],
+                            [hdrs[9], self.bad_cams_9],
+                            self.bad_comment,
+                            self.bad_add, width=1000)
         self.exp_tab = Panel(child=self.exp_layout, title="Exposures") 
 
     def get_prob_layout(self):
@@ -392,27 +424,28 @@ class Report():
         self.telem_source = ColumnDataSource(telem_data)
 
         plot_tools = 'pan,wheel_zoom,lasso_select,reset,undo,save'
-        p1 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Temp (C)',x_axis_type="datetime", tools=plot_tools)
-        p2 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=p1.x_range, y_axis_label='Humidity (%)', x_axis_type="datetime",tools=plot_tools)
-        p3 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=p1.x_range, y_axis_label='Wind Speed (mph)', x_axis_type="datetime",tools=plot_tools)
-        p4 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=p1.x_range, y_axis_label='Airmass', x_axis_type="datetime",tools=plot_tools)
-        p5 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=p1.x_range, y_axis_label='Exptime (sec)', x_axis_type="datetime",tools=plot_tools)
-        p6 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Seeing (arcsec)', tools=plot_tools)
-        p7 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Transparency', tools=plot_tools, x_range = p6.x_range)
-        p8 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Sky Level', tools=plot_tools, x_range=p6.x_range)
+        self.p1 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', y_axis_label='Temp (C)',x_axis_type="datetime", tools=plot_tools)
+        self.p2 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=self.p1.x_range, y_axis_label='Humidity (%)', x_axis_type="datetime",tools=plot_tools)
+        self.p3 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=self.p1.x_range, y_axis_label='Wind Speed (mph)', x_axis_type="datetime",tools=plot_tools)
+        self.p4 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=self.p1.x_range, y_axis_label='Airmass', x_axis_type="datetime",tools=plot_tools)
+        self.p5 = figure(plot_width=800, plot_height=300, x_axis_label='UTC Time', x_range=self.p1.x_range, y_axis_label='Exptime (sec)', x_axis_type="datetime",tools=plot_tools)
+        self.p6 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Seeing (arcsec)', tools=plot_tools)
+        self.p7 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Transparency', tools=plot_tools, x_range = self.p6.x_range)
+        self.p8 = figure(plot_width=800, plot_height=300, x_axis_label='Exposure', y_axis_label='Sky Level', tools=plot_tools, x_range=self.p6.x_range)
 
-        p1.circle(x = 'time',y='mirror_temp',source=self.telem_source,color='orange', size=10, alpha=0.5) #
-        p1.circle(x = 'time',y='truss_temp',source=self.telem_source, size=10, alpha=0.5, ) #legend_label = 'Truss'
-        p1.circle(x = 'time',y='air_temp',source=self.telem_source, color='green', size=10, alpha=0.5) #, legend_label = 'Air'
-        p1.legend.location = "top_right"
+        self.p1.circle(x = 'time',y='mirror_temp',source=self.telem_source,color='orange', size=10, alpha=0.5) #
+        self.p1.circle(x = 'time',y='truss_temp',source=self.telem_source, size=10, alpha=0.5, ) #legend_label = 'Truss'
+        self.p1.circle(x = 'time',y='air_temp',source=self.telem_source, color='green', size=10, alpha=0.5) #, legend_label = 'Air'
+        self.p1.legend.location = "top_right"
 
-        p2.circle(x = 'time',y='humidity',source=self.telem_source, size=10, alpha=0.5)
-        p3.circle(x = 'time',y='wind_speed',source=self.telem_source, size=10, alpha=0.5)
-        p4.circle(x = 'time',y='airmass',source=self.telem_source, size=10, alpha=0.5)
-        p5.circle(x = 'time',y='exptime',source=self.telem_source, size=10, alpha=0.5)
-        p6.circle(x = 'exp',y='seeing',source=self.telem_source, size=10, alpha=0.5)
-        p7.circle(x = 'exp',y='tput',source=self.telem_source, size=10, alpha=0.5)
-        p8.circle(x = 'exp',y='skylevel',source=self.telem_source, size=10, alpha=0.5)
+        self.p2.circle(x = 'time',y='humidity',source=self.telem_source, size=10, alpha=0.5)
+        self.p3.circle(x = 'time',y='wind_speed',source=self.telem_source, size=10, alpha=0.5)
+        self.p4.circle(x = 'time',y='airmass',source=self.telem_source, size=10, alpha=0.5)
+        self.p5.circle(x = 'time',y='exptime',source=self.telem_source, size=10, alpha=0.5)
+        self.p6.circle(x = 'exp',y='seeing',source=self.telem_source, size=10, alpha=0.5)
+        self.p7.circle(x = 'exp',y='tput',source=self.telem_source, size=10, alpha=0.5)
+        self.p8.circle(x = 'exp',y='skylevel',source=self.telem_source, size=10, alpha=0.5)
+        self.bk_plots = column(self.p1, self.p2, self.p3, self.p4, self.p5, self.p6, self.p7, self.p8)
 
         self.weather_desc = TextInput(title='Weather Description', placeholder='description', width=500)
         self.weather_btn = Button(label='Add Weather Description', css_classes=['add_button'], width=100)
@@ -427,14 +460,14 @@ class Report():
                             self.weather_alert,
                             self.weather_table,
                             self.plots_subtitle,
-                            p1,p2,p3,p4,p5,p6,p7,p8], width=1000)
+                            self.bk_plots], width=1000)
         else:
             weather_layout = layout([self.buffer,self.title,
                 self.weather_subtitle,
                 self.weather_inst,
                 self.weather_table,
                 self.plots_subtitle,
-                p1,p2,p3,p4,p5,p6,p7,p8], width=1000)
+                self.bk_plots], width=1000)
         self.weather_tab = Panel(child=weather_layout, title="Observing Conditions")
 
     def get_checklist_layout(self):
@@ -512,6 +545,36 @@ class Report():
                         self.exp_table], width=1000)
         self.nl_tab = Panel(child=nl_layout, title="Current DESI Night Log")
 
+    def get_ns_layout(self):
+        self.ns_subtitle = Div(text='Night Summaries', css_classes=['subt-style'])
+        self.ns_inst = Div(text='Enter a date to get previously submitted NightLogs', css_classes=['inst-style'])
+        self.ns_date_input = TextInput(title='Date',placeholder='YYYYMMDD')
+        self.ns_date_btn = Button(label='Get NightLog', css_classes=['add_button'])
+        self.ns_html = Div(text='',width=800)
+
+        ns_layout = layout([self.buffer,
+                            self.ns_subtitle,
+                            self.ns_inst,
+                            [self.ns_date_input, self.ns_date_btn],
+                            self.ns_html], width=1000)
+        self.ns_tab = Panel(child=ns_layout, title='Night Summary Index')
+
+    def get_nightsum(self):
+        ns_date = self.ns_date_input.value
+        ns = {}          
+        ns_html = ''                                                                                                                
+        for dir_, sdir, f in os.walk(self.nl_dir): 
+            for x in f: 
+                if 'NightSummary' in x: 
+                    date = dir_.split('/')[-1]
+                    ns[date] = os.path.join(dir_,x)
+        try:
+            filen = ns[ns_date]
+            ns_html += open(filen).read()
+            self.ns_html.text = ns_html
+        except:
+            self.ns_html.text = 'Cannot find NightSummary for this date'
+
 
     def get_time(self, time):
         """Returns strptime with utc. Takes time zone selection
@@ -584,7 +647,7 @@ class Report():
         if exists:
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
        
-            self.nl_file = self.DESI_Log.nightlog_file
+            self.nl_file = self.DESI_Log.nightlog_html
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
             if self.report_type == 'OS':
@@ -637,7 +700,11 @@ class Report():
                         self.milestone_alert.text = 'Issue with Time Use Data: {}'.format(e)
  
                 
-
+            else:
+                try:
+                    self.display_current_header()
+                except Exception as e:
+                    print('Header not displaying',e)
             self.current_nl()
             self.get_exposure_list()
 
@@ -809,67 +876,89 @@ class Report():
             telem_data.airmass = exp_df.airmass
             telem_data.exptime = exp_df.exptime
             telem_data.seeing = exp_df.seeing
-            telem_data.tput = exp_df.transpar
+
+            tput = []
+            for x in exp_df['etc']:
+               if x is not None:
+                   tput.append(x['transp'])
+               else:
+                   tput.append(None)
+            telem_data.tput = tput #exp_df['etc']['transp']
+
             telem_data.skylevel = exp_df.skylevel
 
         self.telem_source.data = telem_data
-
+        #export_png(self.bk_plots)
         if self.save_telem_plots:
-            fig = plt.figure(figsize=(8,20))
+            plt.style.use('ggplot')
+            plt.rcParams.update({'axes.labelsize': 'small'})
+            from matplotlib.pyplot import cm
+            color=iter(cm.tab10(np.linspace(0,1,8)))
+
+
+            fig = plt.figure(figsize=(10,15))
             ax1 = fig.add_subplot(8,1,1)
-            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','mirror_temp'), s=5, label='mirror temp')    
-            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','truss_temp'), s=5, label='truss temp')  
-            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','air_temp'), s=5, label='air temp') 
-            ax1.set_ylabel("Telescop Temperature (C)")
+            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','mirror_temp'), s=10, label='mirror temp')    
+            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','truss_temp'), s=10, label='truss temp')  
+            ax1.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'telescope','air_temp'), s=10, label='air temp') 
+            ax1.set_ylabel("Telescope Temperature (C)")
             ax1.legend()
             ax1.grid(True)
             ax1.tick_params(labelbottom=False)
 
             ax2 = fig.add_subplot(8,1,2, sharex = ax1)
-            ax2.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','humidity'), s=5, label='humidity') 
+            c=next(color)
+            ax2.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','humidity'), s=10, color=c, label='humidity') 
             ax2.set_ylabel("Humidity %")
             ax2.grid(True)
             ax2.tick_params(labelbottom=False)
 
             ax3 = fig.add_subplot(8,1,3, sharex=ax1) 
-            ax3.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','wind_speed'), s=5, label='wind speed')
+            c=next(color)
+            ax3.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), self.get_telem_list(exp_df,'tower','wind_speed'), s=10, color=c, label='wind speed')
             ax3.set_ylabel("Wind Speed (mph)")
             ax3.grid(True)
             ax3.tick_params(labelbottom=False)
 
             ax4 = fig.add_subplot(8,1,4, sharex=ax1)
-            ax4.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=5, label='airmass')
+            c=next(color)
+            ax4.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.airmass, s=10, color=c, label='airmass')
             ax4.set_ylabel("Airmass")
             ax4.grid(True)
             ax4.tick_params(labelbottom=False)
 
             ax5 = fig.add_subplot(8,1,5, sharex=ax1)
-            ax5.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=5, label='exptime')
+            c=next(color)
+            ax5.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.exptime, s=10, color=c, label='exptime')
             ax5.set_ylabel("Exposure time (s)")
             ax5.grid(True)
             ax5.tick_params(labelbottom=False)
 
             ax6 = fig.add_subplot(8,1,6,sharex=ax1)
-            ax6.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=5, label='seeing')   
+            c=next(color)
+            ax6.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.seeing, s=10, color=c, label='seeing')   
             ax6.set_ylabel("Seeing")
             ax6.grid(True)
             ax6.tick_params(labelbottom=False)
 
             ax7 = fig.add_subplot(8,1,7,sharex=ax1)
-            ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.transpar, s=5, label='transparency')
+            c=next(color)
+            ax7.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), tput, s=10, color=c, label='transparency')
             ax7.set_ylabel("Transparency (%)")
             ax7.grid(True)
             ax7.tick_params(labelbottom=False)
 
             ax8 = fig.add_subplot(8,1,8,sharex=ax1)
-            ax8.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=5, label='Sky Level')      
+            c=next(color)
+            ax8.scatter(exp_df.date_obs.dt.tz_convert('US/Arizona'), exp_df.skylevel, s=10, color=c, label='Sky Level')      
             ax8.set_ylabel("Sky level (AB/arcsec^2)")
             ax8.grid(True)
 
             ax8.set_xlabel("Local Time (MST)")
             ax8.xaxis.set_major_formatter(mdates.DateFormatter('%m/%d %H:%M', tz=pytz.timezone("US/Arizona")))
             ax8.tick_params(labelrotation=45)
-            fig.suptitle("Telemetry for obsday={}".format(self.night))
+            fig.suptitle("Telemetry for obsday {}".format(self.night),fontsize=14)
+            plt.subplots_adjust(top=0.85)
             fig.tight_layout()
 
             plt.savefig(self.DESI_Log.telem_plots_file)
@@ -883,7 +972,46 @@ class Report():
         exp_html = exp_df.to_html()
         return exp_html
 
+    def bad_exp_add(self):
+        exp = self.bad_exp.value
+        cams_dict = {0:'a',1:'b',2:'r',3:'z'}
+        if self.all_or_partial.active == 0:
+            bad = True
+            cameras = None
+        elif self.all_or_partial.active == 1:
+            bad = False
+            cameras = ''
+            for i, cams in enumerate([self.bad_cams_0, self.bad_cams_1, self.bad_cams_2, self.bad_cams_3, self.bad_cams_4, self.bad_cams_5, self.bad_cams_6, self.bad_cams_7, self.bad_cams_8, self.bad_cams_9]):
+                if len(cams.active) == 0:
+                    pass
+                else:
+                    print(cams.active)
+                    for c in cams.active:
+                        cameras += '{}{}'.format(cams_dict[int(c)],i)
 
+        comment = self.bad_comment.value
+        data = {}
+        data['EXPID'] = [exp]
+        data['BAD'] = [bad]
+        data['CAMS'] = [cameras]
+        data['COMMENT'] = [comment]
+        self.bad_alert.text = 'Submitted Bad Exposure {} @ {}'.format(exp, datetime.datetime.now().strftime('%H:%M.%S'))
+        self.bad_comment.value = ''
+        self.bad_exp.value = ''
+        self.all_or_partial.active = 0
+        self.bad_cams_0.active = []
+        self.bad_cams_1.active = []
+        self.bad_cams_2.active = []
+        self.bad_cams_3.active = []
+        self.bad_cams_4.active = []
+        self.bad_cams_5.active = []
+        self.bad_cams_6.active = []
+        self.bad_cams_7.active = []
+        self.bad_cams_8.active = []
+        self.bad_cams_9.active = []
+
+
+        self.DESI_Log.add_bad_exp(data)
     def check_add(self):
         """add checklist time to Night Log
         """
@@ -1294,11 +1422,17 @@ class Report():
 
             e = ECLEntry('Synopsis_Night', text=nl_html, textile=True)
 
-            subject = 'Night Summary {}-{}-{}'.format(self.date_init.value[0:4], self.date_init.value[4:6], self.date_init.value[6:])
+            subject = 'Night Summary {}'.format(self.night)
             e.addSubject(subject)
             url = 'http://desi-www.kpno.noao.edu:8090/ECL/desi'
             user = 'dos'
             pw = 'dosuser'
+
+            #make Paul's plot
+            try:
+                os.system("{}/bin/plotnightobs -n {}".format(os.environ['SURVEYOPSDIR'],self.night)) 
+            except Exception as e:
+                print(e)
             if self.test:
                 pass
             else:
@@ -1312,11 +1446,12 @@ class Report():
             self.save_telem_plots = True
             self.current_nl()
 
-            self.submit_text.text = "Night Log posted to eLog and emailed to collaboration at {}".format(datetime.datetime.now().strftime("%Y%m%d %H:%M")) + '</br>'
             if self.test:
                 self.email_nightsum(user_email = ["parfa30@gmail.com","parkerf@berkeley.edu"])
             else:
                 self.email_nightsum(user_email = ["parfa30@gmail.com","satya.gontcho@gmail.com","desi-nightlog@desi.lbl.gov"])
+
+            self.submit_text.text = "Night Log posted to eLog and emailed to collaboration at {}".format(datetime.datetime.now().strftime("%Y%m%d%H:%M")) + '</br>'
 
     def email_nightsum(self,user_email = None):
 
@@ -1337,10 +1472,10 @@ class Report():
             msg['To'] = ', '.join(user_email)
 
         # Create the body of the message (a plain-text and an HTML version).
-        f = f = self.DESI_Log._open_kpno_file_first(self.DESI_Log.nightlog_html)
+        f = self.DESI_Log._open_kpno_file_first(self.DESI_Log.nightlog_html)
         nl_file=open(f,'r')
         lines = nl_file.readlines()
-        nl_html = ' '
+        nl_html = "" 
         img_names = []
         for line in lines:
             nl_html += line
@@ -1352,43 +1487,35 @@ class Report():
             for line in exp_list:
                 nl_html += line
 
-        # Add telem plots
-        nl_html += "<h3 id='telem_plots'>Night Telemetry</h3>"
-        nl_html += '\n'
-        
-        #if os.path.exists(self.DESI_Log.telem_plots_file):
-        #    nl_html += '<img src="{}"> alt="Telemetry Plots"'.format(self.DESI_Log.telem_plots_file)
-        #    nl_html += '\n'
-
-        Html_file = open(os.path.join(self.DESI_Log.root_dir,'NightSummary{}'.format(self.night)),"w")
+        nl_text = MIMEText(nl_html, 'html')
+        msg.attach(nl_text)
+        Html_file = open(os.path.join(self.DESI_Log.root_dir,'NightSummary{}.html'.format(self.night)),"w")
         Html_file.write(nl_html)
-        Html_file.close()
 
-        # Record the MIME types of both parts - text/plain and text/html.
-        part1 = MIMEText(nl_html, 'plain')
-        part2 = MIMEText(nl_html, 'html')
-
-        # Attach parts into message container.
-        # According to RFC 2046, the last part of a multipart message, in this case
-        # the HTML message, is best and preferred.
-        #msg.attach(part1)
-        msg.attach(part2)
-
-        # Add images
-        if os.path.exists(self.DESI_Log.image_file):
-            for i, img in enumerate(images):
-                fp = open(os.path.join(self.DESI_Log.image_dir,img), 'rb')
-                msgImage = MIMEImage(fp.read())
-                fp.close()
-                msgImage.add_header('Content-ID', '<image{}>'.format(i))
-                msg.attach(msgImage)
-        if os.path.exists(self.DESI_Log.telem_plots_file):
-            fp = open(self.DESI_Log.telem_plots_file, 'rb')
-            msgImage = MIMEImage(fp.read())
-            fp.close()
+        # Add Paul's plot
+        try:
+            nightops = open(os.path.join(os.environ['DESINIGHTSTATS'],'nightstats{}.png'.format(self.night)),'rb').read()
+            msgImage = MIMEImage(nightops)
+            data_uri = base64.b64encode(nightops).decode('utf-8')
+            img_tag = '<img src="data:image/png;base64,%s" \>' % data_uri
+            msgImage.add_header('Content-Disposition', 'attachment; filename=nightstats{}.png'.format(self.night))
             msg.attach(msgImage)
+            Html_file.write(img_tag)
+        except Exception as e:
+            print(e)
+        # Add images
+        if os.path.exists(self.DESI_Log.telem_plots_file):
+            telemplot = open(self.DESI_Log.telem_plots_file, 'rb').read()
+            msgImage = MIMEImage(telemplot)
+            data_uri = base64.b64encode(telemplot).decode('utf-8')
+            img_tag = '<img src="data:image/png;base64,%s" \>' % data_uri
+            msgImage.add_header('Content-Disposition', 'attachment; filename=telem_plots_{}.png'.format(self.night))
+            msg.attach(msgImage)
+            Html_file.write(img_tag)
+        Html_file.close()
         
         text = msg.as_string()
+
         # Send the message via local SMTP server.
         #yag = yagmail.SMTP(sender)
         #yag.send("parfa30@gmail.com",nl_html,self.DESI_Log.telem_plots_file)

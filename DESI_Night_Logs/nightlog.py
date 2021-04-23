@@ -43,9 +43,7 @@ class NightLog(object):
         self.dqs_dir = os.path.join(self.root_dir,"DataQualityAssessment")
         self.other_dir = os.path.join(self.root_dir,"OtherInput")
 
-        self.header_file = os.path.join(self.root_dir,'header_{}'.format(self.location))
         self.header_html = os.path.join(self.root_dir,'header_{}.html'.format(self.location))
-        self.nightlog_file = os.path.join(self.root_dir,'nightlog_{}'.format(self.location))
         self.nightlog_html = os.path.join(self.root_dir,'nightlog_{}.html'.format(self.location))
 
         self.os_pb = os.path.join(self.os_dir,'problems_{}.csv'.format(self.location))
@@ -64,6 +62,7 @@ class NightLog(object):
         self.other_exp = os.path.join(self.other_dir,'exposures_{}.csv'.format(self.location))
 
         self.weather = os.path.join(self.os_dir,'weather_{}.csv'.format(self.location))
+        self.bad_exp_list = os.path.join(self.root_dir,'bad_exp_list_{}.csv'.format(self.location))
 
         self.meta_json = os.path.join(self.root_dir,'nightlog_meta_{}.json'.format(self.location))
         self.image_file = os.path.join(self.image_dir, 'image_list_{}'.format(self.location))
@@ -136,20 +135,6 @@ class NightLog(object):
             return new_filen
         else:
             return filen
-
-    # def add_dqs_observer(self, dqs_firstname, dqs_lastname):
-    #     filen = self._open_kpno_file_first(self.meta_json)
-    #     if filen is not None:
-    #         with open(filen, 'r') as f:
-    #             meta_dict = json.load(f)
-    #             meta_dict['dqs_1'] = dqs_firstname
-    #             meta_dict['dqs_last'] = dqs_lastname
-    #             os.remove(self.meta_json)
-    #             with open(self.meta_json, 'w') as ff:
-    #                 json.dump(meta_dict, ff)
-
-    #     self.write_intro()
-
 
     def _combine_compare_csv_files(self, filen):
         loc = os.path.splitext(filen)[0].split('_')[-1]
@@ -271,17 +256,19 @@ class NightLog(object):
         if df is not None:
             df = df.drop_duplicates(['Time'], keep='first')
             df.reset_index(inplace=True, drop=True)
+            filen.write("<ul>")
             for index, row in df.iterrows():
-                filen.write("* [{}] {}".format(index, row['Objective']))
-                filen.write("\n\n")
+                filen.write("<li> [{}] {}</li>".format(index, row['Objective']))
+            filen.write("</ul>")
 
     def write_milestone(self, filen):
         df = self._combine_compare_csv_files(self.milestone)
         if df is not None:
             df = df.drop_duplicates(['Time'], keep='first')
             df.reset_index(inplace=True, drop=True)
+            filen.write("<ul>")
             for index, row in df.iterrows():
-                filen.write("* [{}] {}".format(index, row['Desc']))
+                filen.write("<li> [{}] {}".format(index, row['Desc']))
                 if not pd.isna(row['Exp_Start']): # not in [np.nan, 'nan',None, 'None', " ", ""]:
                     if str(row['Exp_Start']) not in ['',' ','nan']:
                         filen.write("; Exposure(s): {}".format(row['Exp_Start']))
@@ -289,36 +276,41 @@ class NightLog(object):
                     if str(row['Exp_Stop']) not in ['',' ','nan']:
                         filen.write(" - {}".format(row['Exp_Stop']))
                 if not pd.isna(row['Exp_Excl']): # not in [np.nan, 'nan',None, 'None', " ", ""]:   
-                    if str(row['Exp_Excl']) not in ['', ' ','nan']:
-                        filen.write(", excluding {}".format(row['Exp_Excl']))
-                filen.write("\n")
+                    filen.write(", excluding {}".format(row['Exp_Excl']))
+                filen.write("</li>")
+            filen.write("</ul>")
+
 
     def write_checklist(self, filen):
         df_os = self._combine_compare_csv_files(self.os_cl)
         df_dqs = self._combine_compare_csv_files(self.dqs_cl)
         if df_os is not None:
             filen.write("OS checklist completed at (Local time):")
-            filen.write("\n\n")
+            filen.write("<br/>")
+            filen.write("<ul>")
             for index, row in df_os.iterrows():
                 if not pd.isna(row['Comment']):
                     if str(row['Comment']) not in ['',' ','nan','None']:
-                        filen.write("* {} - {}\n".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+                        filen.write("<li> {} - {}</li>".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
                 else:
-                    filen.write("* {}\n".format(self.write_time(row['Time'],kp_only=True)))
-            filen.write("\n")
-            filen.write("\n")
+                    filen.write("<li> {}</li>".format(self.write_time(row['Time'],kp_only=True)))
+            filen.write("</ul>")
+            filen.write("<br/>")
+            filen.write("<br/>")
 
         if df_dqs is not None:
             filen.write("DQS checklist completed at (Local time):")
-            filen.write("\n\n")
+            filen.write("<br/><br/>")
+            filen.write("<ul>")
             for index, row in df_dqs.iterrows():
                 if not pd.isna(row['Comment']):
                     if str(row['Comment']) not in ['',' ','nan','None']:
-                       filen.write("* {} - {}\n".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+                       filen.write("<li> {} - {}</li>".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
                 else:
-                    filen.write("* {}\n".format(self.write_time(row['Time'],kp_only=True)))
-            filen.write("\n")
-            filen.write("\n")
+                    filen.write("<li> {}</li>".format(self.write_time(row['Time'],kp_only=True)))
+            filen.write("</ul>")
+            filen.write("<br/>")
+            filen.write("<br/>")
 
     def write_weather(self, filen):
         """Operations Scientist adds information regarding the weather.
@@ -326,14 +318,9 @@ class NightLog(object):
         df = self._combine_compare_csv_files(self.weather)
         if df is not None:
             df = df.rename(columns={'desc':'Description','temp':'Temp.','wind':'Wind Speed (mph)','humidity':'Humidity','seeing':'Seeing','tput':'Transparency','skylevel':'SkyLevel'})
-            df_list = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-')
+            df_list = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='weathertable',max_cols=8)
             for line in df_list:
                 filen.write(line)
-            #for index, row in df.iterrows():
-            #    filen.write("* {} - {}".format(self.write_time(row['Time'], kp_only=True), row['desc']))
-            #    filen.write("; Temp: {:.2f}, Wind Speed: {:.2f}, Humidity: {:.2f}".format(float(row['temp']), float(row['wind']), float(row['humidity'])))
-            #    filen.write(", Seeing: {:.2f}, Tput: {:.2f}, Sky: {:.2f}".format(float(row['seeing']), float(row['tput']), float(row['skylevel'])))
-            #    filen.write("\n")
 
     def write_problem(self, filen):
         df_os = self._combine_compare_csv_files(self.os_pb)
@@ -349,7 +336,7 @@ class NightLog(object):
             self.prob_df = df.sort_values(by=['Time'])
 
             for index, row in self.prob_df.iterrows():  
-                filen.write("- {} := ".format(self.write_time(row['Time'])))
+                filen.write("<b>{}</b> ".format(self.write_time(row['Time'])))
                 if not pd.isna(row['Problem']): # not in [np.nan, 'nan',None, 'None', " ", ""]:
                     filen.write("{}".format(row['Problem']))
                 if not pd.isna(row['alarm_id']): # not in [float(np.nan), 'nan',None, 'None', " ", ""]:
@@ -365,7 +352,8 @@ class NightLog(object):
                     filen.write(' ({})'.format(row['name']))
                 if str(row['img_name']) not in [None,np.nan,'nan','',' ']:
                     self._write_image_tag(filen, row['img_name'])
-                filen.write('\n')
+                filen.write('<br/>')
+                filen.write('<br/>')
 
     def check_exp_times(self, file):
         if os.path.exists(file):
@@ -402,7 +390,7 @@ class NightLog(object):
                     if t is not None:
                         times.append(t)
         times = np.unique(times)
-        #times = np.unique([x.Time for x in np.hstack([os_df, dqs_df, other_df]) if x is not None])
+
         for time in times:
             df_ = {}
             for x, d in df_full.items():
@@ -417,52 +405,49 @@ class NightLog(object):
                 if str(os_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
                     got_exp = str(os_['Exp_Start'])
                     try:
-                        file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
+                        file.write("<b>{} Exp. {}</b>  {}<br/>".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
                     except:
-                        file.write("- {} Exp. {} := {}\n".format(self.write_time(os_['Time']), str(os_['Exp_Start']), os_['Comment']))
+                        file.write("<b>{} Exp. {}</b>  {}<br/>".format(self.write_time(os_['Time']), str(os_['Exp_Start']), os_['Comment']))
                 else:
-                    file.write("- {} := {}\n".format(self.write_time(os_['Time']), os_['Comment']))
+                    file.write("<b>{}</b> {}<br/>".format(self.write_time(os_['Time']), os_['Comment']))
 
                     if str(os_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                         self._write_image_tag(file, os_['img_name'])
-                        file.write('\n')
 
             if len(df_['dqs']) > 0:
                 dqs_ = df_['dqs'].iloc[0]
                 if got_exp is not None:
-                    file.write(f"*Data Quality:* {dqs_['Quality']}; {dqs_['Comment']}\n")
+                    file.write(f"*Data Quality:* {dqs_['Quality']}; {dqs_['Comment']}<br/>")
                 else:
                     got_exp = str(dqs_['Exp_Start'])
                     try:
-                        file.write("- {} Exp. {} := *Data Quality:* {}, {}\n".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                        file.write("<b>{} Exp. {}</b> *Data Quality:* {}, {}<br/>".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
                     except:
-                        file.write("- {} Exp. {} := *Data Quality:* {}, {}\n".format(self.write_time(dqs_['Time']), str(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                        file.write("<b>{} Exp. {}</b> *Data Quality:* {}, {}<br/>".format(self.write_time(dqs_['Time']), str(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
 
                 if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                     self._write_image_tag(file, dqs_['img_name'])
-                    file.write('\n')
 
             if len(df_['other']) > 0:
                 other_ = df_['other'].iloc[0]
                 if got_exp is not None:
-                    file.write("_Comment:_ {} ({})\n".format(other_['Comment'], other_['Name']))
+                    file.write("_Comment:_ {} ({})<br/>".format(other_['Comment'], other_['Name']))
                 else:
                     if str(other_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
                         got_exp = str(other_['Exp_Start'])
                         try:
-                            file.write("- {} Exp: {}:= _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
+                            file.write("<b>{} Exp. {}</b> _Comment:_ {} ({})<br/>".format(self.write_time(other_['Time']), int(other_['Exp_Start']), other_['Comment'], other_['Name']))
                         except:
-                            file.write("- {} Exp: {}:= _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), str(other_['Exp_Start']), other_['Comment'], other_['Name']))
+                            file.write("<b>{} Exp. {}</b> _Comment:_ {} ({})<br/>".format(self.write_time(other_['Time']), str(other_['Exp_Start']), other_['Comment'], other_['Name']))
                     else:
-                        file.write("- {} := _Comment:_ {} ({})\n".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
+                        file.write("<b> {} </b> _Comment:_ {} ({})<br/>".format(self.write_time(other_['Time']), other_['Comment'], other_['Name']))
 
                 if str(other_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                     self._write_image_tag(file, other_['img_name'])
-                    file.write('\n')
 
             if len(df_['prob']) > 0:
                 prob_ = df_['prob'].iloc[0]
-                file.write("- {} := ".format(self.write_time(prob_['Time'])))
+                file.write("<b> {} </b> ".format(self.write_time(prob_['Time'])))
                 if not pd.isna(prob_['Problem']): # not in [np.nan, 'nan',None, 'None', " ", ""]:
                     file.write("{}".format(prob_['Problem']))
                 if not pd.isna(prob_['alarm_id']): # not in [float(np.nan), 'nan',None, 'None', " ", ""]:
@@ -478,7 +463,7 @@ class NightLog(object):
                     file.write(' ({})'.format(prob_['name']))
                 if str(prob_['img_name']) not in [None,np.nan,'nan','',' ']:
                     self._write_image_tag(file, prob_['img_name'])
-                file.write('\n')
+                file.write('<br/>')
 
             if got_exp is not None:
                 try:
@@ -499,13 +484,11 @@ class NightLog(object):
                             file.write("Airmass: {:.2f}, ".format(float(this_exp['airmass'])))
                     except:
                         pass
-                    file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program: {this_exp['program']}\n")
+                    file.write(f"Sequence: {this_exp['sequence']}, Flavor: {this_exp['flavor']}, Program: {this_exp['program']}<br/>")
 
                 except:
-                    file.write("\n")
-
-                
-
+                    pass
+            file.write('<br/>')
 
     def load_index(self, idx, page):
         if page == 'milestone':
@@ -572,16 +555,16 @@ class NightLog(object):
     def _write_image_tag(self, img_file, img_name, comments = None, width=400, height=400):
         # server should be made a class variable
         server = f'http://desi-www.kpno.noao.edu:8090/nightlogs/{self.obsday}/images'
-        img_file.write("\n")
-        #img_file.write("h5. %s\n" % img_name)
-        img_file.write('<img src="%s/%s" width=%s height=%s alt="Uploaded image %s">\n' % (server,img_name,str(width),str(height),img_name))
+        img_file.write("<br/>")
+        #img_file.write("h5. %s<br/>" % img_name)
+        img_file.write('<img src="%s/%s" width=%s height=%s alt="Uploaded image %s"><br/>' % (server,img_name,str(width),str(height),img_name))
         if isinstance(comments, str):
-            img_file.write("<br>{}\n".format(comments))
+            img_file.write("<br>{}<br/>".format(comments))
 
     def add_contributer_list(self, contributers):
         file = open(self.contributer_file, 'w')
         file.write(contributers)
-        file.write("\n")
+        file.write("<br/>")
         file.close()
 
     def add_summary(self, data):
@@ -591,157 +574,169 @@ class NightLog(object):
         df = df.fillna(value=0)
         d = df.iloc[0]
 
-        obs_items  = OrderedDict({'Observing':d['obs_time'],'Testing':d['test_time'],'Loss to Instrument':d['inst_loss'],'Loss to Weather':d['weather_loss'],'Loss to Telescope':d['tel_loss'],'Total Recorded':d['total'],'Time between 18 deg. twilight':d['18deg']})
+        obs_items  = OrderedDict({'Observing':d['obs_time'],'Testing':d['test_time'],'Loss to Instrument':d['inst_loss'],
+            'Loss to Weather':d['weather_loss'],'Loss to Telescope':d['tel_loss'],'Total Recorded':d['total'],'Time between 18 deg. twilight':d['18deg']})
         file = open(self.summary_file, 'w')
-        file.write("Time Use (hrs):\n")
+        file.write("Time Use (hrs):<br/>")
+        file.write("<ul>")
         for name, item in obs_items.items():
             if not pd.isna(item):
                 try:
-                    file.write("* {}: {:.2f}\n".format(name, float(item)))
+                    file.write("<li> {}: {:.2f}</li>".format(name, float(item)))
                 except Exception as e:
                     print(e)
             else:
-                file.write("* {}: 0.0\n".format(name))
-
+                file.write("<li> {}: 0.0</li>".format(name))
+        file.write("</ul>")
         if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_1'])
-            file.write("\n")
+            file.write("<br/>")
         if d['summary_2'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_2'])
-            file.write("\n")
+            file.write("<br/>")
+
         
         file.close()
 
-    def write_file(self, the_path, header,file_nl):
-        if os.path.exists(the_path):
-            with open(the_path, 'r') as f:
-                if header is not None:
-                    file_nl.write(header)
-                    file_nl.write("\n")
-                    file_nl.write("\n")
-                for line in f:
-                    file_nl.write(line)
-                    file_nl.write("\n")
-                f.close()
-        
+    def add_bad_exp(self, data):
+        if not os.path.exists(self.bad_exp_list):
+            df = pd.DataFrame(columns=['EXPID','BAD','CAMS','COMMENT'])
+            df.to_csv(self.bad_exp_list, index=False)
+        else:
+            df = pd.read_csv(self.bad_exp_list)
+
+        this_df = pd.DataFrame.from_dict(data)
+
+        df = pd.concat([df, this_df])
+        df.to_csv(self.bad_exp_list, index=False)
+
+    def write_bad_exp(self, file_nl):
+        if os.path.exists(self.bad_exp_list):
+            file_nl.write("<h3> Bad Exposures</h3>")
+            df = pd.read_csv(self.bad_exp_list)
+            df_html = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='badtable',max_cols=4)
+
+            for line in df_html:
+                file_nl.write(line)
 
     def write_intro(self):
-        file_intro=open(self.header_file,'w')
+        file_intro=open(self.header_html,'w')
         try:
             f = self._open_kpno_file_first(self.meta_json)
             meta_dict = json.load(open(f,'r'))
 
             if (meta_dict['LO_lastname_2'] == meta_dict['LO_lastname_1']) | (meta_dict['LO_firstname_2'] == 'None'):
-                file_intro.write("*Lead Observer*: {} {}\n".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
+                file_intro.write("<b>Lead Observer</b>: {} {}<br/>".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
             else:
-                file_intro.write("*Lead Observer 1*: {} {}\n".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
-                file_intro.write("*Lead Observer 2*: {} {}\n".format(meta_dict['LO_firstname_2'],meta_dict['LO_lastname_2']))
+                file_intro.write("<b>Lead Observer 1</b>: {} {}<br/>".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
+                file_intro.write("<b>Lead Observer 2</b>: {} {}<br/>".format(meta_dict['LO_firstname_2'],meta_dict['LO_lastname_2']))
             if (meta_dict['os_2_lastname'] == meta_dict['os_1_lastname']) | (meta_dict['os_2_firstname'] == None):
-                file_intro.write("*Observing Scientist (OS)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
+                file_intro.write("<b>Observing Scientist (OS)</b>: {} {}<br/>".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
             else:
-                file_intro.write("*Observer (OS-1)*: {} {}\n".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
-                file_intro.write("*Observer (OS-2)*: {} {}\n".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
+                file_intro.write("<b>Observer (OS-1)</b>: {} {}<br/>".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
+                file_intro.write("<b>Observer (OS-2)</b>: {} {}<br/>".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
             if (meta_dict['dqs_2_lastname'] == meta_dict['dqs_1_lastname']) | (meta_dict['dqs_2_firstname'] == None):
-                file_intro.write("*Data Quality Scientist (DQS)*: {} {}\n".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
+                file_intro.write("<b>Data Quality Scientist (DQS)</b>: {} {}<br/>".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
             else:
-                file_intro.write("*Observer (DQS-1)*: {} {}\n".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
-                file_intro.write("*Observer (DQS-2)*: {} {}\n".format(meta_dict['dqs_2_firstname'],meta_dict['dqs_2_lastname']))
+                file_intro.write("<b>Observer (DQS-1)</b>: {} {}<br/>".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
+                file_intro.write("<b>Observer (DQS-2)</b>: {} {}<br/>".format(meta_dict['dqs_2_firstname'],meta_dict['dqs_2_lastname']))
 
-            file_intro.write("*Telescope Operator*: {} {}\n".format(meta_dict['OA_firstname'],meta_dict['OA_lastname']))
-            file_intro.write("*Ephemerides in local time [UTC]*:\n")
-            file_intro.write("* sunset: {}\n".format(self.write_time(meta_dict['time_sunset'])))
-            file_intro.write("* 12(o) twilight ends: {}\n".format(self.write_time(meta_dict['dusk_12_deg'])))
-            file_intro.write("* 18(o) twilight ends: {}\n".format(self.write_time(meta_dict['dusk_18_deg'])))
-            file_intro.write("* 18(o) twilight starts: {}\n".format(self.write_time(meta_dict['dawn_18_deg'])))
-            file_intro.write("* 12(o) twilight starts: {}\n".format(self.write_time(meta_dict['dawn_12_deg'])))
-            file_intro.write("* sunrise: {}\n".format(self.write_time(meta_dict['time_sunrise'])))
-            file_intro.write("* moonrise: {}\n".format(self.write_time(meta_dict['time_moonrise'])))
-            file_intro.write("* moonset: {}\n".format(self.write_time(meta_dict['time_moonset'])))
-            file_intro.write("* illumination: {}\n".format(meta_dict['illumination']))
+            file_intro.write("<b>Telescope Operator</b>: {} {}<br/>".format(meta_dict['OA_firstname'],meta_dict['OA_lastname']))
+            file_intro.write("<b>Ephemerides in local time [UTC]</b>:")
+            file_intro.write("<ul>")
+            file_intro.write("<li> sunset: {}</li>".format(self.write_time(meta_dict['time_sunset'])))
+            file_intro.write("<li> 12(o) twilight ends: {}</li>".format(self.write_time(meta_dict['dusk_12_deg'])))
+            file_intro.write("<li> 18(o) twilight ends: {}</li>".format(self.write_time(meta_dict['dusk_18_deg'])))
+            file_intro.write("<li> 18(o) twilight starts: {}</li>".format(self.write_time(meta_dict['dawn_18_deg'])))
+            file_intro.write("<li> 12(o) twilight starts: {}</li>".format(self.write_time(meta_dict['dawn_12_deg'])))
+            file_intro.write("<li> sunrise: {}</li>".format(self.write_time(meta_dict['time_sunrise'])))
+            file_intro.write("<li> moonrise: {}</li>".format(self.write_time(meta_dict['time_moonrise'])))
+            file_intro.write("<li> moonset: {}</li>".format(self.write_time(meta_dict['time_moonset'])))
+            file_intro.write("<li> illumination: {}</li>".format(meta_dict['illumination']))
+            file_intro.write("</ul>")
 
         except Exception as e:
             print('Exception reading meta json file: {}'.format(str(e)))
 
         file_intro.close()
-        cmd = "pandoc --metadata pagetitle=header -s {} -f textile -t html -o {}".format(self.header_file,self.header_html)
 
-        try:
-            os.system(cmd)
-        except Exception as e:
-            print('Exception calling pandoc (header): %s' % str(e))
 
     def finish_the_night(self):
         """
             Merge together all the different files into one '.txt' file to copy past on the eLog.
         """
-        file_nl=open(self.nightlog_file, 'w')
+        file_nl=open(self.nightlog_html, 'w')
+        file_nl.write("<h1>DESI Night Summary %s</h1>" % str(self.obsday))
 
         #Write the meta_html here
         try:
-            hfile = self._open_kpno_file_first(self.header_file)
+            hfile = self._open_kpno_file_first(self.header_html)
             if hfile is not None:
                 with open(hfile, 'r') as file_intro:
-                    lines = file_intro.readlines()
+                    lines = file_intro.read()
                     for line in lines:
                         file_nl.write(line)
-                    file_nl.write("\n")
-                    file_nl.write("\n")
         except Exception as e:
             print("Nightlog Header has not been created: {}".format(e))
+
         #Contributers
-        self.write_file(self._open_kpno_file_first(self.contributer_file), "h3. Contributers\n", file_nl)
+        try:
+            cfile = self._open_kpno_file_first(self.contributer_file)
+            if cfile is not None:
+                file_nl.write("<h3>Contributers</h3>")
+                with open(cfile, 'r') as file_cont:
+                    lines = file_cont.read()
+                    for line in lines:
+                        file_nl.write(line)
+                file_nl.write("<br/>")
+        except:
+            pass
+
         #Night Summary
-        self.write_file(self._open_kpno_file_first(self.summary_file), "h3. Night Summary\n", file_nl)
+        try:
+            cfile = self._open_kpno_file_first(self.summary_file)
+            if cfile is not None:
+                file_nl.write("<h3>Night Summary</h3>")
+                with open(cfile, 'r') as file_cont:
+                    lines = file_cont.read()
+                    for line in lines:
+                        file_nl.write(line)
+                file_nl.write("<br/>")
+        except:
+            pass
+
         #Plan for the night
-        file_nl.write("\n")
-        file_nl.write("\n")
-        file_nl.write("h3. Plan for the night\n")
-        file_nl.write("\n")
-        file_nl.write("The detailed operations plan for today (obsday "+self.obsday+") can be found at https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan"+self.obsday+".\n")
-        file_nl.write("\n")
-        file_nl.write("Main items are listed below:\n")
+        file_nl.write("<h3>Plan for the night</h3>")
+        file_nl.write("The detailed operations plan for today (obsday {}) can be found at https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}.<br/>".format(self.obsday, self.obsday))
+        file_nl.write("Main items are listed below:<br/>")
         self.write_plan(file_nl)
+
         #Milestones/Accomplishments
-        file_nl.write("\n")
-        file_nl.write("\n")
-        file_nl.write("h3. Milestones and Major Progress\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
+        file_nl.write("<h3>Milestones and Major Progress</h3>")
         self.write_milestone(file_nl)
+
         #Problems
-        file_nl.write("\n")
-        file_nl.write("\n")
-        file_nl.write("h3. Problems and Operations Issues\n")
+        file_nl.write("<h3>Problems and Operations Issues</h3>")
         self.write_problem(file_nl)
+        file_nl.write("<br/>")
+
         #Weather
-        file_nl.write("\n")
-        file_nl.write("\n")
-        file_nl.write("h3. Observing Conditions\n")
+        file_nl.write("<h3>Observing Conditions</h3>")
         self.write_weather(file_nl)
-        file_nl.write("\n")
-        file_nl.write("\n")
+        file_nl.write("<br/>")
+
         #Checklists
-        file_nl.write("\n")
-        file_nl.write("\n")
-        file_nl.write("h3. Checklists\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
+        file_nl.write("<h3>Checklists</h3>")
         self.write_checklist(file_nl)
+        file_nl.write("<br/>")
+
         #Nightly Progress
-        file_nl.write("h3. Details on the Night Progress\n")
-        file_nl.write("\n")
-        file_nl.write("\n")
+        file_nl.write("<h3> Details on the Night Progress</h3>")
         self.write_exposure(file_nl)
+        file_nl.write("<br/>")
+
+        self.write_bad_exp(file_nl)
+        file_nl.write("<br/>")
 
         file_nl.close()
-        cmd = "pandoc  --resource-path={} --metadata pagetitle=report -s {} -f textile -t html -o {}".format(self.root_dir,
-                                                                                                             self.nightlog_file,
-                                                                                                             self.nightlog_html)
-        try:
-            os.system(cmd)
-        except Exception as e:
-            print('Exception calling pandoc: %s' % str(e))
 
-        #os.system("pandoc --self-contained --metadata pagetitle='report' -s {} -f textile -t html -o {}".format(self.image_dir, os.path.join(self.root_dir,'nightlog'),os.path.join(self.root_dir,'nightlog.html')))
-    # merge together all the different files into one .txt file to copy past on the eLog
-    # checkout the notebooks at https://github.com/desihub/desilo/tree/master/DESI_Night_Logs/ repository

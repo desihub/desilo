@@ -46,7 +46,7 @@
 
 .bk-root .subt-style {
 	color: black;
-        width: 1000px;
+    width: 1000px;
 	text-decoration: underline;
 	font-size:18pt;
 	font-style: bold;
@@ -70,6 +70,38 @@
     font-style: bold;
     font-size:10pt;
     text-align: center;
+}
+.badtable {
+    width:300px;
+}
+.weathertable {
+    width:800px;
+}
+.badtable {
+    font-size: 11pt; 
+    font-family: Arial;
+    border: 1px black;
+}
+
+.badtable  tr:nth-child(even) {
+    background: #E0E0E0;
+}
+
+.badtable tr {
+    height: 10px;
+}
+.weathertable {
+    font-size: 11pt; 
+    font-family: Arial;
+    border: 1px black;
+}
+
+.weathertable  tr:nth-child(even) {
+    background: #E0E0E0;
+}
+
+.weathertable tr {
+    height: 10px;
 }
 .bk-root .bk-tabs-header .bk-tab.bk-active{
 	background-color: cornflowerblue;

@@ -38,8 +38,9 @@ class Other_Report(Report):
         self.get_prob_layout()
         self.get_weather_layout()
         self.get_nl_layout()
+        self.get_ns_layout()
 
-        self.layout = Tabs(tabs=[self.intro_tab, self.exp_tab, self.prob_tab, self.weather_tab, self.nl_tab]) #comment_tab, self.prob_tab, 
+        self.layout = Tabs(tabs=[self.intro_tab, self.exp_tab, self.prob_tab, self.weather_tab, self.nl_tab, self.ns_tab]) #comment_tab, self.prob_tab, 
 
     def run(self):
         self.get_layout()
@@ -50,8 +51,10 @@ class Other_Report(Report):
         self.exp_btn.on_click(self.comment_add)
         self.prob_btn.on_click(self.prob_add)
         self.prob_load_btn.on_click(self.load_problem)
+        self.ns_date_btn.on_click(self.get_nightsum)
         self.exp_delete_btn.on_click(self.progress_delete)
         self.prob_delete_btn.on_click(self.problem_delete)
+
 
 Other = Other_Report()
 Other.run()

@@ -27,7 +27,8 @@ class DQS_Report(Report):
         self.title = Div(text="DESI Nightly Intake - Data QA Scientist", css_classes=['h1-title-style'], width=1000)
         inst = """
         The Data Quality Scientist (DQS) is responsible for analyzing all exposures for their quality.
-        You can connect to an existing Night Log that was created by the Observing Scientist.
+        Submit problems as they arise throughout the night and complete the DQS checklist once an hour. Let the Lead Observer
+        know if you encounter any issues. 
         """
         self.instructions = Div(text=inst, css_classes=['inst-style'], width=500)
         self.page_logo = Div(text="<img src='DQS_Report/static/logo.png'>", width=350, height=300)
@@ -44,8 +45,9 @@ class DQS_Report(Report):
         self.get_checklist_layout()
         self.get_nl_layout()
         self.get_weather_layout()
+        self.get_ns_layout()
 
-        self.layout = Tabs(tabs=[self.intro_tab, self.exp_tab, self.prob_tab, self.check_tab, self.weather_tab, self.nl_tab])
+        self.layout = Tabs(tabs=[self.intro_tab, self.exp_tab, self.prob_tab, self.check_tab, self.weather_tab, self.nl_tab, self.ns_tab])
 
     def run(self):
         self.get_layout()
@@ -57,7 +59,10 @@ class DQS_Report(Report):
         self.check_btn.on_click(self.check_add)
         self.dqs_load_btn.on_click(self.dqs_load)
         self.prob_load_btn.on_click(self.load_problem)
+        self.ns_date_btn.on_click(self.get_nightsum)
+        self.bad_add.on_click(self.bad_exp_add)
         self.prob_delete_btn.on_click(self.problem_delete)
+
 
 
 DQS = DQS_Report()

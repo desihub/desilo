@@ -68,6 +68,7 @@ class OS_Report(Report):
         self.get_prob_layout()
         self.get_checklist_layout()
         self.get_weather_layout()
+        self.get_ns_layout()
         self.check_tab.title = 'OS Checklist'
 
         intro_layout = layout([self.buffer,
@@ -87,7 +88,7 @@ class OS_Report(Report):
                             self.intro_txt], width=1000)
         intro_tab = Panel(child=intro_layout, title="Initialization")
 
-        self.layout = Tabs(tabs=[intro_tab, self.plan_tab, self.milestone_tab, self.exp_tab, self.prob_tab, self.weather_tab, self.check_tab,  self.nl_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+        self.layout = Tabs(tabs=[intro_tab, self.plan_tab, self.milestone_tab, self.exp_tab, self.prob_tab, self.weather_tab, self.check_tab,  self.nl_tab, self.ns_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
 
     def run(self):
         self.get_layout()
@@ -116,6 +117,7 @@ class OS_Report(Report):
         #self.img_btn.on_click(self.image_add)
         self.contributer_btn.on_click(self.add_contributer_list)
         self.summary_btn.on_click(self.add_summary)
+        self.ns_date_btn.on_click(self.get_nightsum)
         
 OS = OS_Report()
 OS.run()
