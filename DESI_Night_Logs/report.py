@@ -1422,20 +1422,20 @@ class Report():
                    raise Exception(response)
                    self.submit_text.text = "You cannot post to the eLog on this machine"
             #Add bad exposures
-            survey_dir = '/data/datasystems/survey/ops/surveyops/trunk/ops/'
-            bad_filen = 'bad_exp_list.csv'
-            bad_path = os.path.join(survey_dir, bad_filen)
-            print(bad_path)
-            if not os.path.exists(bad_path):
-                df = pd.DataFrame(columns=['EXPID','BAD','BADCAMS','COMMENT'])
-                df.to_csv(bad_path,index=False)
-            bad_df = pd.read_csv(bad_path)
-            print(bad_df)
-            new_bad = pd.read_csv(self.DESILog.bad_exp_list)
-            bad_df = pd.concat([bad_df, new_bad])
-            print(bad_df)
-            bad_df = bad_df.drop_duplicates(subset=['EXPID'], keep='last')
-            bad_df.to_csv(bad_path,index=False)
+            try:
+                survey_dir = '/data/datasystems/survey/ops/surveyops/trunk/ops/'
+                bad_filen = 'bad_exp_list.csv'
+                bad_path = os.path.join(survey_dir, bad_filen)
+                if not os.path.exists(bad_path):
+                    df = pd.DataFrame(columns=['EXPID','BAD','BADCAMS','COMMENT'])
+                    df.to_csv(bad_path,index=False)
+                bad_df = pd.read_csv(bad_path)
+                new_bad = pd.read_csv(self.DESILog.bad_exp_list)
+                bad_df = pd.concat([bad_df, new_bad])
+                bad_df = bad_df.drop_duplicates(subset=['EXPID'], keep='last')
+                bad_df.to_csv(bad_path,index=False)
+            except Exception as e:
+                print('Cant post to the bad exp list: {}'.formta(e))
 
 
             self.save_telem_plots = True
