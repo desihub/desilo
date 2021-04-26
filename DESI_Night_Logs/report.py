@@ -986,7 +986,6 @@ class Report():
                 if len(cams.active) == 0:
                     pass
                 else:
-                    print(cams.active)
                     for c in cams.active:
                         cameras += '{}{}'.format(cams_dict[int(c)],i)
 
@@ -1268,58 +1267,73 @@ class Report():
 
         
     def plan_load(self):
-        b, item = self.DESI_Log.load_index(self.plan_order.value, 'plan')
-        if b:
-            self.plan_input.value = str(item['Objective'])
-            self.plan_time = item['Time']
-        else:
-            self.plan_alert.text = "That plan item doesn't exist yet. {}".format(item)
+        try:
+            b, item = self.DESI_Log.load_index(self.plan_order.value, 'plan')
+            if b:
+                self.plan_input.value = str(item['Objective'])
+                self.plan_time = item['Time']
+            else:
+                self.plan_alert.text = "That plan item doesn't exist yet. {}".format(item)
+        except Exception as e:
+            self.plan_alert.text = "Issue with loading that plan item: {}".format(e)
 
     def dqs_load(self):
         if self.exp_option.active == 0:
              exp = int(self.exp_select.value)
         if self.exp_option.active == 1:
             exp = int(self.exp_enter.value.strip())
-        b, item = self.DESI_Log.load_exp(exp)
-        if b:
-            self.exp_comment.value = item['Comment']
-            qual = np.where(self.quality_list==item['Quality'])[0]
-            self.quality_btns.active = int(qual)
-        else:
-            self.exp_alert.text = "An input for that exposure doesn't exist for this user. {}".format(item)
+        try:
+            b, item = self.DESI_Log.load_exp(exp)
+            if b:
+                self.exp_comment.value = item['Comment']
+                qual = np.where(self.quality_list==item['Quality'])[0]
+                self.quality_btns.active = int(qual)
+            else:
+                self.exp_alert.text = "An input for that exposure doesn't exist for this user. {}".format(item)
+        except Exception as e:
+            self.exp_alert.text = "Issue with loading that exposure: {}".format(e)
 
     def milestone_load(self):
-        b, item = self.DESI_Log.load_index(int(self.milestone_load_num.value), 'milestone')
-        if b:
-            self.milestone_input.value = str(item['Desc'])
-            self.milestone_exp_start.value = str(item['Exp_Start'])
-            self.milestone_exp_end.value = str(item['Exp_Stop'])
-            self.milestone_exp_excl.value = str(item['Exp_Excl'])
-            self.milestone_time = item['Time']
-        else:
-            self.milestone_alert.text = "That milestone index doesn't exist yet. {}".format(item)
+        try:
+            b, item = self.DESI_Log.load_index(int(self.milestone_load_num.value), 'milestone')
+            if b:
+                self.milestone_input.value = str(item['Desc'])
+                self.milestone_exp_start.value = str(item['Exp_Start'])
+                self.milestone_exp_end.value = str(item['Exp_Stop'])
+                self.milestone_exp_excl.value = str(item['Exp_Excl'])
+                self.milestone_time = item['Time']
+            else:
+                self.milestone_alert.text = "That milestone index doesn't exist yet. {}".format(item)
+        except Exception as e:
+            self.milestone_alert.text = "Issue with loading that milestone: {}".format(e)
 
     def load_exposure(self):
         #Check if progress has been input with a given timestamp
-        _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.exp_time.value.strip()), self.report_type, 'exposure')
+        try:
+            _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.exp_time.value.strip()), self.report_type, 'exposure')
 
-        if not _exists:
-            self.exp_alert.text = 'This timestamp does not yet have an input from this user. {}'.format(item)
-        else:
-            self.exp_comment.value = str(item['Comment'])
-            self.exp_exposure_start.value = str(item['Exp_Start'])
-            #self.exp_exposure_finish.value = str(item['Exp_End'])
+            if not _exists:
+                self.exp_alert.text = 'This timestamp does not yet have an input from this user. {}'.format(item)
+            else:
+                self.exp_comment.value = str(item['Comment'])
+                self.exp_exposure_start.value = str(item['Exp_Start'])
+                #self.exp_exposure_finish.value = str(item['Exp_End'])
+        except Exception as e:
+            self.exp_alert.text = "Issue with loading that exposure: {}".format(e)
 
     def load_problem(self):
         #Check if progress has been input with a given timestamp
-        _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.prob_time.value.strip()), self.report_type, 'problem')
+        try:
+            _exists, item = self.DESI_Log.load_timestamp(self.get_time(self.prob_time.value.strip()), self.report_type, 'problem')
 
-        if not _exists:
-            self.prob_alert.text = 'This timestamp does not yet have an input from this user. {}'.format(item)
-        else:
-            self.prob_input.value = str(item['Problem'])
-            self.prob_alarm.value = str(item['alarm_id'])
-            self.prob_action.value = str(item['action'])
+            if not _exists:
+                self.prob_alert.text = 'This timestamp does not yet have an input from this user. {}'.format(item)
+            else:
+                self.prob_input.value = str(item['Problem'])
+                self.prob_alarm.value = str(item['alarm_id'])
+                self.prob_action.value = str(item['action'])
+        except Exception as e:
+            self.prob_alert.text = "Issue with loading that problem: {}".format(e)
 
     def add_contributer_list(self):
         cont_list = self.contributer_list.value

@@ -289,9 +289,8 @@ class NightLog(object):
             filen.write("<br/>")
             filen.write("<ul>")
             for index, row in df_os.iterrows():
-                if not pd.isna(row['Comment']):
-                    if str(row['Comment']) not in ['',' ','nan','None']:
-                        filen.write("<li> {} - {}</li>".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
+                if (not pd.isna(row['Comment'])) & (str(row['Comment']) not in ['',' ','nan','None']):
+                       filen.write("<li> {} - {}</li>".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
                 else:
                     filen.write("<li> {}</li>".format(self.write_time(row['Time'],kp_only=True)))
             filen.write("</ul>")
@@ -301,8 +300,7 @@ class NightLog(object):
             filen.write("<br/>")
             filen.write("<ul>")
             for index, row in df_dqs.iterrows():
-                if not pd.isna(row['Comment']):
-                    if str(row['Comment']) not in ['',' ','nan','None']:
+                if (not pd.isna(row['Comment'])) & (str(row['Comment']) not in ['',' ','nan','None']):
                        filen.write("<li> {} - {}</li>".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
                 else:
                     filen.write("<li> {}</li>".format(self.write_time(row['Time'],kp_only=True)))
