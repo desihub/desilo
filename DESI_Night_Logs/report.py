@@ -1440,9 +1440,9 @@ class Report():
                 survey_dir = '/data/datasystems/survey/ops/surveyops/trunk/ops/'
                 bad_filen = 'bad_exp_list.csv'
                 bad_path = os.path.join(survey_dir, bad_filen)
-                if not os.path.exists(bad_path):
-                    df = pd.DataFrame(columns=['EXPID','BAD','BADCAMS','COMMENT'])
-                    df.to_csv(bad_path,index=False)
+                #if not os.path.exists(bad_path):
+                #    df = pd.DataFrame(columns=['EXPID','BAD','BADCAMS','COMMENT'])
+                #    df.to_csv(bad_path,index=False)
                 bad_df = pd.read_csv(bad_path)
                 new_bad = pd.read_csv(self.DESILog.bad_exp_list)
                 bad_df = pd.concat([bad_df, new_bad])

@@ -637,7 +637,7 @@ class NightLog(object):
             else:
                 file_intro.write("<b>Observer (OS-1)</b>: {} {}<br/>".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
                 file_intro.write("<b>Observer (OS-2)</b>: {} {}<br/>".format(meta_dict['os_2_firstname'],meta_dict['os_2_lastname']))
-            if (meta_dict['dqs_2_lastname'] == meta_dict['dqs_1_lastname']) | (meta_dict['dqs_2_firstname'] == None):
+            if (meta_dict['dqs_2_lastname'] == meta_dict['dqs_1_lastname']) | (meta_dict['dqs_2_firstname'] == None) | (meta_dict['dqs_2_firstname'] == ''):
                 file_intro.write("<b>Data Quality Scientist (DQS)</b>: {} {}<br/>".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
             else:
                 file_intro.write("<b>Observer (DQS-1)</b>: {} {}<br/>".format(meta_dict['dqs_1_firstname'],meta_dict['dqs_1_lastname']))
