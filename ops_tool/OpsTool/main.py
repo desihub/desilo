@@ -25,6 +25,7 @@ from bokeh.layouts import column, layout, row, gridplot
 from bokeh.models.widgets import Panel
 from bokeh.models import CustomJS, ColumnDataSource, Select, Slider, CheckboxGroup
 from bokeh.models import ColumnDataSource, DataTable, DateFormatter, TableColumn
+from bokeh.models import CheckboxButtonGroup
 
 import gspread
 from gspread_dataframe import get_as_dataframe
@@ -94,7 +95,7 @@ class OpsTool(object):
         self.daily_report()
 
     def sched_load(self):
-        sheet = client.open_by_url(url).sheet1
+        sheet = self.client.open_by_url(self.url).sheet1
         df = get_as_dataframe(sheet, usecols = [0,1,2,3,4,5,6,7], header = 5)
         df = df.rename(columns={'Unnamed: 1':'Date','Date':'Day', 'Local Lead Observer':'LO_1',
         'Remote Lead Observer':'LO_2', 'OS Remote Early Shift ':'OS_1',
@@ -171,9 +172,10 @@ class OpsTool(object):
     def email_two_weeks(self):
         email = self.two_weeks_email.value
         name = self.two_weeks_name.value
-        print('This is not quite ready',name)
+
         t = 'two_weeks'
         self.email_stuff(name, email, t)
+
 
     def email_night_before(self):
         email = self.night_before_email.value
@@ -210,7 +212,17 @@ class OpsTool(object):
             self.follow_up_name.value = ''
             msgfile.close()
         elif type == 'two_weeks':
-            pass
+            subject = 'Preparation for DESI Observing'
+            msg = 'Hello {},<br>'.format(name)
+            if self.two_weeks_select.active[0] == 0:
+                msgfile = open('./OpsTool/static/two_week_info_msg_os.html')
+            elif self.two_weeks_select.active[0] == 1:
+                msgfile = open('./OpsTool/static/two_week_info_msg_dqs.html')
+            msg += msgfile.read()
+            self.send_email(subject, email, msg)
+            self.two_weeks_email.value = ''
+            self.two_weeks_name.value = ''
+            msgfile.close()
         elif type == 'one_month':
             pass
         else:
@@ -281,6 +293,7 @@ class OpsTool(object):
         self.follow_up_name = TextInput(title='Name: ', placeholder='Danica Patrick', width=200)
         self.one_month_btn = Button(label="Email One Month Info", width=200)
         self.two_weeks_btn = Button(label="Email Two Weeks Info", width=200)
+        self.two_weeks_select = CheckboxGroup(labels=['OS','DQS'], active=[0])
         self.night_before_btn = Button(label="Email Night Before Info", width=200)
         self.follow_up_btn = Button(label="Email Follow Up", width=200)
         self.update_df_btn = Button(label='Update DataFrame', width=200)
@@ -312,6 +325,7 @@ class OpsTool(object):
         sched_tab = Panel(child=sched_layout, title='Schedule')
 
         self.layout = Tabs(tabs=[main_tab, sched_tab])
+
         
     def run(self):
         self.layout()
