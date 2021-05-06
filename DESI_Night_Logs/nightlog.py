@@ -462,7 +462,9 @@ class NightLog(object):
                 file.write('<br/>')
 
             if got_exp is not None:
+                got_exp = float(got_exp)
                 try:
+                    got_exp = int(got_exp)
                     this_exp = exp_df[exp_df.id == int(got_exp)]
                     this_exp = this_exp.fillna(value=np.nan)
                     this_exp = this_exp.iloc[0]
