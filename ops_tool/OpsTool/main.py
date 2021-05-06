@@ -260,7 +260,7 @@ class OpsTool(object):
 
         smtp_server = "smtp.gmail.com"
         port = 587
-        password = 'M@y@ll-4m@kpno'
+        password = input("Input password: ")
 
         context = ssl.create_default_context()
         try:
