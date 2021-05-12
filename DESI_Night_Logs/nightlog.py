@@ -136,7 +136,7 @@ class NightLog(object):
         else:
             return filen
 
-    def _combine_compare_csv_files(self, filen):
+    def _combine_compare_csv_files(self, filen, bad=False):
         loc = os.path.splitext(filen)[0].split('_')[-1]
         if loc == 'kpno':
             other_filen = filen.replace(loc, 'nersc')
@@ -151,8 +151,12 @@ class NightLog(object):
             dfs.append(df2)
         if len(dfs) > 0:
             df_ = pd.concat(dfs)
-            df_ = df_.sort_values(by=['Time'])
-            df_.reset_index(inplace=True, drop=True)
+            if bad==False:
+                df_ = df_.sort_values(by=['Time'])
+                df_.reset_index(inplace=True, drop=True)
+            elif bad == True:
+                df_ = df_.sort_values(by=['EXPID'])
+                df_.reset_index(inplace=True, drop=True)
             return df_
         else:
             return None
@@ -358,7 +362,10 @@ class NightLog(object):
                     try:
                         e_ = exp_df[exp_df.id == int(row['Exp_Start'])]
                         time = pd.to_datetime(e_.date_obs).dt.strftime('%Y%m%dT%H:%M').values[0]  
-                        df.at[index, 'Time'] = time
+                        if str(time) == 'nan': # in [np.nan,'nan']:
+                            pass
+                        else:
+                            df.at[index, 'Time'] = time
                     except:
                         pass
                 df.to_csv(file,index=False)
@@ -615,13 +622,15 @@ class NightLog(object):
         df.to_csv(self.bad_exp_list, index=False)
 
     def write_bad_exp(self, file_nl):
-        if os.path.exists(self.bad_exp_list):
-            file_nl.write("<h3> Bad Exposures</h3>")
-            df = pd.read_csv(self.bad_exp_list)
-            df_html = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='badtable',max_cols=4)
-
+        df = self._combine_compare_csv_files(self.bad_exp_list, bad=True)
+        try:
+            if len(df) > 0:
+                file_nl.write("<h3> Bad Exposures</h3>")
+                df_html = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='badtable',max_cols=4)
             for line in df_html:
                 file_nl.write(line)
+        except Exception as e:
+            print(e)
 
     def write_intro(self):
         file_intro=open(self.header_html,'w')

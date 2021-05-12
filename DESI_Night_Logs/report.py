@@ -39,10 +39,12 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
+#os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
+#os.environ['NW_DIR'] = '/exposures/desi'
 class Report():
     def __init__(self, type):
 
-        self.test = False
+        self.test = False 
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -1444,7 +1446,7 @@ class Report():
                 #    df = pd.DataFrame(columns=['EXPID','BAD','BADCAMS','COMMENT'])
                 #    df.to_csv(bad_path,index=False)
                 bad_df = pd.read_csv(bad_path)
-                new_bad = pd.read_csv(self.DESILog.bad_exp_list)
+                new_bad = self.DESI_Log._combine_compare_csv_files(self.DESI_Log.bad_exp_list, bad=True)
                 bad_df = pd.concat([bad_df, new_bad])
                 bad_df = bad_df.drop_duplicates(subset=['EXPID'], keep='last')
                 bad_df.to_csv(bad_path,index=False)
