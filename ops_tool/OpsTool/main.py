@@ -39,13 +39,14 @@ from email.mime.image import MIMEImage
 
 class OpsTool(object):
     def __init__(self):
-        self.test = False 
+        self.test = True
         self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
-        self.credentials = "/n/home/desiobserver/parkerf/desilo/ops_tool/google_access_account.json"
+        self.credentials = "./google_access_account.json"
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
         self.client = gspread.authorize(self.creds)
 
         self.df = pd.read_csv('obs_schedule.csv')
+        self.user_info = pd.read_csv('user_info.csv')
         self.today = datetime.datetime.now().strftime('%Y-%m-%d')
         self.today_df = self.df[self.df.Date == self.today]
         self.today_source = ColumnDataSource(self.today_df)
@@ -59,6 +60,33 @@ class OpsTool(object):
             TableColumn(field='DQS', title='Data Quality Scientist')]
 
         self.data_table = DataTable(source = self.today_source, columns = today_columns, width=1000,height=100)
+
+        all_names = []
+        for name in np.unique(self.df.OS_1):
+            all_names.append(name.strip())
+        for name in np.unique(self.df.OS_2):
+            all_names.append(name.strip())
+        for name in np.unique(self.df.DQS):
+            all_names.append(name.strip())
+        all_names = np.unique(all_names)
+
+        for name in all_names:
+            emails = self.user_info[self.user_info['name'] == name]['email']
+            try:
+                email = emails.values[0]
+
+            except:
+                print(name)
+
+
+
+    def get_email(self, name):
+        try:
+            email = self.user_info[self.user_info['name'] == name]['email'].values[0]
+        except:
+            email = None 
+        return email
+
 
     def new_day(self):
         self.today = self.enter_date.value
@@ -85,6 +113,7 @@ class OpsTool(object):
         two_weeks_minus_one = self.df.iloc[idx[0]+13]
         one_month = self.df.iloc[idx[0]+30]
         one_month_minus_one =self.df.iloc[idx[0]+31]
+        self.today_emails = {}
         text = ''
         for col in ['LO_1','LO_2','OS_1','OS_2','DQS']:
 
@@ -95,7 +124,8 @@ class OpsTool(object):
                     pass
                 else:
                     if str(today[col]) not in [np.nan, '', ' ','nan']:
-                        text += 'Starts {} shift tomorrow: {}\n\n'.format(col, tomorrow[col])
+                        text += 'Starts {} shift tomorrow: {} ({})\n\n'.format(col, tomorrow[col], self.get_email(tomorrow[col]))
+                        self.today_emails[tomorrow[col]] = [self.get_email(tomorrow[col]), 'tomorrow']
             except Exception as e:
                 print("Issue with reading tomorrow's shift: {}".format(e))
 
@@ -104,7 +134,8 @@ class OpsTool(object):
                     pass
                 else:
                     if str(two_weeks[col]) not in ['nan','',' ']:
-                        text += 'Starts {} shift in 2 weeks: {}\n\n'.format(col, two_weeks[col])
+                        text += 'Starts {} shift in 2 weeks: {} ({})\n\n'.format(col, two_weeks[col], self.get_email(two_weeks[col]))
+                        self.today_emails[two_weeks[col]] = [self.get_email(two_weeks[col]), 'two_weeks']
             except Exception as e:
                 print("Issue with reading shift 2 weeks from now: {}".format(e))
 
@@ -113,7 +144,8 @@ class OpsTool(object):
                     pass
                 else:
                     if str(one_month[col]) not in ['nan','',' ']:
-                        text += 'Starts {} shift in 1 month: {}\n\n'.format(col, one_month[col])
+                        text += 'Starts {} shift in 1 month: {} ({})\n\n'.format(col, one_month[col], self.get_email(one_month[col]))
+                        self.today_emails[one_month[col]] = [self.get_email(one_month[col]), 'one_month']
             except Exception as e:
                 print("Issue with reading shift 1 month from now: {}".format(e))
 
@@ -123,7 +155,8 @@ class OpsTool(object):
                     #text += 'No one finished yesterday\n'
                 else:
                     if str(today[col]) not in [np.nan, '', ' ','nan']:
-                        text += 'Finished {} shift yesterday: {}\n\n'.format(col, yesterday[col])
+                        text += 'Finished {} shift yesterday: {} ({})\n\n'.format(col, yesterday[col], self.get_email(yesterday[col]))
+                        self.today_emails[yesterday[col]] = [self.get_email(yesterday[col]), 'yesterday']
             except Exception as e:
                 print("Issue with reading yesterday's shift: {}".format(e))
 
@@ -133,53 +166,78 @@ class OpsTool(object):
         name = self.one_month_name.value
         email = self.one_month_email.value
         print('This is not quite set up',name)
+        t = 'one_month'
+        self.email_stuff(name, email, t)
 
     def email_two_weeks(self):
         email = self.two_weeks_email.value
         name = self.two_weeks_name.value
 
-        subject = 'Preparation for DESI Observing'
-        msg = 'Hello {},<br>'.format(name)
-        if self.two_weeks_select.active[0] == 0:
-            msgfile = open('./OpsTool/static/two_week_info_msg_os.html')
-        elif self.two_weeks_select.active[0] == 1:
-            msgfile = open('./OpsTool/static/two_week_info_msg_dqs.html')
-        msg += msgfile.read()
-        self.send_email(subject, email, msg)
-        self.two_weeks_email.value = ''
-        self.two_weeks_name.value = ''
-        msgfile.close()
+        t = 'two_weeks'
+        self.email_stuff(name, email, t)
+
 
     def email_night_before(self):
         email = self.night_before_email.value
         name = self.night_before_name.value
-        
-        subject = 'DESI Observing Tomorrow'
-        msg = 'Hello {},<br>'.format(name)
-        msgfile = open('./OpsTool/static/night_before_msg.html')
-        msg += msgfile.read()
-        self.send_email(subject, email, msg)
-        self.night_before_email.value = ''
-        self.night_before_name.value = ''
-        msgfile.close()
+        t = 'tomorrow'
+        self.email_stuff(name, email, t)
+
 
     def email_follow_up(self):
         email = self.follow_up_email.value
         name = self.follow_up_name.value
         # get email
-        subject = 'DESI Observing Feedback'
-        msg = 'Hello {},<br>'.format(name)
-        msgfile = open('./OpsTool/static/follow_up_msg.html')
-        msg += msgfile.read()
-        self.send_email(subject, email, msg)
-        self.follow_up_email.value = ''
-        self.follow_up_name.value = ''
-        msgfile.close()
+        t = 'yesterday'
+        self.email_stuff(name, email, t)
+
+
+    def email_stuff(self, name, email, type):
+        if type == 'tomorrow':
+            subject = 'DESI Observing Tomorrow'
+            msg = 'Hello {},<br>'.format(name)
+            msgfile = open('./OpsTool/static/night_before_msg.html')
+            msg += msgfile.read()
+            self.send_email(subject, email, msg)
+            self.night_before_email.value = ''
+            self.night_before_name.value = ''
+            msgfile.close()
+        elif type == 'yesterday':
+            subject = 'DESI Observing Feedback'
+            msg = 'Hello {},<br>'.format(name)
+            msgfile = open('./OpsTool/static/follow_up_msg.html')
+            msg += msgfile.read()
+            self.send_email(subject, email, msg)
+            self.follow_up_email.value = ''
+            self.follow_up_name.value = ''
+            msgfile.close()
+        elif type == 'two_weeks':
+            subject = 'Preparation for DESI Observing'
+            msg = 'Hello {},<br>'.format(name)
+            if self.two_weeks_select.active[0] == 0:
+                msgfile = open('./OpsTool/static/two_week_info_msg_os.html')
+            elif self.two_weeks_select.active[0] == 1:
+                msgfile = open('./OpsTool/static/two_week_info_msg_dqs.html')
+            msg += msgfile.read()
+            self.send_email(subject, email, msg)
+            self.two_weeks_email.value = ''
+            self.two_weeks_name.value = ''
+            msgfile.close()
+        elif type == 'one_month':
+            pass
+        else:
+            print('Not correct type')
+
+    def email_all(self):
+        print(self.today_emails)
+        for name, values in self.today_emails.items():
+            self.email_stuff(name, values[0], values[1])
 
     def send_email(self, subject, user_email, message):
-        sender = "pfagrelius@noao.edu" 
+        sender = "desioperations1@gmail.com" 
 
-        toaddrs = [user_email]
+        toaddrs = user_email.split('; ')
+        print(toaddrs)
         # Create message container - the correct MIME type is multipart/alternative.
         msg = MIMEMultipart('html')
         msg['Subject'] = subject
@@ -192,21 +250,30 @@ class OpsTool(object):
         else:
             msg['CC'] = 'parker.fagrelius@noirlab.edu'
             toaddrs.append('parker.fagrelius@noirlab.edu')
+        print(toaddrs)
 
         msg['To'] = user_email
 
         msgText = MIMEText(message, 'html')
         msg.attach(msgText)
         text = msg.as_string()
-        # context = ssl.create_default_context()
-        # with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
-        #     server.login(sender, password)
-        #     server.sendmail(sender, user_email, text)
-        #     server.quit()
-        
-        s = smtplib.SMTP('localhost')
-        s.sendmail(sender, toaddrs, text)
-        s.quit()
+
+        smtp_server = "smtp.gmail.com"
+        port = 587
+        password = input("Input password: ")
+
+        context = ssl.create_default_context()
+        try:
+            server = smtplib.SMTP(smtp_server,port)
+            server.ehlo() # Can be omitted
+            server.starttls(context=context) # Secure the connection
+            server.ehlo() # Can be omitted
+            server.login(sender, password)
+            server.sendmail(sender, toaddrs, text)
+        except Exception as e:
+            # Print any error messages to stdout
+            print(e)
+
 
     def layout(self):
         self.report = PreText(text=' ')
@@ -230,15 +297,34 @@ class OpsTool(object):
         self.night_before_btn = Button(label="Email Night Before Info", width=200)
         self.follow_up_btn = Button(label="Email Follow Up", width=200)
         self.update_df_btn = Button(label='Update DataFrame', width=200)
+        self.email_all_btn = Button(label='Make all emails',width=200)
 
-        self.layout = layout([title,today_title,
+        main_layout = layout([title,today_title,
                   self.data_table,
                   [self.enter_date, self.date_btn],
                   self.update_df_btn,
                   night_report_title,
                   self.report,
-                  [[self.one_month_name,self.one_month_email,
-                  self.one_month_btn],[self.two_weeks_name,self.two_weeks_email,self.two_weeks_select, self.two_weeks_btn],[self.night_before_name,self.night_before_email, self.night_before_btn],[self.follow_up_name,self.follow_up_email, self.follow_up_btn]]])
+                  self.email_all_btn,
+                  [[self.one_month_name,self.one_month_email, self.one_month_btn],[self.two_weeks_name,self.two_weeks_email, self.two_weeks_btn],[self.night_before_name,self.night_before_email, self.night_before_btn],[self.follow_up_name,self.follow_up_email, self.follow_up_btn]]])
+        main_tab = Panel(child=main_layout, title='Main')
+
+        self.sched_source = ColumnDataSource(self.df)
+        sched_columns = [TableColumn(field='Day', title='Day', width=10),
+                   TableColumn(field='Date', title='Time', width=50),
+                   TableColumn(field='Comments', title='Comment', width=150),
+                   TableColumn(field='LO_1', title='Lead Obs. 1', width=75),
+                   TableColumn(field='LO_2', title='Lead Obs. 2', width=75),
+                   TableColumn(field='OS_1', title='Obs. Sci 1', width=75),
+                   TableColumn(field='OS_2', title='Obs. Sci 1', width=75),
+                   TableColumn(field='DQS', title='Data QA Sci.', width=75)] #, 
+
+        self.sched_table = DataTable(source=self.sched_source, columns=sched_columns, width=1000, height=500)
+        sched_layout = layout([title,
+                                self.sched_table])
+        sched_tab = Panel(child=sched_layout, title='Schedule')
+
+        self.layout = Tabs(tabs=[main_tab, sched_tab])
 
         
     def run(self):
@@ -250,6 +336,7 @@ class OpsTool(object):
         self.two_weeks_btn.on_click(self.email_two_weeks)
         self.night_before_btn.on_click(self.email_night_before)
         self.follow_up_btn.on_click(self.email_follow_up)
+        self.email_all_btn.on_click(self.email_all)
 
 Ops = OpsTool()
 Ops.run()
