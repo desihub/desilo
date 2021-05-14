@@ -39,7 +39,7 @@ from email.mime.image import MIMEImage
 
 class OpsTool(object):
     def __init__(self):
-        self.test = False 
+        self.test = True
         self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
         self.credentials = "./google_access_account.json"
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
@@ -135,7 +135,7 @@ class OpsTool(object):
                     pass
                 else:
                     if str(two_weeks[col]) not in ['nan','',' ']:
-                        text += 'Starts {} shift in 2 weeks: {} ({})\n\n'.format(col, two_weeks[col], self.get_email(two_weeks[col]))
+                        text += 'Starts {} shift in 2 weeks ({}): {} ({})\n\n'.format(col, two_weeks['Date'],two_weeks[col], self.get_email(two_weeks[col]))
                         self.today_emails[two_weeks[col]] = [self.get_email(two_weeks[col]), 'two_weeks',col]
             except Exception as e:
                 print("Issue with reading shift 2 weeks from now: {}".format(e))
@@ -204,8 +204,10 @@ class OpsTool(object):
             subject = 'DESI Observing Tomorrow'
             msg = 'Hello {},<br>'.format(name)
             if self.timing == 'tomorrow':
+                subject = 'DESI Observing Tomorrow'
                 msgfile = open('./OpsTool/static/night_before_msg.html')
             if self.timing == 'weekend':
+                subject = 'DESI Observing This Weekend'
                 msgfile = open('./OpsTool/static/weekend_before_msg.html')
             msg += msgfile.read()
             self.send_email(subject, email, msg)
@@ -224,6 +226,7 @@ class OpsTool(object):
         elif type == 'two_weeks':
             subject = 'Preparation for DESI Observing'
             msg = 'Hello {},<br>'.format(name)
+            msg += '<b> Shift starting {}</b><br>'.format(self.two_weeks_start.value)
             if self.observer == 'OS':
                 msgfile = open('./OpsTool/static/two_week_info_msg_os.html')
             elif self.observer == 'DQS':
@@ -314,6 +317,7 @@ class OpsTool(object):
         self.one_month_btn = Button(label="Email One Month Info", width=200)
         self.one_month_start = TextInput(title='Date Start: ',placeholder='Month DD, YYYY',width=200)
         self.two_weeks_btn = Button(label="Email Two Weeks Info", width=200)
+        self.two_weeks_start = TextInput(title='Date Start: ',placeholder='Month DD, YYYY',width=200)
         self.two_weeks_select = CheckboxButtonGroup(labels=['OS','DQS'], active=[0])
         self.night_before_btn = Button(label="Email Night Before Info", width=200)
         self.follow_up_btn = Button(label="Email Follow Up", width=200)
@@ -328,7 +332,7 @@ class OpsTool(object):
                   night_report_title,
                   self.report,
                   self.email_all_btn,
-                  [[self.one_month_name,self.one_month_email, self.one_month_start, self.one_month_btn],[self.two_weeks_name,self.two_weeks_select,self.two_weeks_email, self.two_weeks_btn],
+                  [[self.one_month_name,self.one_month_email, self.one_month_start, self.one_month_btn],[self.two_weeks_name,self.two_weeks_select,self.two_weeks_start,self.two_weeks_email, self.two_weeks_btn],
                   [self.night_before_name, self.weekend_select, self.night_before_email, self.night_before_btn],[self.follow_up_name,self.follow_up_email, self.follow_up_btn]]])
         main_tab = Panel(child=main_layout, title='Main')
 
