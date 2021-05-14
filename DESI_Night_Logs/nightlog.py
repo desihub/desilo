@@ -420,7 +420,7 @@ class NightLog(object):
                 dqs_ = df_['dqs'].iloc[0]
                 if str(dqs_['Comment']) == 'nan':
                     comment = ''
-                else
+                else:
                     comment = str(dqs_['Comment'])
                 if got_exp is not None:
                     file.write(f"<b><em>Data Quality:</em></b> {dqs_['Quality']}; {comment}<br/>")
