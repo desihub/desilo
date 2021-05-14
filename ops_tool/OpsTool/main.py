@@ -39,13 +39,13 @@ from email.mime.image import MIMEImage
 
 class OpsTool(object):
     def __init__(self):
-        self.test = True
+        self.test = False 
         self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
         self.credentials = "./google_access_account.json"
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
         self.client = gspread.authorize(self.creds)
 
-        self.df = pd.read_csv('obs_schedule.csv')
+        self.df = pd.read_csv('obs_schedule_corrected.csv')
         self.user_info = pd.read_csv('user_info.csv')
         self.today = datetime.datetime.now().strftime('%Y-%m-%d')
         self.today_df = self.df[self.df.Date == self.today]
@@ -82,7 +82,7 @@ class OpsTool(object):
 
     def get_email(self, name):
         try:
-            email = self.user_info[self.user_info['name'] == name]['email'].values[0]
+            email = self.user_info[self.user_info['name'] == str(name).strip()]['email'].values[0]
         except:
             email = None 
         return email
@@ -112,7 +112,7 @@ class OpsTool(object):
         two_weeks = self.df.iloc[idx[0]+14]
         two_weeks_minus_one = self.df.iloc[idx[0]+13]
         one_month = self.df.iloc[idx[0]+30]
-        one_month_minus_one =self.df.iloc[idx[0]+31]
+        one_month_minus_one =self.df.iloc[idx[0]+29]
         self.today_emails = {}
         text = ''
         for col in ['LO_1','LO_2','OS_1','OS_2','DQS']:
@@ -125,7 +125,8 @@ class OpsTool(object):
                 else:
                     if str(today[col]) not in [np.nan, '', ' ','nan']:
                         text += 'Starts {} shift tomorrow: {} ({})\n\n'.format(col, tomorrow[col], self.get_email(tomorrow[col]))
-                        self.today_emails[tomorrow[col]] = [self.get_email(tomorrow[col]), 'tomorrow']
+                        self.today_emails[tomorrow[col]] = [self.get_email(tomorrow[col]), 'tomorrow',col]
+                        self.timing = 'tomorrow'
             except Exception as e:
                 print("Issue with reading tomorrow's shift: {}".format(e))
 
@@ -135,17 +136,17 @@ class OpsTool(object):
                 else:
                     if str(two_weeks[col]) not in ['nan','',' ']:
                         text += 'Starts {} shift in 2 weeks: {} ({})\n\n'.format(col, two_weeks[col], self.get_email(two_weeks[col]))
-                        self.today_emails[two_weeks[col]] = [self.get_email(two_weeks[col]), 'two_weeks']
+                        self.today_emails[two_weeks[col]] = [self.get_email(two_weeks[col]), 'two_weeks',col]
             except Exception as e:
                 print("Issue with reading shift 2 weeks from now: {}".format(e))
 
             try:
-                if one_month[col] == one_month_minus_one[col]:
+                if str(one_month[col]).strip() == str(one_month_minus_one[col]).strip():
                     pass
                 else:
                     if str(one_month[col]) not in ['nan','',' ']:
-                        text += 'Starts {} shift in 1 month: {} ({})\n\n'.format(col, one_month[col], self.get_email(one_month[col]))
-                        self.today_emails[one_month[col]] = [self.get_email(one_month[col]), 'one_month']
+                        text += 'Starts {} shift in 1 month ({}): {} ({})\n\n'.format(col, one_month['Date'],one_month[col], self.get_email(one_month[col]))
+                        self.today_emails[one_month[col]] = [self.get_email(one_month[col]), 'one_month',col]
             except Exception as e:
                 print("Issue with reading shift 1 month from now: {}".format(e))
 
@@ -156,7 +157,7 @@ class OpsTool(object):
                 else:
                     if str(today[col]) not in [np.nan, '', ' ','nan']:
                         text += 'Finished {} shift yesterday: {} ({})\n\n'.format(col, yesterday[col], self.get_email(yesterday[col]))
-                        self.today_emails[yesterday[col]] = [self.get_email(yesterday[col]), 'yesterday']
+                        self.today_emails[yesterday[col]] = [self.get_email(yesterday[col]), 'yesterday',col]
             except Exception as e:
                 print("Issue with reading yesterday's shift: {}".format(e))
 
@@ -165,14 +166,16 @@ class OpsTool(object):
     def email_one_month(self):
         name = self.one_month_name.value
         email = self.one_month_email.value
-        print('This is not quite set up',name)
         t = 'one_month'
         self.email_stuff(name, email, t)
 
     def email_two_weeks(self):
         email = self.two_weeks_email.value
         name = self.two_weeks_name.value
-
+        if self.two_weeks_select.active[0] == 0:
+            self.observer = 'OS'
+        elif self.two_weeks_select.active[0] == 1:
+            self.observer = 'DQS'
         t = 'two_weeks'
         self.email_stuff(name, email, t)
 
@@ -181,6 +184,10 @@ class OpsTool(object):
         email = self.night_before_email.value
         name = self.night_before_name.value
         t = 'tomorrow'
+        if self.weekend_select.active[0] == 0:
+            self.timing = 'tomorrow'
+        elif self.weekend_select.active[0] == 1:
+            self.timing = 'weekend'
         self.email_stuff(name, email, t)
 
 
@@ -196,7 +203,10 @@ class OpsTool(object):
         if type == 'tomorrow':
             subject = 'DESI Observing Tomorrow'
             msg = 'Hello {},<br>'.format(name)
-            msgfile = open('./OpsTool/static/night_before_msg.html')
+            if self.timing == 'tomorrow':
+                msgfile = open('./OpsTool/static/night_before_msg.html')
+            if self.timing == 'weekend':
+                msgfile = open('./OpsTool/static/weekend_before_msg.html')
             msg += msgfile.read()
             self.send_email(subject, email, msg)
             self.night_before_email.value = ''
@@ -214,9 +224,9 @@ class OpsTool(object):
         elif type == 'two_weeks':
             subject = 'Preparation for DESI Observing'
             msg = 'Hello {},<br>'.format(name)
-            if self.two_weeks_select.active[0] == 0:
+            if self.observer == 'OS':
                 msgfile = open('./OpsTool/static/two_week_info_msg_os.html')
-            elif self.two_weeks_select.active[0] == 1:
+            elif self.observer == 'DQS':
                 msgfile = open('./OpsTool/static/two_week_info_msg_dqs.html')
             msg += msgfile.read()
             self.send_email(subject, email, msg)
@@ -224,55 +234,65 @@ class OpsTool(object):
             self.two_weeks_name.value = ''
             msgfile.close()
         elif type == 'one_month':
-            pass
+            subject = 'Confirmation of DESI Observing Shift'
+            msg = 'Hello {},<br>'.format(name)
+            msg += '<b> Shift starting {}</b><br>'.format(self.one_month_start.value)
+            msgfile = open('./OpsTool/static/one_month_info_msg.html')
+            msg += msgfile.read()
+            self.send_email(subject, email, msg)
+            self.one_month_email.value = ''
+            self.one_month_name.value = ''
+            msgfile.close()
         else:
             print('Not correct type')
 
     def email_all(self):
         print(self.today_emails)
         for name, values in self.today_emails.items():
+            self.observer = values[2].split('_')[0]
             self.email_stuff(name, values[0], values[1])
 
     def send_email(self, subject, user_email, message):
         sender = "desioperations1@gmail.com" 
-
-        toaddrs = user_email.split('; ')
-        print(toaddrs)
-        # Create message container - the correct MIME type is multipart/alternative.
-        msg = MIMEMultipart('html')
-        msg['Subject'] = subject
-        msg['From'] = sender
-        if self.test == False:
-            recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu']
-            msg['CC'] = ", ".join(recipients)
-            toaddrs.append('parker.fagrelius@noirlab.edu')
-            toaddrs.append('arjun.dey@noirlab.edu')
+        if user_email in [None,'None']:
+        	pass
         else:
-            msg['CC'] = 'parker.fagrelius@noirlab.edu'
-            toaddrs.append('parker.fagrelius@noirlab.edu')
-        print(toaddrs)
+	        toaddrs = user_email.split('; ')
+	        # Create message container - the correct MIME type is multipart/alternative.
+	        msg = MIMEMultipart('html')
+	        msg['Subject'] = subject
+	        msg['From'] = sender
+	        if self.test == False:
+	            recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu']
+	            msg['CC'] = ", ".join(recipients)
+	            toaddrs.append('parker.fagrelius@noirlab.edu')
+	            toaddrs.append('arjun.dey@noirlab.edu')
+	        else:
+	            msg['CC'] = 'parker.fagrelius@noirlab.edu'
+	            toaddrs.append('parker.fagrelius@noirlab.edu')
+	        print(toaddrs)
 
-        msg['To'] = user_email
+	        msg['To'] = user_email
 
-        msgText = MIMEText(message, 'html')
-        msg.attach(msgText)
-        text = msg.as_string()
+	        msgText = MIMEText(message, 'html')
+	        msg.attach(msgText)
+	        text = msg.as_string()
 
-        smtp_server = "smtp.gmail.com"
-        port = 587
-        password = input("Input password: ")
+	        smtp_server = "smtp.gmail.com"
+	        port = 587
+	        password = os.environ['OPS_PW'] #input("Input password: ")
 
-        context = ssl.create_default_context()
-        try:
-            server = smtplib.SMTP(smtp_server,port)
-            server.ehlo() # Can be omitted
-            server.starttls(context=context) # Secure the connection
-            server.ehlo() # Can be omitted
-            server.login(sender, password)
-            server.sendmail(sender, toaddrs, text)
-        except Exception as e:
-            # Print any error messages to stdout
-            print(e)
+	        context = ssl.create_default_context()
+	        try:
+	            server = smtplib.SMTP(smtp_server,port)
+	            server.ehlo() # Can be omitted
+	            server.starttls(context=context) # Secure the connection
+	            server.ehlo() # Can be omitted
+	            server.login(sender, password)
+	            server.sendmail(sender, toaddrs, text)
+	        except Exception as e:
+	            # Print any error messages to stdout
+	            print(e)
 
 
     def layout(self):
@@ -292,10 +312,12 @@ class OpsTool(object):
         self.night_before_name = TextInput(title='Name: ', placeholder='Mia Hamm', width=200)
         self.follow_up_name = TextInput(title='Name: ', placeholder='Danica Patrick', width=200)
         self.one_month_btn = Button(label="Email One Month Info", width=200)
+        self.one_month_start = TextInput(title='Date Start: ',placeholder='Month DD, YYYY',width=200)
         self.two_weeks_btn = Button(label="Email Two Weeks Info", width=200)
-        self.two_weeks_select = CheckboxGroup(labels=['OS','DQS'], active=[0])
+        self.two_weeks_select = CheckboxButtonGroup(labels=['OS','DQS'], active=[0])
         self.night_before_btn = Button(label="Email Night Before Info", width=200)
         self.follow_up_btn = Button(label="Email Follow Up", width=200)
+        self.weekend_select = CheckboxButtonGroup(labels=['Tomorrow','Weekend'], active=[0])
         self.update_df_btn = Button(label='Update DataFrame', width=200)
         self.email_all_btn = Button(label='Make all emails',width=200)
 
@@ -306,7 +328,8 @@ class OpsTool(object):
                   night_report_title,
                   self.report,
                   self.email_all_btn,
-                  [[self.one_month_name,self.one_month_email, self.one_month_btn],[self.two_weeks_name,self.two_weeks_email, self.two_weeks_btn],[self.night_before_name,self.night_before_email, self.night_before_btn],[self.follow_up_name,self.follow_up_email, self.follow_up_btn]]])
+                  [[self.one_month_name,self.one_month_email, self.one_month_start, self.one_month_btn],[self.two_weeks_name,self.two_weeks_select,self.two_weeks_email, self.two_weeks_btn],
+                  [self.night_before_name, self.weekend_select, self.night_before_email, self.night_before_btn],[self.follow_up_name,self.follow_up_email, self.follow_up_btn]]])
         main_tab = Panel(child=main_layout, title='Main')
 
         self.sched_source = ColumnDataSource(self.df)
