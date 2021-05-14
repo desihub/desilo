@@ -35,8 +35,8 @@ class DQS_Report(Report):
 
         self.dqs_checklist = ["Are all images being transferred to Night Watch?", "Did you check the observing conditions?", "Did you check the guiding?"]
 
-        self.quality_list = ['Bad','OK','Good','Great']
-        self.quality_btns = RadioButtonGroup(labels=self.quality_list, active=2)
+        self.quality_list = ['Good','Not Sure','No Data','Bad']
+        self.quality_btns = RadioButtonGroup(labels=self.quality_list, active=0)
 
     def get_layout(self):
         self.get_intro_layout()
@@ -60,6 +60,8 @@ class DQS_Report(Report):
         self.dqs_load_btn.on_click(self.dqs_load)
         self.prob_load_btn.on_click(self.load_problem)
         self.ns_date_btn.on_click(self.get_nightsum)
+        self.all_button.on_click(self.add_all_to_bad_list)
+        self.partial_button.on_click(self.add_some_to_bad_list)
         self.bad_add.on_click(self.bad_exp_add)
         self.prob_delete_btn.on_click(self.problem_delete)
 
