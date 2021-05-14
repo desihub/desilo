@@ -419,15 +419,17 @@ class NightLog(object):
             if len(df_['dqs']) > 0:
                 dqs_ = df_['dqs'].iloc[0]
                 if str(dqs_['Comment']) == 'nan':
-                    dqs_.update({'Comment': ''})
+                    comment = ''
+                else
+                    comment = str(dqs_['Comment'])
                 if got_exp is not None:
-                    file.write(f"<b><em>Data Quality:</em></b> {dqs_['Quality']}; {dqs_['Comment']}<br/>")
+                    file.write(f"<b><em>Data Quality:</em></b> {dqs_['Quality']}; {comment}<br/>")
                 else:
                     got_exp = str(dqs_['Exp_Start'])
                     try:
-                        file.write("<b>{} Exp. {}</b> <b><em>Data Quality:</em></b> {}, {}<br/>".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                        file.write("<b>{} Exp. {}</b> <b><em>Data Quality:</em></b> {}, {}<br/>".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],comment))
                     except:
-                        file.write("<b>{} Exp. {}</b> <b><em>Data Quality:</em></b> {}, {}<br/>".format(self.write_time(dqs_['Time']), str(dqs_['Exp_Start']), dqs_['Quality'],dqs_['Comment']))
+                        file.write("<b>{} Exp. {}</b> <b><em>Data Quality:</em></b> {}, {}<br/>".format(self.write_time(dqs_['Time']), str(dqs_['Exp_Start']), dqs_['Quality'],comment))
 
                 if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                     self._write_image_tag(file, dqs_['img_name'])
