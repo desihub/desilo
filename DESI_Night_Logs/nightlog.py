@@ -273,14 +273,15 @@ class NightLog(object):
             filen.write("<ul>")
             for index, row in df.iterrows():
                 filen.write("<li> [{}] {}".format(index, row['Desc']))
-                if not pd.isna(row['Exp_Start']): # not in [np.nan, 'nan',None, 'None', " ", ""]:
+                if not pd.isna(row['Exp_Start']):
                     if str(row['Exp_Start']) not in ['',' ','nan']:
                         filen.write("; Exposure(s): {}".format(row['Exp_Start']))
-                if not pd.isna(row['Exp_Stop']): #not in [np.nan, 'nan',None, 'None', " ", ""]:   
+                if not pd.isna(row['Exp_Stop']):  
                     if str(row['Exp_Stop']) not in ['',' ','nan']:
                         filen.write(" - {}".format(row['Exp_Stop']))
-                if not pd.isna(row['Exp_Excl']): # not in [np.nan, 'nan',None, 'None', " ", ""]:   
-                    filen.write(", excluding {}".format(row['Exp_Excl']))
+                if not pd.isna(row['Exp_Excl']):
+                    if str(row['Exp_Excl']) not in ['',' ','nan']:
+                        filen.write(", excluding {}".format(row['Exp_Excl']))
                 filen.write("</li>")
             filen.write("</ul>")
 
@@ -418,7 +419,7 @@ class NightLog(object):
             if len(df_['dqs']) > 0:
                 dqs_ = df_['dqs'].iloc[0]
                 if str(dqs_['Comment']) == 'nan':
-                    dqs_['Comment'] = ''
+                    dqs_.update({'Comment': ''})
                 if got_exp is not None:
                     file.write(f"<b><em>Data Quality:</em></b> {dqs_['Quality']}; {dqs_['Comment']}<br/>")
                 else:
@@ -619,6 +620,7 @@ class NightLog(object):
         this_df = pd.DataFrame.from_dict(data)
 
         df = pd.concat([df, this_df])
+        df = df.drop_duplicates(subset=['EXPID'], keep='last')
         df.to_csv(self.bad_exp_list, index=False)
 
     def write_bad_exp(self, file_nl):

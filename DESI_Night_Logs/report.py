@@ -242,12 +242,12 @@ class Report():
         self.milestone_tab = Panel(child=milestone_layout, title='Milestones')
 
     def exp_layout(self):
-        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',rows=10, cols=5,width=800,max_length=10000)
+        self.exp_comment = TextAreaInput(title ='Comment/Remark', placeholder = 'Humidity high for calibration lamps',rows=6, cols=5,width=800,max_length=10000)
         self.exp_time = TextInput(placeholder = '20:07', width=100) #title ='Time in Kitt Peak local time*', 
-        self.exp_btn = Button(label='Add/Update', css_classes=['add_button'])
+        self.exp_btn = Button(label='Add/Update', css_classes=['add_button'],width=200)
         self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.exp_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
-        self.exp_alert = Div(text=' ', css_classes=['alert-style'])
+        self.exp_alert = Div(text=' ', css_classes=['alert-style'], width=500)
         self.dqs_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
 
         self.exp_select = Select(title='(1) Select Exposure', options=['None'],width=150)
@@ -309,15 +309,19 @@ class Report():
         """
         exp_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
 
+        
         self.exp_comment.placeholder = 'CCD4 has some bright columns'
         self.quality_title = Div(text='Data Quality: ', css_classes=['inst-style'])
 
         #bad exposures
-        self.bad_subt = Div(text='Bad Exposures',css_classes=['subt-style'],width=500)
-        self.bad_exp = TextInput(title='Exposure',placeholder='12345',width=200)
-        self.bad_comment = TextInput(title='Comment',placeholder='light leakage',width=300)
+        self.bad_subt = Div(text='Please Select Which is True about the Bad Exposure: ',css_classes=['subt-style'],width=500)
+        self.bad_subt_2 = Div(text='Select Which Cameras are Bad: ',css_classes=['subt-style'],width=500)
+        #self.bad_exp = TextInput(title='Exposure',placeholder='12345',width=200)
+        #self.bad_comment = TextInput(title='Comment',placeholder='light leakage',width=300)
         self.bad_alert = Div(text='',css_classes=['alert-style'],width=500)
-        self.all_or_partial = RadioButtonGroup(labels=['All Bad','Select Cameras'],active=0)
+        self.all_button = Button(label='Full exposure should be deleted', width=500, css_classes=['add_button'])
+        self.partial_button = Button(label='Exposure is only partially bad (only certain cameras)', width=500, css_classes=['connect_button'])
+        #self.all_or_partial = RadioButtonGroup(labels=['All Bad','Select Cameras'],active=0)
         hdrs = [Div(text='Spectrograph {}: '.format(i),width=150) for i in range(10)]
         self.bad_cams_0 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
         self.bad_cams_1 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
@@ -330,22 +334,11 @@ class Report():
         self.bad_cams_8 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
         self.bad_cams_9 = CheckboxButtonGroup(labels=['All','B','R','Z'],active=[],orientation='horizontal', width=300)
 
-        self.bad_add = Button(label='Add Bad Exposure',css_classes=['add_button'],width=200)
-        
-        
-        self.exp_layout = layout(self.buffer,self.title,
-                            exp_subtitle,
-                            exp_inst,
-                            [self.exp_option, self.dqs_load_btn],
-                            [self.exp_select, self.exp_enter],
-                            [self.quality_title, self.quality_btns],
-                            self.exp_comment,
-                            [self.img_upinst2, self.img_upload_comments_dqs],
-                            [self.exp_btn],
-                            [self.exp_alert],
-                            self.line,
-                            self.bad_subt,
-                            [self.bad_exp, self.all_or_partial], 
+        self.bad_add = Button(label='Add to bad exposure list',css_classes=['add_button'],width=200)
+        self.bad_layout_1 = layout(self.bad_subt,
+                            self.all_button,
+                            self.partial_button)
+        self.bad_layout_2 = layout(self.bad_subt_2,
                             [hdrs[0], self.bad_cams_0],
                             [hdrs[1], self.bad_cams_1],
                             [hdrs[2], self.bad_cams_2],
@@ -356,9 +349,32 @@ class Report():
                             [hdrs[7], self.bad_cams_7],
                             [hdrs[8], self.bad_cams_8],
                             [hdrs[9], self.bad_cams_9],
-                            self.bad_comment,
-                            self.bad_add, width=1000)
+                            self.bad_add)
+        
+        
+        self.exp_layout = layout(children=[self.buffer,self.title,
+                            exp_subtitle,
+                            exp_inst,
+                            [self.exp_option, self.dqs_load_btn],
+                            [self.exp_select, self.exp_enter],
+                            [self.quality_title, self.quality_btns],
+                            self.exp_comment,
+                            [self.img_upinst2, self.img_upload_comments_dqs],
+                            [self.exp_btn],
+                            [self.exp_alert]],width=1000)
         self.exp_tab = Panel(child=self.exp_layout, title="Exposures") 
+
+    def add_all_to_bad_list(self):
+        self.bad_all = True
+        self.exp_layout.children[9] = self.exp_btn
+        self.bad_exp_add()
+        self.exp_alert.text = 'The whole exposure {} has been added to the bad exposure list'.format(self.bad_exp_val)
+        self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
+
+    def add_some_to_bad_list(self):
+        self.bad_all = False
+        self.exp_layout.children[9] = self.bad_layout_2
+
 
     def get_prob_layout(self):
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
@@ -976,12 +992,12 @@ class Report():
         return exp_html
 
     def bad_exp_add(self):
-        exp = self.bad_exp.value
+        exp = self.bad_exp_val
         cams_dict = {0:'a',1:'b',2:'r',3:'z'}
-        if self.all_or_partial.active == 0:
+        if self.bad_all:
             bad = True
             cameras = None
-        elif self.all_or_partial.active == 1:
+        elif self.bad_all == False:
             bad = False
             cameras = ''
             for i, cams in enumerate([self.bad_cams_0, self.bad_cams_1, self.bad_cams_2, self.bad_cams_3, self.bad_cams_4, self.bad_cams_5, self.bad_cams_6, self.bad_cams_7, self.bad_cams_8, self.bad_cams_9]):
@@ -990,17 +1006,16 @@ class Report():
                 else:
                     for c in cams.active:
                         cameras += '{}{}'.format(cams_dict[int(c)],i)
+            self.exp_layout.children[9] = self.exp_btn
+            self.exp_alert.text = 'Part of the exposure {} has been added to the bad exposure list'.format(exp)
 
-        comment = self.bad_comment.value
+        comment = self.bad_comment
         data = {}
         data['EXPID'] = [exp]
         data['BAD'] = [bad]
         data['BADCAMS'] = [cameras]
         data['COMMENT'] = [comment]
-        self.bad_alert.text = 'Submitted Bad Exposure {} @ {}'.format(exp, datetime.datetime.now().strftime('%H:%M.%S'))
-        self.bad_comment.value = ''
-        self.bad_exp.value = ''
-        self.all_or_partial.active = 0
+        #self.bad_alert.text = 'Submitted Bad Exposure {} @ {}'.format(exp, datetime.datetime.now().strftime('%H:%M.%S'))
         self.bad_cams_0.active = []
         self.bad_cams_1.active = []
         self.bad_cams_2.active = []
@@ -1011,7 +1026,7 @@ class Report():
         self.bad_cams_7.active = []
         self.bad_cams_8.active = []
         self.bad_cams_9.active = []
-
+        self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
 
         self.DESI_Log.add_bad_exp(data)
     def check_add(self):
@@ -1219,6 +1234,7 @@ class Report():
 
     def exp_add(self):
         quality = self.quality_list[self.quality_btns.active]
+
         if self.exp_option.active == 0:
             try:
                 exp_val = int(self.exp_select.value)
@@ -1236,10 +1252,17 @@ class Report():
             data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
             self.DESI_Log.add_input(data, 'dqs_exp',img_name=img_name, img_data=img_data)
 
-            self.exp_alert.text = 'Last Exposure input @ {} for Exp. {}'.format(now, exp_val)
-            self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
+            self.exp_alert.text = 'Last Exposure input to Night Log  @ {} for Exp. {} with quality {}'.format(now, exp_val,quality)
+            
         except Exception as e:
             self.exp_alert.text = 'Error with your Input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
+
+        if quality == 'Bad':
+            self.exp_layout.children[9] = self.bad_layout_1
+            self.bad_exp_val = exp_val
+            self.bad_comment = self.exp_comment.value.strip()
+        else:
+            self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
 
     def plan_delete(self):
         time = self.plan_time
@@ -1286,9 +1309,14 @@ class Report():
             exp = int(self.exp_enter.value.strip())
         try:
             b, item = self.DESI_Log.load_exp(exp)
+            print(b)
+            print(item)
             if b:
                 self.exp_comment.value = item['Comment']
-                qual = np.where(self.quality_list==item['Quality'])[0]
+                qual = np.where(np.array(self.quality_list)==str(item['Quality']).strip())[0]
+                print(self.quality_list)
+                print(item['Quality'])
+                print(qual)
                 self.quality_btns.active = int(qual)
             else:
                 self.exp_alert.text = "An input for that exposure doesn't exist for this user. {}".format(item)
