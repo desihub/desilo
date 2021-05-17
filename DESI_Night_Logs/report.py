@@ -1011,6 +1011,7 @@ class Report():
 
         comment = self.bad_comment
         data = {}
+        data['NIGHT'] = self.night
         data['EXPID'] = [exp]
         data['BAD'] = [bad]
         data['BADCAMS'] = [cameras]
@@ -1478,6 +1479,11 @@ class Report():
                 bad_df = pd.concat([bad_df, new_bad])
                 bad_df = bad_df.drop_duplicates(subset=['EXPID'], keep='last')
                 bad_df.to_csv(bad_path,index=False)
+                err1 = os.system('svn update --non-interactive {}'.format(bad_path))
+                print('SVN added bad exp list {}'.format(err1))
+                err2 = os.system('svn commit --non-interactive -m "autocommit from night summary submission" {}'.format(bad_path))
+                print('SVN commited bad exp list {}'.format(err2))
+
             except Exception as e:
                 print('Cant post to the bad exp list: {}'.format(e))
 

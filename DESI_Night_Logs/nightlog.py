@@ -614,7 +614,7 @@ class NightLog(object):
 
     def add_bad_exp(self, data):
         if not os.path.exists(self.bad_exp_list):
-            df = pd.DataFrame(columns=['EXPID','BAD','BADCAMS','COMMENT'])
+            df = pd.DataFrame(columns=['NIGHT','EXPID','BAD','BADCAMS','COMMENT'])
             df.to_csv(self.bad_exp_list, index=False)
         else:
             df = pd.read_csv(self.bad_exp_list)
@@ -630,7 +630,7 @@ class NightLog(object):
         try:
             if len(df) > 0:
                 file_nl.write("<h3> Bad Exposures</h3>")
-                df_html = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='badtable',max_cols=4)
+                df_html = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='badtable',max_cols=5)
             for line in df_html:
                 file_nl.write(line)
         except Exception as e:
