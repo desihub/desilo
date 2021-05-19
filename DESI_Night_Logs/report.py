@@ -39,12 +39,12 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-#os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
-#os.environ['NW_DIR'] = '/exposures/desi'
+os.environ['NL_DIR'] = '/software/www2/html/nightlogs'
+os.environ['NW_DIR'] = '/exposures/desi'
 class Report():
     def __init__(self, type):
 
-        self.test = False 
+        self.test = True 
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -215,8 +215,8 @@ class Report():
         self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.milestone_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
-        self.summary_1 = TextAreaInput(rows=5, placeholder='End of Night Summary for first half', title='End of Night Summary',max_length=5000)
-        self.summary_2 = TextAreaInput(rows=5, placeholder='End of Night Summary for second half', max_length=5000)
+        self.summary_1 = TextAreaInput(rows=8, placeholder='End of Night Summary for first half', title='End of Night Summary',max_length=5000)
+        self.summary_2 = TextAreaInput(rows=8, placeholder='End of Night Summary for second half', max_length=5000)
         self.obs_time = TextInput(title ='ObsTime', placeholder='10', width=100)
         self.test_time = TextInput(title ='TestTime', placeholder='0', width=100)
         self.inst_loss_time = TextInput(title ='InstLoss', placeholder='0', width=100)
@@ -425,16 +425,16 @@ class Report():
 
         data = pd.DataFrame(columns = ['Time','desc','temp','wind','humidity','seeing','tput','skylevel'])
         self.weather_source = ColumnDataSource(data)
-        obs_columns = [TableColumn(field='Time', title='Time (Local)', width=50, formatter=self.timefmt),
-                   TableColumn(field='desc', title='Description', width=150),
-                   TableColumn(field='temp', title='Temperature (C)', width=75),
-                   TableColumn(field='wind', title='Wind Speed (mph)', width=75),
-                   TableColumn(field='humidity', title='Humidity (%)', width=50),
-                   TableColumn(field='seeing', title='Seeing (arcsec)', width=50),
-                   TableColumn(field='tput', title='Throughput', width=50),
-                   TableColumn(field='skylevel', title='Sky Level', width=50)] #, 
+        obs_columns = [TableColumn(field='Time', title='Time (Local)', width=100, formatter=self.timefmt),
+                   TableColumn(field='desc', title='Description', width=250),
+                   TableColumn(field='temp', title='Temperature (C)', width=100),
+                   TableColumn(field='wind', title='Wind Speed (mph)', width=100),
+                   TableColumn(field='humidity', title='Humidity (%)', width=100),
+                   TableColumn(field='seeing', title='Seeing (arcsec)', width=100),
+                   TableColumn(field='tput', title='Throughput', width=100),
+                   TableColumn(field='skylevel', title='Sky Level', width=100)] #, 
 
-        self.weather_table = DataTable(source=self.weather_source, columns=obs_columns, width=1000, height=300)
+        self.weather_table = DataTable(source=self.weather_source, columns=obs_columns,fit_columns=False, width=1000, height=350)
 
         telem_data = pd.DataFrame(columns =
         ['time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing','tput','skylevel'])
@@ -525,7 +525,7 @@ class Report():
         self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
         self.nl_text = Div(text=" ", width=800)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
-        self.nl_submit_btn = Button(label='Submit NightLog & Publish NightSummary (Only Press Once - this take a couple minutes)', width=400, css_classes=['add_button'])
+        self.nl_submit_btn = Button(label='Submit NightLog & Publish NightSummary (Only Press Once - this takes a few minutes)', width=800, css_classes=['add_button'])
         self.submit_text = Div(text=' ', css_classes=['alert-style'], width=800)
         
         self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
@@ -1009,7 +1009,7 @@ class Report():
 
         comment = self.bad_comment
         data = {}
-        data['NIGHT'] = self.night
+        data['NIGHT'] = [self.night]
         data['EXPID'] = [exp]
         data['BAD'] = [bad]
         data['BADCAMS'] = [cameras]
@@ -1478,6 +1478,7 @@ class Report():
                 new_bad = self.DESI_Log._combine_compare_csv_files(self.DESI_Log.bad_exp_list, bad=True)
                 bad_df = pd.concat([bad_df, new_bad])
                 bad_df = bad_df.drop_duplicates(subset=['EXPID'], keep='last')
+                bad_df = bad_df.astype({"NIGHT":pd.Int32Dtype(), "EXPID": int,"BAD":bool,"BADCAMS":str,"COMMENT":str})
                 bad_df.to_csv(bad_path,index=False)
                 err1 = os.system('svn update --non-interactive {}'.format(bad_path))
                 print('SVN added bad exp list {}'.format(err1))

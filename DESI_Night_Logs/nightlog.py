@@ -326,7 +326,7 @@ class NightLog(object):
         df = self._combine_compare_csv_files(self.weather)
         if df is not None:
             df = df.rename(columns={'desc':'Description','temp':'Temp.','wind':'Wind Speed (mph)','humidity':'Humidity','seeing':'Seeing','tput':'Transparency','skylevel':'SkyLevel'})
-            time = [self.write_time(t) for t in df.Time]
+            time = [self.write_time(t,kp_only=True) for t in df.Time]
             df['Time'] = time
             df_list = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='weathertable',max_cols=8)
             for line in df_list:
@@ -616,6 +616,7 @@ class NightLog(object):
         if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_1'])
             file.write("<br/>")
+            file.write("<br/>")
         if d['summary_2'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_2'])
             file.write("<br/>")
@@ -634,6 +635,7 @@ class NightLog(object):
 
         df = pd.concat([df, this_df])
         df = df.drop_duplicates(subset=['EXPID'], keep='last')
+        df = df.astype({"NIGHT":pd.Int32Dtype(), "EXPID": int,"BAD":bool,"BADCAMS":str,"COMMENT":str})
         df.to_csv(self.bad_exp_list, index=False)
 
     def write_bad_exp(self, file_nl):
