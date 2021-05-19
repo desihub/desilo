@@ -635,7 +635,7 @@ def sky_calendar(date = None, observer = None):
         obs_info['moonset'] = None
 
     # twilights
-    for horizon, name in [('-6','civil'),('-12','nautical'),('-18','astronomical')]:
+    for horizon, name in [('-6','civil'),('-10','ten'),('-12','nautical'),('-18','astronomical')]:
         observer.horizon = horizon
         obs_info[f'dusk_{name}'] = observer.next_setting(sun, use_center=True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time()
         obs_info[f'dawn_{name}'] =observer.next_rising(sun, use_center = True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time()

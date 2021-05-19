@@ -205,7 +205,7 @@ class Report():
         </ul>
         """
         self.milestone_inst = Div(text=inst, css_classes=['inst-style'],width=1000)
-        self.milestone_input = TextAreaInput(placeholder="Description", title="Enter a Milestone:", rows=5, cols=3, max_length=5000, width=800)
+        self.milestone_input = TextAreaInput(placeholder="Description", title="Enter a Milestone:", rows=2, cols=3, max_length=5000, width=800)
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345',  width=200)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', width=200)
         self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', width=200)
@@ -215,8 +215,8 @@ class Report():
         self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.milestone_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
-        self.summary_1 = TextAreaInput(rows=10, placeholder='End of Night Summary for first half', title='End of Night Summary',max_length=5000)
-        self.summary_2 = TextAreaInput(rows=10, placeholder='End of Night Summary for second half', max_length=5000)
+        self.summary_1 = TextAreaInput(rows=5, placeholder='End of Night Summary for first half', title='End of Night Summary',max_length=5000)
+        self.summary_2 = TextAreaInput(rows=5, placeholder='End of Night Summary for second half', max_length=5000)
         self.obs_time = TextInput(title ='ObsTime', placeholder='10', width=100)
         self.test_time = TextInput(title ='TestTime', placeholder='0', width=100)
         self.inst_loss_time = TextInput(title ='InstLoss', placeholder='0', width=100)
@@ -229,14 +229,13 @@ class Report():
                         self.title,
                         self.milestone_subtitle,
                         self.milestone_inst,
-                        [self.milestone_input,[self.milestone_load_num, self.milestone_load_btn, self.milestone_btn, self.milestone_delete_btn]] ,
-                        [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl],
+                        [[self.milestone_input, [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl]],[self.milestone_load_num, self.milestone_load_btn, self.milestone_btn, self.milestone_delete_btn]] ,
                         [self.milestone_new_btn],
                         self.milestone_alert,
                         self.line,
                         self.summary_1,
                         self.summary_2,
-                        [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time, [self.total_time, self.full_time_text]],
+                        [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time, self.total_time, self.full_time_text],
                         self.summary_btn,
                         ], width=1000)
         self.milestone_tab = Panel(child=milestone_layout, title='Milestones')
@@ -435,7 +434,7 @@ class Report():
                    TableColumn(field='tput', title='Throughput', width=50),
                    TableColumn(field='skylevel', title='Sky Level', width=50)] #, 
 
-        self.weather_table = DataTable(source=self.weather_source, columns=obs_columns, width=1000, height=500)
+        self.weather_table = DataTable(source=self.weather_source, columns=obs_columns, width=1000, height=300)
 
         telem_data = pd.DataFrame(columns =
         ['time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing','tput','skylevel'])
@@ -526,7 +525,7 @@ class Report():
         self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
         self.nl_text = Div(text=" ", width=800)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
-        self.nl_submit_btn = Button(label='Submit NightLog & Publish Nightsum', width=300, css_classes=['add_button'])
+        self.nl_submit_btn = Button(label='Submit NightLog & Publish NightSummary (Only Press Once - this take a couple minutes)', width=400, css_classes=['add_button'])
         self.submit_text = Div(text=' ', css_classes=['alert-style'], width=800)
         
         self.exptable_alert = Div(text=" ", css_classes=['alert-style'], width=500)
@@ -742,22 +741,21 @@ class Report():
         meta['dqs_2_firstname'], meta['dqs_2_lastname'] = self.dqs_name_2.value.split(' ')[0], ' '.join(self.dqs_name_2.value.split(' ')[1:])
         meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
 
-
         eph = sky_calendar()
         meta['time_sunset'] = self.get_strftime(eph['sunset'])
         meta['time_sunrise'] = self.get_strftime(eph['sunrise'])
         meta['time_moonrise'] = self.get_strftime(eph['moonrise'])
         meta['time_moonset'] = self.get_strftime(eph['moonset'])
         meta['illumination'] = eph['illumination']
+        meta['dusk_10_deg'] = self.get_strftime(eph['dusk_ten'])
         meta['dusk_12_deg'] = self.get_strftime(eph['dusk_nautical'])
         meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
         meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
         meta['dawn_12_deg'] = self.get_strftime(eph['dawn_nautical'])
-
+        meta['dawn_10_deg'] = self.get_strftime(eph['dawn_ten'])
 
         self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
         self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
-
         self.DESI_Log.get_started_os(meta)
 
         self.connect_txt.text = 'Night Log Observer Data is Updated'
@@ -1173,13 +1171,13 @@ class Report():
         elif self.os_exp_option.active == 1:
             if self.exp_option.active == 0:
                 try:
-                    exp = int(self.exp_select.value)
+                    exp = int(float(self.exp_select.value))
                 except Exception as e:
                     self.exp_alert.text = "Problem with the Exposure you Selected @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'), e)
 
             elif self.exp_option.active ==1:
                 try:
-                    exp = int(self.exp_enter.value.strip())
+                    exp = int(float(self.exp_enter.value.strip()))
                 except Exception as e:
                     self.exp_alert.text = "Problem with the Exposure you Entered @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'), e)
             comment = self.exp_comment.value.strip()
@@ -1310,8 +1308,6 @@ class Report():
             exp = int(self.exp_enter.value.strip())
         try:
             b, item = self.DESI_Log.load_exp(exp)
-            print(b)
-            print(item)
             if b:
                 self.exp_comment.value = item['Comment']
                 qual = np.where(np.array(self.quality_list)==str(item['Quality']).strip())[0]
@@ -1347,7 +1343,11 @@ class Report():
                 self.exp_alert.text = 'This timestamp does not yet have an input from this user. {}'.format(item)
             else:
                 self.exp_comment.value = str(item['Comment'])
-                self.exp_exposure_start.value = str(item['Exp_Start'])
+                if str(item['Exp_Start']) not in ['', ' ','nan']:
+                    self.exp_enter.value = str(item['Exp_Start'])
+                    #self.loaded_exposure = True
+                    self.exp_option.active = 1
+                    self.os_exp_option.active = 1
                 #self.exp_exposure_finish.value = str(item['Exp_End'])
         except Exception as e:
             self.exp_alert.text = "Issue with loading that exposure: {}".format(e)
@@ -1468,7 +1468,7 @@ class Report():
                    self.submit_text.text = "You cannot post to the eLog on this machine"
             #Add bad exposures
             try:
-                survey_dir = '/data/datasystems/survey/ops/surveyops/trunk/ops/'
+                survey_dir = os.path.join(os.environ['NL_DIR'],'ops')
                 bad_filen = 'bad_exp_list.csv'
                 bad_path = os.path.join(survey_dir, bad_filen)
                 #if not os.path.exists(bad_path):
