@@ -117,8 +117,8 @@ class NightLog(object):
         items = ['LO_firstname_1','LO_lastname_1','LO_firstname_2','LO_lastname_2','OA_firstname','OA_lastname',
         'os_1_firstname','os_1_lastname','os_2_firstname','os_2_lastname',
         'dqs_1_firstname','dqs_1_lastname','dqs_2_firstname','dqs_2_lastname',
-        'time_sunset','time_sunrise','time_moonrise','time_moonset','illumination',
-        'dusk_18_deg','dawn_18_deg','dusk_12_deg','dawn_12_deg','dqs_1','dqs_last']
+        'time_sunset','time_sunrise','time_moonrise','time_moonset','illumination','dusk_10_deg',
+        'dusk_18_deg','dawn_18_deg','dusk_12_deg','dawn_12_deg','dawn_10_deg','dqs_1','dqs_last']
         meta_dict = {}
         for item in items:
             try:
@@ -275,13 +275,22 @@ class NightLog(object):
                 filen.write("<li> [{}] {}".format(index, row['Desc']))
                 if not pd.isna(row['Exp_Start']):
                     if str(row['Exp_Start']) not in ['',' ','nan']:
-                        filen.write("; Exposure(s): {}".format(row['Exp_Start']))
+                        try:
+                            filen.write("; Exposure(s): {}".format(int(row['Exp_Start'])))
+                        except:
+                            filen.write("; Exposure(s): {}".format(row['Exp_Start']))
                 if not pd.isna(row['Exp_Stop']):  
                     if str(row['Exp_Stop']) not in ['',' ','nan']:
-                        filen.write(" - {}".format(row['Exp_Stop']))
+                        try:
+                            filen.write(" - {}".format(int(row['Exp_Stop'])))
+                        except:
+                            filen.write(" - {}".format(row['Exp_Stop']))
                 if not pd.isna(row['Exp_Excl']):
                     if str(row['Exp_Excl']) not in ['',' ','nan']:
-                        filen.write(", excluding {}".format(row['Exp_Excl']))
+                        try:
+                            filen.write(", excluding {}".format(int(float(row['Exp_Excl']))))
+                        except:
+                            filen.write(", excluding {}".format(row['Exp_Excl']))
                 filen.write("</li>")
             filen.write("</ul>")
 
@@ -317,6 +326,8 @@ class NightLog(object):
         df = self._combine_compare_csv_files(self.weather)
         if df is not None:
             df = df.rename(columns={'desc':'Description','temp':'Temp.','wind':'Wind Speed (mph)','humidity':'Humidity','seeing':'Seeing','tput':'Transparency','skylevel':'SkyLevel'})
+            time = [self.write_time(t,kp_only=True) for t in df.Time]
+            df['Time'] = time
             df_list = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='weathertable',max_cols=8)
             for line in df_list:
                 filen.write(line)
@@ -605,6 +616,7 @@ class NightLog(object):
         if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_1'])
             file.write("<br/>")
+            file.write("<br/>")
         if d['summary_2'] not in [np.nan, None, 'nan', 'None','',' ']:
             file.write(d['summary_2'])
             file.write("<br/>")
@@ -623,6 +635,7 @@ class NightLog(object):
 
         df = pd.concat([df, this_df])
         df = df.drop_duplicates(subset=['EXPID'], keep='last')
+        df = df.astype({"NIGHT":pd.Int32Dtype(), "EXPID": int,"BAD":bool,"BADCAMS":str,"COMMENT":str})
         df.to_csv(self.bad_exp_list, index=False)
 
     def write_bad_exp(self, file_nl):
@@ -662,10 +675,12 @@ class NightLog(object):
             file_intro.write("<b>Ephemerides in local time [UTC]</b>:")
             file_intro.write("<ul>")
             file_intro.write("<li> sunset: {}</li>".format(self.write_time(meta_dict['time_sunset'])))
+            file_intro.write("<li> 10(o) twilight ends: {}</li>".format(self.write_time(meta_dict['dusk_10_deg'])))
             file_intro.write("<li> 12(o) twilight ends: {}</li>".format(self.write_time(meta_dict['dusk_12_deg'])))
             file_intro.write("<li> 18(o) twilight ends: {}</li>".format(self.write_time(meta_dict['dusk_18_deg'])))
             file_intro.write("<li> 18(o) twilight starts: {}</li>".format(self.write_time(meta_dict['dawn_18_deg'])))
             file_intro.write("<li> 12(o) twilight starts: {}</li>".format(self.write_time(meta_dict['dawn_12_deg'])))
+            file_intro.write("<li> 10(o) twilight starts: {}</li>".format(self.write_time(meta_dict['dawn_10_deg'])))
             file_intro.write("<li> sunrise: {}</li>".format(self.write_time(meta_dict['time_sunrise'])))
             file_intro.write("<li> moonrise: {}</li>".format(self.write_time(meta_dict['time_moonrise'])))
             file_intro.write("<li> moonset: {}</li>".format(self.write_time(meta_dict['time_moonset'])))
