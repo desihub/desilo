@@ -39,13 +39,16 @@ class OpsViewer(object):
     def get_names(self):
         self.this_df = self.df[self.df.Date == self.day]
         self.this_df = self.this_df.iloc[0]
-        if str(self.this_df.Comments) in ['',' ','None','nan']:
+        if str(self.this_df.Comments) in ['',' ','None','nan','-']:
             self.obs_comment.text = ''
             self.obs_comment.css_classes = ['plain-style']
         else:
             self.obs_comment.text = str(self.this_df.Comments)
+            self.obs_comment.css_classes = ['obs-comment']
         pos = {'LO_1':self.lo_1,'LO_2':self.lo_2,'OS_1':self.os_1,'OS_2':self.os_2,
                 'DQS_1':self.dqs_1,'DQS_2':self.dqs_2,'OA':self.oa,'EM':self.em}
+        styles = {'LO_1':'lo-style','LO_2':'lo-style','OS_1':'os-style','OS_2':'os-style',
+                'DQS_1':'dqs-style','DQS_2':'dqs-style','OA':'oa-style','EM':'em-style'}
         for p, div in pos.items():
             try:
                 name = str(self.this_df[p])
@@ -55,7 +58,7 @@ class OpsViewer(object):
                 else:
                     x = self.check_first_day(name,p)
                     div.text = x
-                    div.css_classes = ['name-style']
+                    div.css_classes = [styles[p]]
             except:
                     pass
 
@@ -90,19 +93,19 @@ class OpsViewer(object):
         title = Div(text='Operations Schedule Viewer',css_classes=['h1-title-style'],width=800)
         self.date_title = Div(text='DESI Operations Schedule for {}'.format(self.day),css_classes=['h1-title-style'],width=800)
         self.obs_comment = Div(text='',css_classes=['obs-comment'])
-        self.lo_1 = Div(text='Lead Obs. 1',css_classes=['name-style'],width=400)
-        self.lo_2 = Div(text='Lead Obs. 2',css_classes=['name-style'],width=400)
-        self.lo_head = Div(text='Lead Observer (LO): ',css_classes=['title-style'],width=400)
-        self.os_1 = Div(text='Obs. Scientist 1',css_classes=['name-style'],width=400)
-        self.os_2 = Div(text='Obs. Scientist 2',css_classes=['name-style'],width=400)
-        self.os_head = Div(text='Observing Scientist (OS): ',css_classes=['title-style'],width=400)
-        self.dqs_1 = Div(text='Data QA Scientist 1 ',css_classes=['name-style'],width=400)
-        self.dqs_2 = Div(text='Data QA Scientist 2',css_classes=['name-style'],width=400)
-        self.dqs_head = Div(text='Data QA Scientist (DQS): ',css_classes=['title-style'],width=400)
-        self.oa = Div(text='Observing Associate',css_classes=['name-style'],width=400)
-        self.oa_head = Div(text="Observing Associate (OA): ",css_classes=['title-style'],width=400)
-        self.em = Div(text='Electronic Mainetenance',css_classes=['name-style'],width=400)
-        self.em_head = Div(text='Electronic Maintenance (EM)',css_classes=['title-style'],width=400)
+        self.lo_1 = Div(text='Lead Obs. 1',css_classes=['lo-style'],width=400)
+        self.lo_2 = Div(text='Lead Obs. 2',css_classes=['lo-style'],width=400)
+        self.lo_head = Div(text='LO: ',css_classes=['lo-style'],width=50)
+        self.os_1 = Div(text='Obs. Scientist 1',css_classes=['os-style'],width=400)
+        self.os_2 = Div(text='Obs. Scientist 2',css_classes=['os-style'],width=400)
+        self.os_head = Div(text='OS: ',css_classes=['os-style'],width=50)
+        self.dqs_1 = Div(text='Data QA Scientist 1 ',css_classes=['dqs-style'],width=400)
+        self.dqs_2 = Div(text='Data QA Scientist 2',css_classes=['dqs-style'],width=400)
+        self.dqs_head = Div(text='DQS: ',css_classes=['dqs-style'],width=50)
+        self.oa = Div(text='Observing Associate',css_classes=['oa-style'],width=400)
+        self.oa_head = Div(text="OA: ",css_classes=['oa-style'],width=50)
+        self.em = Div(text='Electronic Mainetenance',css_classes=['em-style'],width=400)
+        self.em_head = Div(text='EM: ',css_classes=['em-style'],width=50)
         self.buffer = Div(text='')
         self.enter_date = TextInput(placeholder = 'YYYY-MM-DD', width=200)
         self.date_btn = Button(label='Change date', width=200,css_classes=['change_button'])
