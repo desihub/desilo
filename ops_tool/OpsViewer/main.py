@@ -21,15 +21,6 @@ from bokeh.models import CustomJS, ColumnDataSource, Select, Slider, CheckboxGro
 from bokeh.models import ColumnDataSource, DataTable, DateFormatter, TableColumn
 from bokeh.models import CheckboxButtonGroup
 
-import gspread
-from gspread_dataframe import get_as_dataframe
-from oauth2client.service_account import ServiceAccountCredentials
-
-import smtplib, ssl
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
-
 
 class OpsViewer(object):
     def __init__(self):
