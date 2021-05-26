@@ -18,9 +18,9 @@
 	font-weight: bold;
 }
 
-.bk-root .name-style {
+.bk-root .lo-style {
 	color: black;
-	font-size:12pt;
+	font-size:18pt;
 	font-style: bold;
     border: 2px solid black;
     padding: 10px;
@@ -28,6 +28,55 @@
     height: 200px;
     width: 400px;
     box-shadow: 2px 2px 1px grey;
+    background-color: turquoise;
+}
+.bk-root .os-style {
+    color: black;
+    font-size:18pt;
+    font-style: bold;
+    border: 2px solid black;
+    padding: 10px;
+    margin: 10px;
+    height: 200px;
+    width: 400px;
+    box-shadow: 2px 2px 1px grey;
+    background-color: mediumseagreen;
+}
+.bk-root .dqs-style {
+    color: black;
+    font-size:18pt;
+    font-style: bold;
+    border: 2px solid black;
+    padding: 10px;
+    margin: 10px;
+    height: 200px;
+    width: 400px;
+    box-shadow: 2px 2px 1px grey;
+    background-color: salmon;
+}
+.bk-root .oa-style {
+    color: black;
+    font-size:18pt;
+    font-style: bold;
+    border: 2px solid black;
+    padding: 10px;
+    margin: 10px;
+    height: 200px;
+    width: 400px;
+    box-shadow: 2px 2px 1px grey;
+    background-color: violet;
+}
+.bk-root .em-style {
+    color: black;
+    font-size:18pt;
+    font-style: bold;
+    border: 2px solid black;
+    padding: 10px;
+    margin: 10px;
+    height: 200px;
+    width: 400px;
+    box-shadow: 2px 2px 1px grey;
+    background-color: gold;
 }
 .bk-root .plain-style {
     color: black;
