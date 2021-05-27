@@ -39,25 +39,26 @@ from email.mime.image import MIMEImage
 
 class OpsTool(object):
     def __init__(self):
-        self.test = True
+        self.test = False
         self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
         self.credentials = "./google_access_account.json"
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
         self.client = gspread.authorize(self.creds)
 
         self.df = pd.read_csv('obs_schedule_corrected.csv')
+        self.df['Date'] = pd.to_datetime(self.df['Date'], format='%m/%d/%y')
         self.user_info = pd.read_csv('user_info.csv')
         self.today = datetime.datetime.now().strftime('%Y-%m-%d')
         self.today_df = self.df[self.df.Date == self.today]
         self.today_source = ColumnDataSource(self.today_df)
 
         today_columns = [
-            TableColumn(field="Date", title='Date'),
+            TableColumn(field="Date", title='Date',formatter=DateFormatter()),
             TableColumn(field="LO_1", title='Lead Observer 1'),
             TableColumn(field="LO_2", title="Lead Observer 2"),
             TableColumn(field='OS_1', title='Observing Scientist 1'),
             TableColumn(field='OS_2', title='Observing Scientist 2'),
-            TableColumn(field='DQS', title='Data Quality Scientist')]
+            TableColumn(field='DQS_1', title='Data Quality Scientist')]
 
         self.data_table = DataTable(source = self.today_source, columns = today_columns, width=1000,height=100)
 
@@ -66,7 +67,7 @@ class OpsTool(object):
             all_names.append(name.strip())
         for name in np.unique(self.df.OS_2):
             all_names.append(name.strip())
-        for name in np.unique(self.df.DQS):
+        for name in np.unique(self.df.DQS_1):
             all_names.append(name.strip())
         all_names = np.unique(all_names)
 
@@ -109,18 +110,20 @@ class OpsTool(object):
         yesterday = self.df.iloc[idx[0]-1]
         tomorrow = self.df.iloc[idx[0]+1]
         today = self.today_df.iloc[0]
+        two_weeks_plus_one = self.df.iloc[idx[0]+15]
         two_weeks = self.df.iloc[idx[0]+14]
         two_weeks_minus_one = self.df.iloc[idx[0]+13]
+        one_month_plus_one =self.df.iloc[idx[0]+31]
         one_month = self.df.iloc[idx[0]+30]
         one_month_minus_one =self.df.iloc[idx[0]+29]
         self.today_emails = {}
         text = ''
-        for col in ['LO_1','LO_2','OS_1','OS_2','DQS']:
+        for col in ['LO_1','LO_2','OS_1','OS_2','DQS_1']:
 
             text += '{}:\n'.format(col)
             text += '--------------------\n'
             try:
-                if today[col] == tomorrow[col]:
+                if str(today[col]).strip() == str(tomorrow[col]).strip():
                     pass
                 else:
                     if str(today[col]) not in [np.nan, '', ' ','nan']:
@@ -131,11 +134,11 @@ class OpsTool(object):
                 print("Issue with reading tomorrow's shift: {}".format(e))
 
             try:
-                if two_weeks[col] == two_weeks_minus_one[col]:
+                if str(two_weeks[col]).strip() == str(two_weeks_minus_one[col]).strip():
                     pass
                 else:
                     if str(two_weeks[col]) not in ['nan','',' ']:
-                        text += 'Starts {} shift in 2 weeks ({}): {} ({})\n\n'.format(col, two_weeks['Date'],two_weeks[col], self.get_email(two_weeks[col]))
+                        text += 'Starts {} shift in 2 weeks ({}): {} ({})\n\n'.format(col, two_weeks['Date'].strftime('%Y-%m-%d'),two_weeks[col], self.get_email(two_weeks[col]))
                         self.today_emails[two_weeks[col]] = [self.get_email(two_weeks[col]), 'two_weeks',col]
             except Exception as e:
                 print("Issue with reading shift 2 weeks from now: {}".format(e))
@@ -145,13 +148,13 @@ class OpsTool(object):
                     pass
                 else:
                     if str(one_month[col]) not in ['nan','',' ']:
-                        text += 'Starts {} shift in 1 month ({}): {} ({})\n\n'.format(col, one_month['Date'],one_month[col], self.get_email(one_month[col]))
+                        text += 'Starts {} shift in 1 month ({}): {} ({})\n\n'.format(col, one_month['Date'].strftime('%Y-%m-%d'),one_month[col], self.get_email(one_month[col]))
                         self.today_emails[one_month[col]] = [self.get_email(one_month[col]), 'one_month',col]
             except Exception as e:
                 print("Issue with reading shift 1 month from now: {}".format(e))
 
             try:
-                if today[col] == yesterday[col]:
+                if str(today[col]).strip() == str(yesterday[col]).strip():
                     pass
                     #text += 'No one finished yesterday\n'
                 else:
@@ -250,7 +253,6 @@ class OpsTool(object):
             print('Not correct type')
 
     def email_all(self):
-        print(self.today_emails)
         for name, values in self.today_emails.items():
             self.observer = values[2].split('_')[0]
             self.email_stuff(name, values[0], values[1])
@@ -338,13 +340,13 @@ class OpsTool(object):
 
         self.sched_source = ColumnDataSource(self.df)
         sched_columns = [TableColumn(field='Day', title='Day', width=10),
-                   TableColumn(field='Date', title='Time', width=50),
+                   TableColumn(field='Date', title='Time', width=50,formatter=DateFormatter()),
                    TableColumn(field='Comments', title='Comment', width=150),
                    TableColumn(field='LO_1', title='Lead Obs. 1', width=75),
                    TableColumn(field='LO_2', title='Lead Obs. 2', width=75),
                    TableColumn(field='OS_1', title='Obs. Sci 1', width=75),
                    TableColumn(field='OS_2', title='Obs. Sci 1', width=75),
-                   TableColumn(field='DQS', title='Data QA Sci.', width=75)] #, 
+                   TableColumn(field='DQS_1', title='Data QA Sci.', width=75)] #, 
 
         self.sched_table = DataTable(source=self.sched_source, columns=sched_columns, width=1000, height=500)
         sched_layout = layout([title,
