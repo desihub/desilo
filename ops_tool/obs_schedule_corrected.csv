@@ -9,14 +9,14 @@ Wed,4/7/21,,M. Landriau,,Elizabeth Buckley-Geer,Luke Tyas,Andrej Obuljen,,Dave,
 Thu,4/8/21,,M. Landriau,,Christopher James Manser,Luke Tyas,Andrej Obuljen,,Dave,
 Fri,4/9/21,,M. Landriau,,Christopher James Manser,Daniel Eisenstein,Andrej Obuljen,,Doug,
 Sat,4/10/21,,M. Landriau,,Christopher James Manser,Dustin Lang,Davide Bianchi ,,Doug,
-Sun,4/11/21,,Parker ,Luke,Christopher James Manser,Michael Walther,Davide Bianchi,,Doug,
+Sun,4/11/21,,Parker_remote,Luke_remote,Christopher James Manser,Michael Walther,Davide Bianchi,,Doug,
 Mon,4/12/21,,M. Landriau,,Claire Poppett,Michael Walther,Davide Bianchi,,Doug,
 Tue,4/13/21,,M. Landriau,,Claire Poppett,Michael Walther,Calum Gordon ,,Doug,
 Wed,4/14/21,,M. Landriau,,Jeffrey A. Newman,Michael Walther,Calum Gordon,,Doug,
 Thu,4/15/21,,M. Landriau,,John Della Costa,Antonella Palmese,Calum Gordon,,Amy,
 Fri,4/16/21,,M. Landriau,,John Della Costa,Daniel Eisenstein,Calum Gordon,,Amy,
 Sat,4/17/21,,M. Landriau,,John Della Costa,Segev BenZvi,Siwei Zou,,Amy,
-Sun,4/18/21,, Satya,Luke,John Della Costa,Segev BenZvi,Siwei Zou,,Amy,
+Sun,4/18/21,,Satya_remote,Luke_remote,John Della Costa,Segev BenZvi,Siwei Zou,,Amy,
 Mon,4/19/21,,M. Landriau,,John Della Costa,Antonella Palmese,Siwei Zou,,Amy,
 Tue,4/20/21,,M. Landriau,,John Della Costa,Antonella Palmese,Siwei Zou,,Amy,
 Wed,4/21/21,,M. Landriau,,John Della Costa,Antonella Palmese,Pan Zhiwei,,Karen,
@@ -24,14 +24,14 @@ Thu,4/22/21,,M. Landriau,,John Della Costa,Benjamin Alan Weaver,Pan Zhiwei,,Kare
 Fri,4/23/21,,M. Landriau,,John Della Costa,Daniel Eisenstein,Pan Zhiwei,,Karen,
 Sat,4/24/21,,M. Landriau,,John Della Costa,Segev BenZvi,Pan Zhiwei,,Karen,
 Sun,4/25/21,,M. Landriau,,John Della Costa,Segev BenZvi,Davide Bianchi,,Karen,
-Mon,4/26/21,Mayall Shutdown; Dome drive wheel 3; Full moon,None,Claire,None,None,None,,Karen,
+Mon,4/26/21,Mayall Shutdown; Dome drive wheel 3; Full moon,None,Claire_remote,None,None,None,,Karen,
 Tue,4/27/21,Mayall Shutdown; Dome drive wheel 3,None,,None,None,None,,Anthony,
 Wed,4/28/21,Mayall Shutdown; Dome drive wheel 3,J. Lasker,,John Della Costa,Alastair Edge,Hui Kong ,,Anthony,
 Thu,4/29/21,,J. Lasker,,John Della Costa,Alastair Edge,Hui Kong ,,Anthony,
 Fri,4/30/21,,J. Lasker,,Satya Gontcho A Gontcho,Alastair Edge,Julia Ferrer Ereza,,Anthony,
 Sat,5/1/21,,J. Lasker,,Satya Gontcho A Gontcho,Benjamin Alan Weaver,Julia Ferrer Ereza,,Anthony,Steve Lane
 Sun,5/2/21,,J. Lasker,,Satya Gontcho A Gontcho,Benjamin Alan Weaver,Julia Ferrer Ereza,,Anthony,Steve Lane
-Mon,5/3/21,,Satya,Luke,Claire Poppett,Benjamin Alan Weaver,Julia Ferrer Ereza,,Dave,Steve Lane/Chris Brownewell
+Mon,5/3/21,,Satya_remote,Luke_remote,Claire Poppett,Benjamin Alan Weaver,Julia Ferrer Ereza,,Dave,Steve Lane/Chris Brownewell
 Tue,5/4/21,,J. Lasker,,Claire Poppett,Benjamin Alan Weaver,Mariana Vargas Magana,,Dave,Bill McCollam/Chris Brownewell
 Wed,5/5/21,,J. Lasker,,Elizabeth Buckley-Geer,Andrea Muñoz Gutiérrez,Mariana Vargas Magana,,Dave,Bill McCollam/Paul Demmer/Chris Brownewell
 Thu,5/6/21,,J. Lasker,,Elizabeth Buckley-Geer,Andrea Muñoz Gutiérrez,Mariana Vargas Magana,,Dave,Bill McCollam/Paul Demmer 
@@ -45,7 +45,7 @@ Thu,5/13/21,,M. Schubnell,,John Della Costa,Alma Xochitl Gonzalez Morales,Malik 
 Fri,5/14/21,,M. Schubnell,,John Della Costa,Alma Xochitl Gonzalez Morales,Malik Muhammad Sikandar Hanif,,Doug,Paul Demmer
 Sat,5/15/21,,M. Schubnell,,John Della Costa,Francisco Javier Castander,Alma Xochitl Gonzalez Morales,,Amy,Steve Lane
 Sun,5/16/21,,M. Schubnell,,John Della Costa,Francisco Javier Castander,Francisco Javier Sanchez Lopez,,Amy ,Steve Lane
-Mon,5/17/21,,Claire,Parker,John Della Costa,Malik Muhammad Sikandar Hanif,Francisco Javier Sanchez Lopez,,Amy+Thaxton,Steve Lane/Chris Brownewell
+Mon,5/17/21,,Claire_remote,Parker_remote,John Della Costa,Malik Muhammad Sikandar Hanif,Francisco Javier Sanchez Lopez,,Amy+Thaxton,Steve Lane/Chris Brownewell
 Tue,5/18/21,,M. Schubnell,,John Della Costa,Malik Muhammad Sikandar Hanif,Francisco Javier Sanchez Lopez,,Amy+Thaxton,Chris Brownewell
 Wed,5/19/21,,M. Schubnell,,John Della Costa,Malik Muhammad Sikandar Hanif,Francisco Javier Sanchez Lopez,,Amy+Thaxton,Paul Demmer/Chris Brownewell/Dan Oswald
 Thu,5/20/21,,M. Schubnell,,John Della Costa,Malik Muhammad Sikandar Hanif,Dylan Louis Veyrat,,Amy+Thaxton,Paul Demmer/Dan Oswald
@@ -56,13 +56,13 @@ Mon,5/24/21,Mayall Shutdown; dome rail repair; ,None,,None,None,None,,Karen ,Ste
 Tue,5/25/21,Mayall Shutdown; dome rail repair; Full moon,None,,None,None,None,,Karen ,Bill McCollam/Chris Brownewell
 Wed,5/26/21,Mayall Shutdown; dome rail repair,None,,None,None,None,,None,Bill McCollam/Paul Demmer/Chris Brownewell/Dan Oswald
 Thu,5/27/21,Mayall Shutdown; dome rail repair,None,,None,None,None,,None,Bill McCollam/Paul Demmer/Dan Oswald
-Fri,5/28/21,Mayall shutdown ; Return to observing,Parker,James,John Della Costa,Segev BenZvi,Zachery Brown,,Anthony+Thaxton,Paul Demmer/Dan Oswald
-Sat,5/29/21,,Parker,James,John Della Costa,Segev BenZvi,Zachery Brown,,Anthony+Thaxton,Steve Lane (until 8pm)
-Sun,5/30/21,,Parker,James,Huanian Zhang,Segev BenZvi,Zachery Brown,,Anthony+Thaxton,Steve Lane (until 8pm)
-Mon,5/31/21,,Claire,Luke,Huanian Zhang,Boris Gaensicke,Cristiano Sabiu ,,Anthony+Thaxton,Chris Brownewell (until 8pm)
-Tue,6/1/21,,Claire,Luke,Elizabeth Buckley-Geer,Boris Gaensicke,Cristiano Sabiu,,Anthony,Bill McCollam/Chris Brownewell
-Wed,6/2/21,,Claire,Luke,Elizabeth Buckley-Geer,Boris Gaensicke,Cristiano Sabiu,,Dave,Bill McCollam/Paul Demmer/Chris Brownewell/Dan Oswald
-Thu,6/3/21,,Claire,Luke,Elizabeth Buckley-Geer,Boris Gaensicke,Cristiano Sabiu,,Dave,Bill McCollam/Paul Demmer/Dan Oswald
+Fri,5/28/21,Mayall shutdown ; Return to observing,Parker_remote,James_remote,John Della Costa,Segev BenZvi,Zachery Brown,,Anthony+Thaxton,Paul Demmer/Dan Oswald
+Sat,5/29/21,,Parker_remote,James_remote,John Della Costa,Segev BenZvi,Zachery Brown,,Anthony+Thaxton,Steve Lane (until 8pm)
+Sun,5/30/21,,Parker_remote,James_remote,Huanian Zhang,Segev BenZvi,Zachery Brown,,Anthony+Thaxton,Steve Lane (until 8pm)
+Mon,5/31/21,,Claire_remote,Luke_remote,Huanian Zhang,Boris Gaensicke,Cristiano Sabiu ,,Anthony+Thaxton,Chris Brownewell (until 8pm)
+Tue,6/1/21,,Claire_remote,Luke_remote,Elizabeth Buckley-Geer,Boris Gaensicke,Cristiano Sabiu,,Anthony,Bill McCollam/Chris Brownewell
+Wed,6/2/21,,Claire_remote,Luke_remote,Elizabeth Buckley-Geer,Boris Gaensicke,Cristiano Sabiu,,Dave,Bill McCollam/Paul Demmer/Chris Brownewell/Dan Oswald
+Thu,6/3/21,,Claire_remote,Luke_remote,Elizabeth Buckley-Geer,Boris Gaensicke,Cristiano Sabiu,,Dave,Bill McCollam/Paul Demmer/Dan Oswald
 Fri,6/4/21,,M. Landriau,,Christopher James Manser,Boris Gaensicke,K R Namitha,,Dave,Paul Demmer/Dan Oswald
 Sat,6/5/21,,M. Landriau,,Christopher James Manser,Cullan Howlett,K R Namitha,,Dave,Steve Lane
 Sun,6/6/21,,M. Landriau,,Christopher James Manser,Cullan Howlett,K R Namitha,,Dave+Thaxton,Steve Lane
@@ -71,8 +71,8 @@ Tue,6/8/21,,M. Landriau,,Christopher James Manser,Cullan Howlett,Justin Myles,,D
 Wed,6/9/21,,M. Landriau,,John Moustakas,Cullan Howlett ,Justin Myles,,Doug+Thaxton,Bill McCollam/Paul Demmer/Chris Brownewell/Dan Oswald
 Thu,6/10/21,,M. Landriau,,John Moustakas,Cullan Howlett,Justin Myles,,Doug+Thaxton,Bill McCollam/Paul Demmer/Dan Oswald
 Fri,6/11/21,,M. Landriau,,John Moustakas,Marie-Claude Cousinou,Robert Blum,,Doug+Thaxton,Paul Demmer/Dan Oswald
-Sat,6/12/21,,Satya,Ann,John Moustakas,Marie-Claude Cousinou ,Robert Blum,,Doug,Steve Lane
-Sun,6/13/21,,Satya,Ann,John Della Costa,Marie-Claude Cousinou,Khaled Said ,,Doug,Steve Lane
+Sat,6/12/21,,Satya_remote,Ann_remote,John Moustakas,Marie-Claude Cousinou ,Robert Blum,,Doug,Steve Lane
+Sun,6/13/21,,Satya_remote,Ann_remote,John Della Costa,Marie-Claude Cousinou,Khaled Said ,,Doug,Steve Lane
 Mon,6/14/21,,M. Landriau,,John Della Costa,Marie-Claude Cousinou,Khaled Said,,Amy,Steve Lane/Chris Brownewell
 Tue,6/15/21,,M. Landriau,,John Della Costa,Claire Lamman,Khaled Said,,Amy,Bill McCollam/Chris Brownewell
 Wed,6/16/21,,M. Landriau,,John Della Costa,Claire Lamman,Khaled Said,,Amy,
@@ -81,8 +81,8 @@ Fri,6/18/21,,M. Landriau,,Tanveer Karim,Claire Lamman,Qianjun Hang,,Amy,
 Sat,6/19/21,,M. Landriau,,Tanveer Karim,Claire Lamman,Qianjun Hang,,Amy+Thaxton,
 Sun,6/20/21,,M. Landriau,,Tanveer Karim,Cullan Howlett ,Qianjun Hang,,Karen+Thaxton,
 Mon,6/21/21,,M. Landriau,,Tanveer Karim,Cullan Howlett,Seshadri Nadathur,,Karen+Thaxton,
-Tue,6/22/21,,Satya,Ann,Khaled Said,Cullan Howlett,Seshadri Nadathur,,Thaxton,
-Wed,6/23/21,Full moon; ,Satya,Ann,Khaled Said,Cullan Howlett,Seshadri Nadathur,,Thaxton,
+Tue,6/22/21,,Satya_remote,Ann_remote,Khaled Said,Cullan Howlett,Seshadri Nadathur,,Thaxton,
+Wed,6/23/21,Full moon; ,Satya_remote,Ann_remote,Khaled Said,Cullan Howlett,Seshadri Nadathur,,Thaxton,
 Thu,6/24/21,,M. Landriau,,Khaled Said,Cullan Howlett,Seshadri Nadathur,,Karen+Thaxton,
 Fri,6/25/21,,M. Landriau,,Greg Aldering,Boris Gaensicke,Samuel Brieden,,Karen+Thaxton,
 Sat,6/26/21,,M. Landriau,,Greg Aldering,Boris Gaensicke,Samuel Brieden,,Anthony,
@@ -90,8 +90,8 @@ Sun,6/27/21,,M. Landriau,,Greg Aldering,Khaled Said,Samuel Brieden,,Anthony,
 Mon,6/28/21,,M. Landriau,,John Della Costa,Khaled Said,Vanina Ruhlmann-Kleider ,,Anthony+Thaxton,
 Tue,6/29/21,,M. Landriau,,John Della Costa,Khaled Said,Vanina Ruhlmann-Kleider,,Anthony+Thaxton,
 Wed,6/30/21,,M. Landriau,,John Della Costa,Khaled Said,Vanina Ruhlmann-Kleider,,Anthony+Thaxton,
-Thu,7/1/21,,Elizabeth Buckley-Geer,,John Della Costa,Khaled Said,Vanina Ruhlmann-Kleider,,Anthony+Thaxton,
-Fri,7/2/21,,Elizabeth Buckley-Geer,,Biprateep Dey,John Della Costa,Hiram Kalid Herrera Alcantar,Seshadri Nadathur,Dave+Thaxton,
+Thu,7/1/21,,Elizabeth Buckley-Geer_remote,,John Della Costa,Khaled Said,Vanina Ruhlmann-Kleider,,Anthony+Thaxton,
+Fri,7/2/21,,Elizabeth Buckley-Geer_remote,,Biprateep Dey,John Della Costa,Hiram Kalid Herrera Alcantar,Seshadri Nadathur,Dave+Thaxton,
 Sat,7/3/21,,Martin Landriau,,Biprateep Dey,John Della Costa,Hiram Kalid Herrera Alcantar,Seshadri Nadathur,Dave+Thaxton,
 Sun,7/4/21,,Martin Landriau,,Biprateep Dey,Michael Walther,Hiram Kalid Herrera Alcantar,Seshadri Nadathur,Dave,
 Mon,7/5/21,,Martin Landriau,,Biprateep Dey,Michael Walther,Nikhil Padmanabhan,Seshadri Nadathur,Dave,

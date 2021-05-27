@@ -39,12 +39,11 @@ class OpsViewer(object):
     def get_names(self):
         self.this_df = self.df[self.df.Date == self.day]
         self.this_df = self.this_df.iloc[0]
-        if str(self.this_df.Comments) in ['',' ','None','nan','-']:
-            self.obs_comment.text = ''
-            self.obs_comment.css_classes = ['plain-style']
-        else:
-            self.obs_comment.text = str(self.this_df.Comments)
-            self.obs_comment.css_classes = ['obs-comment']
+        comm = str(self.this_df.Comments)
+        if comm in ['nan','None','',' ']:
+            comm = ''
+        self.comment = comm
+
         pos = {'LO_1':self.lo_1,'LO_2':self.lo_2,'OS_1':self.os_1,'OS_2':self.os_2,
                 'DQS_1':self.dqs_1,'DQS_2':self.dqs_2,'OA':self.oa,'EM':self.em}
         styles = {'LO_1':'lo-style','LO_2':'lo-style','OS_1':'os-style','OS_2':'os-style',
@@ -52,6 +51,15 @@ class OpsViewer(object):
         for p, div in pos.items():
             try:
                 name = str(self.this_df[p])
+                self.remote = False
+                try:
+                    remote = name.split('_')
+                    if (len(remote)>1) & (remote[1] == 'remote'):
+                        name = remote[0]
+                        self.remote = True 
+                        self.comment = comm + '; Remote Lead Observer(s)'
+                except Exception as e:
+                    pass
                 if name in ['None','nan',' ','']:
                     div.text = ''
                     div.css_classes = ['plain-style']
@@ -59,8 +67,17 @@ class OpsViewer(object):
                     x = self.check_first_day(name,p)
                     div.text = x
                     div.css_classes = [styles[p]]
+                    if (p in ['LO_1','LO_2']) & (self.remote):
+                        div.css_classes = ['remote-lo-style']          
             except:
                     pass
+
+        if str(self.comment) in ['',' ','None','nan','-']:
+            self.obs_comment.text = ''
+            self.obs_comment.css_classes = ['plain-style']
+        else:
+            self.obs_comment.text = self.comment
+            self.obs_comment.css_classes = ['obs-comment']
 
     def check_first_day(self, name, ops_type):
         try:
@@ -78,12 +95,24 @@ class OpsViewer(object):
 
         except:
             return '{}'.format(name)
-        #find BeginDate of closest day
-        #determine how many days total vs how many days in
 
 
     def new_day(self):
         self.day = self.enter_date.value
+        self.date_title.text = 'DESI Operations Schedule for {}'.format(self.day)
+        self.get_names()
+
+    def prev_day(self):
+        current = pd.to_datetime(self.day, format='%Y-%m-%d')
+        prev_day = current - pd.Timedelta(days=1)
+        self.day = prev_day.strftime('%Y-%m-%d')
+        self.date_title.text = 'DESI Operations Schedule for {}'.format(self.day)
+        self.get_names()
+
+    def next_day(self):
+        current = pd.to_datetime(self.day, format='%Y-%m-%d')
+        next_day = current + pd.Timedelta(days=1)
+        self.day = next_day.strftime('%Y-%m-%d')
         self.date_title.text = 'DESI Operations Schedule for {}'.format(self.day)
         self.get_names()
 
@@ -95,20 +124,22 @@ class OpsViewer(object):
         self.obs_comment = Div(text='',css_classes=['obs-comment'])
         self.lo_1 = Div(text='Lead Obs. 1',css_classes=['lo-style'],width=400)
         self.lo_2 = Div(text='Lead Obs. 2',css_classes=['lo-style'],width=400)
-        self.lo_head = Div(text='LO: ',css_classes=['lo-style'],width=50)
+        self.lo_head = Div(text='LO: ',css_classes=['lo-style'],width=75)
         self.os_1 = Div(text='Obs. Scientist 1',css_classes=['os-style'],width=400)
         self.os_2 = Div(text='Obs. Scientist 2',css_classes=['os-style'],width=400)
-        self.os_head = Div(text='OS: ',css_classes=['os-style'],width=50)
+        self.os_head = Div(text='OS: ',css_classes=['os-style'],width=75)
         self.dqs_1 = Div(text='Data QA Scientist 1 ',css_classes=['dqs-style'],width=400)
         self.dqs_2 = Div(text='Data QA Scientist 2',css_classes=['dqs-style'],width=400)
-        self.dqs_head = Div(text='DQS: ',css_classes=['dqs-style'],width=50)
+        self.dqs_head = Div(text='DQS: ',css_classes=['dqs-style'],width=75)
         self.oa = Div(text='Observing Associate',css_classes=['oa-style'],width=400)
-        self.oa_head = Div(text="OA: ",css_classes=['oa-style'],width=50)
+        self.oa_head = Div(text="OA: ",css_classes=['oa-style'],width=75)
         self.em = Div(text='Electronic Mainetenance',css_classes=['em-style'],width=400)
-        self.em_head = Div(text='EM: ',css_classes=['em-style'],width=50)
+        self.em_head = Div(text='EM: ',css_classes=['em-style'],width=75)
         self.buffer = Div(text='')
+        self.date_before = Button(label='Previous Date', css_classes=['next_button'],width=200)
+        self.date_after = Button(label='Next Date', css_classes=['next_button'],width=200)
         self.enter_date = TextInput(placeholder = 'YYYY-MM-DD', width=200)
-        self.date_btn = Button(label='Change date', width=200,css_classes=['change_button'])
+        self.date_btn = Button(label='Enter date', width=200,css_classes=['change_button'])
 
 
         main_layout = layout([self.date_title,self.obs_comment,
@@ -118,6 +149,7 @@ class OpsViewer(object):
                   [self.oa_head, self.oa],
                   [self.em_head,self.em],
                   self.buffer,
+                  [self.date_before,self.date_after],
                   [self.enter_date, self.date_btn]])
         main_tab = Panel(child=main_layout, title='Main')
 
@@ -147,6 +179,8 @@ class OpsViewer(object):
         self.layout()
         self.get_names()
         self.date_btn.on_click(self.new_day)
+        self.date_before.on_click(self.prev_day)
+        self.date_after.on_click(self.next_day)
 
 Ops = OpsViewer()
 Ops.run()

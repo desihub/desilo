@@ -8,6 +8,15 @@
     box-shadow: 2px 2px 1px grey;
 }
 
+.next_button button.bk.bk-btn.bk-btn-default {
+    color: black;
+    width: 300px;
+    font-size:12pt;
+    background-color: turquoise;
+    border-color: black;
+    box-shadow: 2px 2px 1px grey;
+}
+
 
 .bk-root .h1-title-style {
 	color: black;
@@ -30,6 +39,20 @@
     box-shadow: 2px 2px 1px grey;
     background-color: turquoise;
 }
+
+.bk-root .remote-lo-style {
+    color: black;
+    font-size:18pt;
+    font-style: bold;
+    border: 5px dashed black;
+    padding: 10px;
+    margin: 10px;
+    height: 200px;
+    width: 400px;
+    box-shadow: 2px 2px 1px grey;
+    background-color: turquoise;
+}
+
 .bk-root .os-style {
     color: black;
     font-size:18pt;
