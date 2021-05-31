@@ -23,7 +23,7 @@ import datetime
 
 from bokeh.layouts import column, layout, row, gridplot
 from bokeh.models.widgets import Panel
-from bokeh.models import CustomJS, ColumnDataSource, Select, Slider, CheckboxGroup
+from bokeh.models import CustomJS, ColumnDataSource, Select, Slider, CheckboxGroup, RadioButtonGroup
 from bokeh.models import ColumnDataSource, DataTable, DateFormatter, TableColumn
 from bokeh.models import CheckboxButtonGroup
 
@@ -44,8 +44,10 @@ class OpsTool(object):
         self.credentials = "./google_access_account.json"
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
         self.client = gspread.authorize(self.creds)
-
-        self.df = pd.read_csv('obs_schedule_corrected.csv')
+        if self.test:
+            self.df = pd.read_csv('obs_schedule_test.csv')
+        else:
+            self.df = pd.read_csv('obs_schedule_corrected.csv')
         self.df['Date'] = pd.to_datetime(self.df['Date'], format='%m/%d/%y')
         self.user_info = pd.read_csv('user_info.csv')
         self.today = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -78,8 +80,6 @@ class OpsTool(object):
 
             except:
                 print(name)
-
-
 
     def get_email(self, name):
         try:
@@ -128,7 +128,7 @@ class OpsTool(object):
                 else:
                     if str(today[col]) not in [np.nan, '', ' ','nan']:
                         text += 'Starts {} shift tomorrow: {} ({})\n\n'.format(col, tomorrow[col], self.get_email(tomorrow[col]))
-                        self.today_emails[tomorrow[col]] = [self.get_email(tomorrow[col]), 'tomorrow',col]
+                        self.today_emails[tomorrow[col]] = [self.get_email(tomorrow[col]), 'tomorrow',col,None]
                         self.timing = 'tomorrow'
             except Exception as e:
                 print("Issue with reading tomorrow's shift: {}".format(e))
@@ -139,7 +139,7 @@ class OpsTool(object):
                 else:
                     if str(two_weeks[col]) not in ['nan','',' ']:
                         text += 'Starts {} shift in 2 weeks ({}): {} ({})\n\n'.format(col, two_weeks['Date'].strftime('%Y-%m-%d'),two_weeks[col], self.get_email(two_weeks[col]))
-                        self.today_emails[two_weeks[col]] = [self.get_email(two_weeks[col]), 'two_weeks',col]
+                        self.today_emails[two_weeks[col]] = [self.get_email(two_weeks[col]), 'two_weeks',col,two_weeks['Date'].strftime('%Y-%m-%d')]
             except Exception as e:
                 print("Issue with reading shift 2 weeks from now: {}".format(e))
 
@@ -149,7 +149,7 @@ class OpsTool(object):
                 else:
                     if str(one_month[col]) not in ['nan','',' ']:
                         text += 'Starts {} shift in 1 month ({}): {} ({})\n\n'.format(col, one_month['Date'].strftime('%Y-%m-%d'),one_month[col], self.get_email(one_month[col]))
-                        self.today_emails[one_month[col]] = [self.get_email(one_month[col]), 'one_month',col]
+                        self.today_emails[one_month[col]] = [self.get_email(one_month[col]), 'one_month',col,one_month['Date'].strftime('%Y-%m-%d')]
             except Exception as e:
                 print("Issue with reading shift 1 month from now: {}".format(e))
 
@@ -160,7 +160,7 @@ class OpsTool(object):
                 else:
                     if str(today[col]) not in [np.nan, '', ' ','nan']:
                         text += 'Finished {} shift yesterday: {} ({})\n\n'.format(col, yesterday[col], self.get_email(yesterday[col]))
-                        self.today_emails[yesterday[col]] = [self.get_email(yesterday[col]), 'yesterday',col]
+                        self.today_emails[yesterday[col]] = [self.get_email(yesterday[col]), 'yesterday',col,None]
             except Exception as e:
                 print("Issue with reading yesterday's shift: {}".format(e))
 
@@ -170,28 +170,28 @@ class OpsTool(object):
         name = self.one_month_name.value
         email = self.one_month_email.value
         t = 'one_month'
-        self.email_stuff(name, email, t)
+        self.email_stuff(name, email, t, None)
 
     def email_two_weeks(self):
         email = self.two_weeks_email.value
         name = self.two_weeks_name.value
-        if self.two_weeks_select.active[0] == 0:
+        if self.two_weeks_select.active == 0:
             self.observer = 'OS'
-        elif self.two_weeks_select.active[0] == 1:
+        elif self.two_weeks_select.active == 1:
             self.observer = 'DQS'
         t = 'two_weeks'
-        self.email_stuff(name, email, t)
+        self.email_stuff(name, email, t, None)
 
 
     def email_night_before(self):
         email = self.night_before_email.value
         name = self.night_before_name.value
         t = 'tomorrow'
-        if self.weekend_select.active[0] == 0:
+        if self.weekend_select.active == 0:
             self.timing = 'tomorrow'
-        elif self.weekend_select.active[0] == 1:
+        elif self.weekend_select.active == 1:
             self.timing = 'weekend'
-        self.email_stuff(name, email, t)
+        self.email_stuff(name, email, t, None)
 
 
     def email_follow_up(self):
@@ -199,10 +199,16 @@ class OpsTool(object):
         name = self.follow_up_name.value
         # get email
         t = 'yesterday'
-        self.email_stuff(name, email, t)
+        self.email_stuff(name, email, t, None)
+
+    def email_all(self):
+        print('Sending emails to the following people:',self.today_emails)
+        for name, values in self.today_emails.items():
+            self.observer = values[2].split('_')[0]
+            self.email_stuff(name, values[0], values[1], values[3])
 
 
-    def email_stuff(self, name, email, type):
+    def email_stuff(self, name, email, type,date):
         if type == 'tomorrow':
             subject = 'DESI Observing Tomorrow'
             msg = 'Hello {},<br>'.format(name)
@@ -228,8 +234,11 @@ class OpsTool(object):
             msgfile.close()
         elif type == 'two_weeks':
             subject = 'Preparation for DESI Observing'
-            msg = 'Hello {},<br>'.format(name)
-            msg += '<b> Shift starting {}</b><br>'.format(self.two_weeks_start.value)
+            msg = 'Hello {},<br><br>'.format(name)
+            if date is not None:
+                msg += '<b> Shift starting {}</b><br><br>'.format(date)
+            else:
+                msg += '<b> Shift starting {}</b><br><br>'.format(self.two_weeks_start.value)
             if self.observer == 'OS':
                 msgfile = open('./OpsTool/static/two_week_info_msg_os.html')
             elif self.observer == 'DQS':
@@ -241,8 +250,11 @@ class OpsTool(object):
             msgfile.close()
         elif type == 'one_month':
             subject = 'Confirmation of DESI Observing Shift'
-            msg = 'Hello {},<br>'.format(name)
-            msg += '<b> Shift starting {}</b><br>'.format(self.one_month_start.value)
+            msg = 'Hello {},<br><br>'.format(name)
+            if date is not None:
+                msg += '<b> Shift starting {}</b><br><br>'.format(date)
+            else:
+                msg += '<b> Shift starting {}</b><br><br>'.format(self.one_month_start.value)
             msgfile = open('./OpsTool/static/one_month_info_msg.html')
             msg += msgfile.read()
             self.send_email(subject, email, msg)
@@ -252,90 +264,102 @@ class OpsTool(object):
         else:
             print('Not correct type')
 
-    def email_all(self):
-        for name, values in self.today_emails.items():
-            self.observer = values[2].split('_')[0]
-            self.email_stuff(name, values[0], values[1])
+
 
     def send_email(self, subject, user_email, message):
+
         sender = "desioperations1@gmail.com" 
         if user_email in [None,'None']:
-        	pass
+            pass
         else:
-	        toaddrs = user_email.split('; ')
-	        # Create message container - the correct MIME type is multipart/alternative.
-	        msg = MIMEMultipart('html')
-	        msg['Subject'] = subject
-	        msg['From'] = sender
-	        if self.test == False:
-	            recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu']
-	            msg['CC'] = ", ".join(recipients)
-	            toaddrs.append('parker.fagrelius@noirlab.edu')
-	            toaddrs.append('arjun.dey@noirlab.edu')
-	        else:
-	            msg['CC'] = 'parker.fagrelius@noirlab.edu'
-	            toaddrs.append('parker.fagrelius@noirlab.edu')
-	        print(toaddrs)
+            toaddrs = user_email.split(';')
+            toaddrs = [addr.strip() for addr in toaddrs]
+            all_addrs = toaddrs
 
-	        msg['To'] = user_email
+            # Create message container - the correct MIME type is multipart/alternative.
+            msg = MIMEMultipart('html')
+            msg['Subject'] = subject
+            msg['From'] = sender
+            if self.test == False:
+                recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu']
+                msg['CC'] = ", ".join(recipients)
+                all_addrs.append('parker.fagrelius@noirlab.edu')
+                all_addrs.append('arjun.dey@noirlab.edu')
+            else:
+                msg['CC'] = 'parker.fagrelius@noirlab.edu'
+                toaddrs.append('parker.fagrelius@noirlab.edu')
 
-	        msgText = MIMEText(message, 'html')
-	        msg.attach(msgText)
-	        text = msg.as_string()
+            print(toaddrs)
+            msg['To'] = ", ".join(toaddrs)
 
-	        smtp_server = "smtp.gmail.com"
-	        port = 587
-	        password = os.environ['OPS_PW'] #input("Input password: ")
+            msgText = MIMEText(message, 'html')
+            msg.attach(msgText)
+            text = msg.as_string()
 
-	        context = ssl.create_default_context()
-	        try:
-	            server = smtplib.SMTP(smtp_server,port)
-	            server.ehlo() # Can be omitted
-	            server.starttls(context=context) # Secure the connection
-	            server.ehlo() # Can be omitted
-	            server.login(sender, password)
-	            server.sendmail(sender, toaddrs, text)
-	        except Exception as e:
-	            # Print any error messages to stdout
-	            print(e)
+            smtp_server = "smtp.gmail.com"
+            port = 587
+            password = os.environ['OPS_PW'] #input("Input password: ")
+
+            context = ssl.create_default_context()
+            try:
+                server = smtplib.SMTP(smtp_server,port)
+                server.ehlo() # Can be omitted
+                server.starttls(context=context) # Secure the connection
+                server.ehlo() # Can be omitted
+                server.login(sender, password)
+                server.sendmail(sender, all_addrs, text)
+            except Exception as e:
+                # Print any error messages to stdout
+                print(e)
 
 
     def layout(self):
         self.report = PreText(text=' ')
         info = Div(text=' ')
-        title = Div(text='Operations Planning Tool')
+        title = Div(text='Operations Planning Tool',css_classes=['h1-title-style'])
         today_title = Div(text="Today's Observers: ")
-        night_report_title = Div(text='Daily Report: ')
+        night_report_title = Div(text='Daily Report: ',css_classes=['title-style'])
+
         self.enter_date = TextInput(title='Date', placeholder = 'YYYY-MM-DD', width=200)
-        self.date_btn = Button(label='Change date', width=200)
+        self.date_btn = Button(label='Change date', width=200,css_classes=['change_button'])
+        self.email_all_btn = Button(label='Make all emails',width=200,css_classes=['change_button'])
+        self.update_df_btn = Button(label='Update DataFrame', width=200,css_classes=['next_button'])
+
         self.one_month_email = TextInput(title='Email: ', placeholder='Serena Williams', width=200)
-        self.two_weeks_email = TextInput(title='Email: ', placeholder='Lindsay Vonn', width=200)
-        self.night_before_email = TextInput(title='Email: ', placeholder='Mia Hamm', width=200)
-        self.follow_up_email = TextInput(title='Email: ', placeholder='Danica Patrick', width=200)
+        self.one_month_title = Div(text='One Month: ',css_classes=['title-style'])
         self.one_month_name = TextInput(title='Name: ', placeholder='Serena Williams', width=200)
-        self.two_weeks_name = TextInput(title='Name: ', placeholder='Lindsay Vonn', width=200)
-        self.night_before_name = TextInput(title='Name: ', placeholder='Mia Hamm', width=200)
-        self.follow_up_name = TextInput(title='Name: ', placeholder='Danica Patrick', width=200)
-        self.one_month_btn = Button(label="Email One Month Info", width=200)
+        self.one_month_btn = Button(label="Email One Month Info", width=200,css_classes=['next_button'])
         self.one_month_start = TextInput(title='Date Start: ',placeholder='Month DD, YYYY',width=200)
-        self.two_weeks_btn = Button(label="Email Two Weeks Info", width=200)
+
+        self.two_weeks_email = TextInput(title='Email: ', placeholder='Lindsay Vonn', width=200)
+        self.two_weeks_title = Div(text='Two Weeks: ',css_classes=['title-style'])
+        self.two_weeks_name = TextInput(title='Name: ', placeholder='Lindsay Vonn', width=200)
+        self.two_weeks_btn = Button(label="Email Two Weeks Info", width=200,css_classes=['next_button'])
         self.two_weeks_start = TextInput(title='Date Start: ',placeholder='Month DD, YYYY',width=200)
-        self.two_weeks_select = CheckboxButtonGroup(labels=['OS','DQS'], active=[0])
-        self.night_before_btn = Button(label="Email Night Before Info", width=200)
-        self.follow_up_btn = Button(label="Email Follow Up", width=200)
-        self.weekend_select = CheckboxButtonGroup(labels=['Tomorrow','Weekend'], active=[0])
-        self.update_df_btn = Button(label='Update DataFrame', width=200)
-        self.email_all_btn = Button(label='Make all emails',width=200)
+        self.two_weeks_select = RadioButtonGroup(labels=['OS','DQS'], active=0)
+
+        self.night_before_email = TextInput(title='Email: ', placeholder='Mia Hamm', width=200)
+        self.night_before_title = Div(text='Night/Weekend Before : ',css_classes=['title-style'])
+        self.night_before_name = TextInput(title='Name: ', placeholder='Mia Hamm', width=200)
+        self.night_before_btn = Button(label="Email Night Before Info", width=200,css_classes=['next_button'])
+        self.weekend_select = RadioButtonGroup(labels=['Tomorrow','Weekend'], active=0)
+
+        self.follow_up_email = TextInput(title='Email: ', placeholder='Danica Patrick', width=200)
+        self.follow_up_name = TextInput(title='Name: ', placeholder='Danica Patrick', width=200)
+        self.follow_up_title = Div(text='Follow Up: ',css_classes=['title-style'])
+        self.follow_up_btn = Button(label="Email Follow Up", width=200,css_classes=['next_button'])
+             
 
         main_layout = layout([title,today_title,
                   self.data_table,
                   [self.enter_date, self.date_btn],
-                  self.update_df_btn,
                   night_report_title,
                   self.report,
                   self.email_all_btn,
-                  [[self.one_month_name,self.one_month_email, self.one_month_start, self.one_month_btn],[self.two_weeks_name,self.two_weeks_select,self.two_weeks_start,self.two_weeks_email, self.two_weeks_btn],
-                  [self.night_before_name, self.weekend_select, self.night_before_email, self.night_before_btn],[self.follow_up_name,self.follow_up_email, self.follow_up_btn]]])
+                  [[self.one_month_title, self.one_month_name,self.one_month_email, self.one_month_start, self.one_month_btn],
+                  [self.two_weeks_title,self.two_weeks_name,self.two_weeks_email, self.two_weeks_select,self.two_weeks_start,self.two_weeks_btn],
+                  [self.night_before_title, self.night_before_name, self.weekend_select, self.night_before_email, self.night_before_btn],
+                  [self.follow_up_title,self.follow_up_name,self.follow_up_email, self.follow_up_btn]]])
         main_tab = Panel(child=main_layout, title='Main')
 
         self.sched_source = ColumnDataSource(self.df)
