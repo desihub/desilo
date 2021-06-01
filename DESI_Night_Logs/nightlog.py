@@ -276,13 +276,13 @@ class NightLog(object):
                 if not pd.isna(row['Exp_Start']):
                     if str(row['Exp_Start']) not in ['',' ','nan']:
                         try:
-                            filen.write("; Exposure(s): {}".format(int(row['Exp_Start'])))
+                            filen.write("; Exposure(s): {}".format(int(float(row['Exp_Start']))))
                         except:
                             filen.write("; Exposure(s): {}".format(row['Exp_Start']))
                 if not pd.isna(row['Exp_Stop']):  
                     if str(row['Exp_Stop']) not in ['',' ','nan']:
                         try:
-                            filen.write(" - {}".format(int(row['Exp_Stop'])))
+                            filen.write(" - {}".format(int(float(row['Exp_Stop']))))
                         except:
                             filen.write(" - {}".format(row['Exp_Stop']))
                 if not pd.isna(row['Exp_Excl']):
