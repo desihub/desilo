@@ -25,6 +25,7 @@ from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs, FileInput
 from bokeh.models.widgets.tables import DataTable, TableColumn
 from bokeh.plotting import figure
+import logging
 from astropy.time import TimezoneInfo
 import astropy.units.si as u
 
@@ -91,6 +92,13 @@ class Report():
         self.DESI_Log = None
         self.save_telem_plots = False
         self.buffer = Div(text=' ')
+
+        LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
+        logging.basicConfig(filename = "test.log",
+                level = logging.DEBUG,
+                format = LOG_FORMAT,
+                filemode="w")
+        self.logger = logging.getLogger()
 
 
     def clear_input(self, items):
@@ -1430,6 +1438,7 @@ class Report():
         if not self.current_nl():
             self.nl_text.text = 'You cannot submit a Night Log to the eLog until you have connected to an existing Night Log or initialized tonights Night Log'
         else:
+            self.logger.info("Starting Nightlog Submission Process")
             try:
                 from ECLAPI import ECLConnection, ECLEntry
             except ImportError:
@@ -1481,9 +1490,9 @@ class Report():
                 bad_df = bad_df.astype({"NIGHT":int, "EXPID": int,"BAD":bool,"BADCAMS":str,"COMMENT":str})
                 bad_df.to_csv(bad_path,index=False)
                 err1 = os.system('svn update --non-interactive {}'.format(bad_path))
-                print('SVN added bad exp list {}'.format(err1))
+                self.logger.info('SVN added bad exp list {}'.format(err1))
                 err2 = os.system('svn commit --non-interactive -m "autocommit from night summary submission" {}'.format(bad_path))
-                print('SVN commited bad exp list {}'.format(err2))
+                self.logger.info('SVN commited bad exp list {}'.format(err2))
 
             except Exception as e:
                 print('Cant post to the bad exp list: {}'.format(e))
