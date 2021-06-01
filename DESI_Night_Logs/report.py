@@ -44,7 +44,7 @@ import nightlog as nl
 class Report():
     def __init__(self, type):
 
-        self.test = True
+        self.test = False
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -321,7 +321,7 @@ class Report():
         #self.bad_exp = TextInput(title='Exposure',placeholder='12345',width=200)
         #self.bad_comment = TextInput(title='Comment',placeholder='light leakage',width=300)
         self.bad_alert = Div(text='',css_classes=['alert-style'],width=500)
-        self.all_button = Button(label='Full exposure should be deleted', width=500, css_classes=['add_button'])
+        self.all_button = Button(label='Full exposure will be added to "bad exp list"', width=500, css_classes=['add_button'])
         self.partial_button = Button(label='Exposure is only partially bad (only certain cameras)', width=500, css_classes=['connect_button'])
         #self.all_or_partial = RadioButtonGroup(labels=['All Bad','Select Cameras'],active=0)
         hdrs = [Div(text='Spectrograph {}: '.format(i),width=150) for i in range(10)]
