@@ -40,12 +40,15 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
+os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
+os.environ['NW_DIR'] = '/exposures/desi'
+
 #os.environ['NL_DIR'] = '/software/www2/html/nightlogs'
 #os.environ['NW_DIR'] = '/exposures/desi'
 class Report():
     def __init__(self, type):
 
-        self.test = False 
+        self.test = True
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -94,11 +97,17 @@ class Report():
         self.buffer = Div(text=' ')
 
         LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
-        logging.basicConfig(filename = "test.log",
-                level = logging.DEBUG,
-                format = LOG_FORMAT,
-                filemode="w")
-        self.logger = logging.getLogger()
+        file_handler = logging.FileHandler(filename='test.log', mode='w')
+        file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
+        self.logger = logging.getLogger(__name__)
+        self.logger.addHandler(file_handler)
+        self.logger.setLevel(logging.DEBUG)
+
+        #logging.basicConfig(filename = os.getcwd()+"/test.log",
+        #        level = logging.DEBUG,
+        #        format = LOG_FORMAT,
+        #        filemode="w")
+        #self.logger = logging.getLogger()
 
 
     def clear_input(self, items):
