@@ -30,7 +30,7 @@ class NightLog(object):
             #then write its file
     """
 
-    def __init__(self, obsday, location):
+    def __init__(self, obsday, location, logger):
         """
             Setup the nightlog framework for a given obsday.
         """
@@ -79,6 +79,8 @@ class NightLog(object):
         self.utc = TimezoneInfo()
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
 
+        self.logger = logger
+
 
     def initializing(self):
         """ Creates the folders where all the files used to create the Night Log will be containted.
@@ -87,7 +89,7 @@ class NightLog(object):
             if not os.path.exists(dir_):
                 os.makedirs(dir_)
 
-        return print("Your obsday is {}".format(self.obsday))
+        self.logger.info("Your obsday is {}".format(self.obsday))
 
     def check_exists(self):
         """ Checks that paths have been created and the night has been initiated.
@@ -191,7 +193,7 @@ class NightLog(object):
                 self._upload_and_save_image(img_data, img_name)
                 self._write_image_tag(file, img_name)
             else:
-                print('ERROR: invalid format for uploading image')
+                self.logger.info('ERROR: invalid format for uploading image')
         return file
 
     def delete_item(self, time, tab, user=None):
@@ -411,7 +413,7 @@ class NightLog(object):
                     df_[x] = d[d.Time == time]
                 else:
                     df_[x] = []
-            #print(df_)
+
             got_exp = None
             if len(df_['os']) > 0:
                 os_ = df_['os'].iloc[0]
@@ -603,13 +605,13 @@ class NightLog(object):
                 try:
                     file.write("<li> {}: {:.3f}</li>".format(name, float(item)))
                 except Exception as e:
-                    print(e)
+                    self.logger.info(e)
             else:
                 if not pd.isna(item):
                     try:
                         file.write("<li> {}: {:.2f}</li>".format(name, float(item)))
                     except Exception as e:
-                        print(e)
+                        self.logger.info(e)
                 else:
                     file.write("<li> {}: 0.0</li>".format(name))
         file.write("</ul>")
@@ -646,7 +648,7 @@ class NightLog(object):
             for line in df_html:
                 file_nl.write(line)
         except Exception as e:
-            print(e)
+            self.logger.info('writing bad exposure: {}'.format(e))
 
     def write_intro(self):
         file_intro=open(self.header_html,'w')
@@ -687,7 +689,7 @@ class NightLog(object):
             file_intro.write("</ul>")
 
         except Exception as e:
-            print('Exception reading meta json file: {}'.format(str(e)))
+            self.logger.info('Exception reading meta json file: {}'.format(str(e)))
 
         file_intro.close()
 
@@ -708,7 +710,7 @@ class NightLog(object):
                     for line in lines:
                         file_nl.write(line)
         except Exception as e:
-            print("Nightlog Header has not been created: {}".format(e))
+            self.logger.info("Nightlog Header has not been created: {}".format(e))
 
         #Contributers
         try:

@@ -40,11 +40,7 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs/'
-os.environ['NW_DIR'] = '/exposures/desi'
 
-#os.environ['NL_DIR'] = '/software/www2/html/nightlogs'
-#os.environ['NW_DIR'] = '/exposures/desi'
 class Report():
     def __init__(self, type):
 
@@ -96,18 +92,8 @@ class Report():
         self.save_telem_plots = False
         self.buffer = Div(text=' ')
 
-        LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s"
-        file_handler = logging.FileHandler(filename='test.log', mode='w')
-        file_handler.setFormatter(logging.Formatter(LOG_FORMAT))
         self.logger = logging.getLogger(__name__)
-        self.logger.addHandler(file_handler)
         self.logger.setLevel(logging.DEBUG)
-
-        #logging.basicConfig(filename = os.getcwd()+"/test.log",
-        #        level = logging.DEBUG,
-        #        format = LOG_FORMAT,
-        #        filemode="w")
-        #self.logger = logging.getLogger()
 
 
     def clear_input(self, items):
@@ -651,8 +637,8 @@ class Report():
         elif mode == 'init':
             date = datetime.datetime.now().date()
         self.night = date.strftime("%Y%m%d")
-        self.DESI_Log = nl.NightLog(self.night, self.location)
-        print('Obsday is {}'.format(self.night))
+        self.DESI_Log = nl.NightLog(self.night, self.location, self.logger)
+        self.logger.info('Obsday is {}'.format(self.night))
 
     def _dec_to_hm(self,hours):
         #dec in seconds
@@ -812,7 +798,7 @@ class Report():
                 #print('Something wrong with making telemetry plots')
                 return True 
         except Exception as e:
-            print('current_nl Exception: %s' % str(e))
+            self.logger.info('current_nl Exception: %s' % str(e))
             self.nl_alert.text = 'You are not connected to a Night Log'
             return False
 
@@ -1328,9 +1314,6 @@ class Report():
             if b:
                 self.exp_comment.value = item['Comment']
                 qual = np.where(np.array(self.quality_list)==str(item['Quality']).strip())[0]
-                print(self.quality_list)
-                print(item['Quality'])
-                print(qual)
                 self.quality_btns.active = int(qual)
             else:
                 self.exp_alert.text = "An input for that exposure doesn't exist for this user. {}".format(item)
@@ -1418,19 +1401,19 @@ class Report():
         self.milestone_alert.text = 'Summary Information Entered at {}'.format(now)
 
     def upload_image(self, attr, old, new):
-        print(f'Local image file upload: {self.img_upload.filename}')
+        self.logger.info(f'Local image file upload: {self.img_upload.filename}')
 
     def upload_image_comments_os(self, attr, old, new):
-        print(f'Local image file upload (OS comments): {self.img_upload_comments_os.filename}')
+        self.logger.info(f'Local image file upload (OS comments): {self.img_upload_comments_os.filename}')
 
     def upload_image_comments_other(self, attr, old, new):
-        print(f'Local image file upload (Other comments): {self.img_upload_comments_other.filename}')
+        self.logger.info(f'Local image file upload (Other comments): {self.img_upload_comments_other.filename}')
 
     def upload_image_comments_dqs(self, attr, old, new):
-        print(f'Local image file upload (Other comments): {self.img_upload_comments_dqs.filename}')
+        self.logger.info(f'Local image file upload (Other comments): {self.img_upload_comments_dqs.filename}')
 
     def upload_image_problems(self, attr, old, new):
-        print(f'Local image file upload (Other comments): {self.img_upload_problems.filename}')
+        self.logger.info(f'Local image file upload (Other comments): {self.img_upload_problems.filename}')
 
     def time_is_now(self):
         now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
@@ -1473,7 +1456,7 @@ class Report():
             try:
                 os.system("{}/bin/plotnightobs -n {}".format(os.environ['SURVEYOPSDIR'],self.night)) 
             except Exception as e:
-                print(e)
+                self.logger.info('Issues with Pauls plot: {}'.format(e))
 
             if self.test:
                 pass
@@ -1489,9 +1472,6 @@ class Report():
                 survey_dir = os.path.join(os.environ['NL_DIR'],'ops')
                 bad_filen = 'bad_exp_list.csv'
                 bad_path = os.path.join(survey_dir, bad_filen)
-                #if not os.path.exists(bad_path):
-                #    df = pd.DataFrame(columns=['EXPID','BAD','BADCAMS','COMMENT'])
-                #    df.to_csv(bad_path,index=False)
                 bad_df = pd.read_csv(bad_path)
                 new_bad = self.DESI_Log._combine_compare_csv_files(self.DESI_Log.bad_exp_list, bad=True)
                 bad_df = pd.concat([bad_df, new_bad])
@@ -1504,7 +1484,7 @@ class Report():
                 self.logger.info('SVN commited bad exp list {}'.format(err2))
 
             except Exception as e:
-                print('Cant post to the bad exp list: {}'.format(e))
+                self.logger.info('Cant post to the bad exp list: {}'.format(e))
 
 
             self.save_telem_plots = True
@@ -1522,7 +1502,7 @@ class Report():
         try:
             self.make_telem_plots()
         except:
-            print("Something wrong with telem plots")
+            self.logger.info("Something wrong with telem plots")
 
         sender = "noreply-ecl@noao.edu"
 
@@ -1566,7 +1546,7 @@ class Report():
             msg.attach(msgImage)
             Html_file.write(img_tag)
         except Exception as e:
-            print(e)
+            self.logger.info('Problem attachign pauls plot: {}'.format(e))
         # Add images
         if os.path.exists(self.DESI_Log.telem_plots_file):
             telemplot = open(self.DESI_Log.telem_plots_file, 'rb').read()
@@ -1586,3 +1566,4 @@ class Report():
         s = smtplib.SMTP('localhost')
         s.sendmail(sender, user_email, text)
         s.quit()
+        self.logger.info("Email sent")
