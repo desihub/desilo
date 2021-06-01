@@ -1478,7 +1478,7 @@ class Report():
                 new_bad = self.DESI_Log._combine_compare_csv_files(self.DESI_Log.bad_exp_list, bad=True)
                 bad_df = pd.concat([bad_df, new_bad])
                 bad_df = bad_df.drop_duplicates(subset=['EXPID'], keep='last')
-                bad_df = bad_df.astype({"NIGHT":pd.Int32Dtype(), "EXPID": int,"BAD":bool,"BADCAMS":str,"COMMENT":str})
+                bad_df = bad_df.astype({"NIGHT":int, "EXPID": int,"BAD":bool,"BADCAMS":str,"COMMENT":str})
                 bad_df.to_csv(bad_path,index=False)
                 err1 = os.system('svn update --non-interactive {}'.format(bad_path))
                 print('SVN added bad exp list {}'.format(err1))

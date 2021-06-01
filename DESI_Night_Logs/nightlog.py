@@ -632,10 +632,9 @@ class NightLog(object):
             df = pd.read_csv(self.bad_exp_list)
 
         this_df = pd.DataFrame.from_dict(data)
-
         df = pd.concat([df, this_df])
         df = df.drop_duplicates(subset=['EXPID'], keep='last')
-        df = df.astype({"NIGHT":pd.Int32Dtype(), "EXPID": int,"BAD":bool,"BADCAMS":str,"COMMENT":str})
+        df = df.astype({"NIGHT":int, "EXPID": int,"BAD":bool,"BADCAMS":str,"COMMENT":str})
         df.to_csv(self.bad_exp_list, index=False)
 
     def write_bad_exp(self, file_nl):
