@@ -55,7 +55,7 @@ class OS_Report(Report):
         self.dqs_name_1 = TextInput(title ='Data Quality Scientist 1', placeholder = 'Sally Ride')
         self.dqs_name_2 = TextInput(title ='Data Quality Scientist 2', placeholder = "Mae Jemison")
         self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
-        self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Dave Summers','Doug Williams','Other ']
+        self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Thaxton Smith','Dave Summers','Doug Williams','Other ']
         self.LO_1 = Select(title='Lead Observer 1', value='None', options=self.lo_names)
         self.LO_2 = Select(title='Lead Observer 2', value='None', options=self.lo_names)
         self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names)
