@@ -93,7 +93,7 @@ class Report():
         self.buffer = Div(text=' ')
 
         self.logger = logging.getLogger(__name__)
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(logging.INFO)
 
 
     def clear_input(self, items):
@@ -200,8 +200,8 @@ class Report():
         <b>Plan</b> tab. Include exposure numbers that correspond with the accomplishment, and if applicable, indicate any exposures to ignore in a series.
         Do NOT enter an index for new items - they will be generated.</li>
         <li>If you'd like to modify a submitted milestone, <b>Load</b> the index (these can be found on the Current NL), make your modifications, and then press <b>Update</b>.</li>
-        <li>At the end of your shift - either at the end of the night or half way through - summarize the activities of the night in the <b>End of Night Summary</b>.
-        There is space for a night summary for the first half and the second half of the night. DO NOT delete what already exists.</li>
+        <li>At the end of your shift - either at the end of the night or half way through - summarize the activities of the night in the <b>End of Night Summary</b>. 
+        You can Load and modify submissions.</li>
         <li>At the end of the night, record how many hours of the night were spent observing <b>(ObsTime)</b>, lost to testing <b>(TestTime)</b>, lost to issues with the
         instrument <b>(InstTime)</b>, lost due to weather <b>(WeathTime)</b> or lost due to issues with the telescope <b>(TelTime)</b>. The times entered should sum to the time spent 
         "observing" during the night (i.e., if you started at 15 deg twi and ended and 12 deg twi, it should add up to that), but no less than the time between 18 deg twilights.</li>
@@ -258,7 +258,7 @@ class Report():
         self.exp_alert = Div(text=' ', css_classes=['alert-style'], width=500)
         self.dqs_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
 
-        self.exp_select = Select(title='Select Exposure', options=['None'],width=150)
+        self.exp_select = Select(title='List of Exposures', options=['None'],width=150)
         self.exp_enter = TextInput(title='Exposure', placeholder='12345', width=150)
         self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
         self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
@@ -276,8 +276,9 @@ class Report():
         <li> You can make a comment that is either associated with a <b>Time</b> or <b>Exposure</b>. Select which you will use.
         <ul class="square">
          <li> If you want to comment on a specific Exposure Number, the Night Log will include data from the eLog and combine it with any inputs
-        from the Data Quality Scientist for that exposure.</li>
-         <li> You can either select an exposure from the drop down (<b>(1) Select</b>) or enter it yourself (<b>(2) Enter</b>). Make sure to identify which you will use.</li> 
+        from the Data Quality Scientist for that exposure. </li>
+         <li> Note: The timestamp for your input may change to align with the final timestamp of the exposure. </li>
+         <li> You can either select an exposure from the drop down menu or enter it yourself. Your comment will be attached to whichever exposure is shown in the `Exposure` window. </li> 
          </ul>
         </li>
         <li>If you'd like to modify a submitted comment, enter the Time of the submission and hit the <b>Load</b> button. 
@@ -1414,7 +1415,7 @@ class Report():
                 df = pd.read_csv(f)
                 d = df.iloc[0]
                 self.summary_input.value = d['SUMMARY_{}'.format(half)]
-            except Exceptions as e:
+            except Exception as e:
                 print('Issue loading summary: {}'.format(e))
         else:
             self.milestone_alert.text = 'That summary does not yet exist'
