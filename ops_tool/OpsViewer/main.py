@@ -50,6 +50,7 @@ class OpsViewer(object):
                 'DQS_1':'dqs-style','DQS_2':'dqs-style','OA':'oa-style','EM':'em-style'}
         for p, div in pos.items():
             try:
+                self.df[p] = self.df[p].str.strip()
                 name = str(self.this_df[p])
                 self.remote = False
                 try:
@@ -84,7 +85,7 @@ class OpsViewer(object):
             self.df['value_grp'] = (self.df[ops_type] != self.df[ops_type].shift()).cumsum()
             xx = pd.DataFrame({'BeginDate' : self.df.groupby('value_grp').Date.first(), 
                   'EndDate' : self.df.groupby('value_grp').Date.last(),
-                  'Consecutive' : self.df.groupby('value_grp').size()}).reset_index(drop=True)
+                  'Consecutive' : self.df.groupby('value_grp').size()},).reset_index(drop=True)
             xx.set_index('EndDate',inplace=True,drop=False)
             xxx = xx.truncate(before='{}'.format(self.day))
             xxx = xxx.iloc[0]
