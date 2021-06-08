@@ -116,7 +116,10 @@ class OS_Report(Report):
         self.prob_delete_btn.on_click(self.problem_delete)
         #self.img_btn.on_click(self.image_add)
         self.contributer_btn.on_click(self.add_contributer_list)
+        self.exp_select.on_change('value',self.select_exp)
         self.summary_btn.on_click(self.add_summary)
+        self.time_btn.on_click(self.add_time)
+        self.summary_load_btn.on_click(self.load_summary)
         self.ns_date_btn.on_click(self.get_nightsum)
         
 OS = OS_Report()

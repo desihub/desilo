@@ -68,7 +68,7 @@ class NightLog(object):
         self.image_file = os.path.join(self.image_dir, 'image_list_{}'.format(self.location))
         self.upload_image_file = os.path.join(self.image_dir, 'upload_image_list_{}'.format(self.location))
         self.contributer_file = os.path.join(self.root_dir, 'contributer_file_{}'.format(self.location))
-        self.summary_file = os.path.join(self.root_dir, 'summary_file_{}'.format(self.location))
+        self.summary_file = os.path.join(self.root_dir, 'summary_file_{}.csv'.format(self.location))
         self.time_use = os.path.join(self.root_dir, 'time_use_{}.csv'.format(self.location))
         self.explist_file = os.path.join(self.root_dir, 'explist_{}.csv'.format(self.location))
         self.telem_plots_file = os.path.join(self.root_dir, 'telem_plots_{}.png'.format(self.location))
@@ -517,7 +517,9 @@ class NightLog(object):
         if page == 'plan':
             the_path = self.objectives
         df = self._combine_compare_csv_files(the_path)
+
         try:
+
             item = df[df.index == int(idx)]
             item = item.iloc[0]
             if len(item) > 0:
@@ -588,43 +590,68 @@ class NightLog(object):
         file.write("<br/>")
         file.close()
 
-    def add_summary(self, data):
+    def write_time_summary(self, file_nl):
 
-        df = pd.DataFrame(data, index=[0])
-        df.to_csv(self.time_use,index=False)
-        df = df.fillna(value=0)
-        d = df.iloc[0]
+        f = self._open_kpno_file_first(self.time_use)
+        if os.path.exists(f):
+            df = pd.read_csv(f)
+            df = df.fillna(value=0)
+            d = df.iloc[0]
 
-        obs_items  = OrderedDict({'Observing':d['obs_time'],'Testing':d['test_time'],'Loss to Instrument':d['inst_loss'],
-            'Loss to Weather':d['weather_loss'],'Loss to Telescope':d['tel_loss'],'Total Recorded':d['total'],'Time between 18 deg. twilight':d['18deg']})
-        file = open(self.summary_file, 'w')
-        file.write("Time Use (hrs):<br/>")
-        file.write("<ul>")
-        for name, item in obs_items.items():
-            if name == 'Time between 18 deg. twilight':
-                try:
-                    file.write("<li> {}: {:.3f}</li>".format(name, float(item)))
-                except Exception as e:
-                    self.logger.info(e)
-            else:
-                if not pd.isna(item):
+            obs_items  = OrderedDict({'Observing':d['obs_time'],'Testing':d['test_time'],'Loss to Instrument':d['inst_loss'],
+                'Loss to Weather':d['weather_loss'],'Loss to Telescope':d['tel_loss'],'Total Recorded':d['total'],'Time between 18 deg. twilight':d['18deg']})
+            file_nl.write("Time Use (hrs):<br/>")
+            file_nl.write("<ul>")
+            for name, item in obs_items.items():
+                if name == 'Time between 18 deg. twilight':
                     try:
-                        file.write("<li> {}: {:.2f}</li>".format(name, float(item)))
+                        file_nl.write("<li> {}: {:.3f}</li>".format(name, float(item)))
                     except Exception as e:
                         self.logger.info(e)
                 else:
-                    file.write("<li> {}: 0.0</li>".format(name))
-        file.write("</ul>")
-        if d['summary_1'] not in [np.nan, None, 'nan', 'None','',' ']:
-            file.write(d['summary_1'])
-            file.write("<br/>")
-            file.write("<br/>")
-        if d['summary_2'] not in [np.nan, None, 'nan', 'None','',' ']:
-            file.write(d['summary_2'])
-            file.write("<br/>")
+                    if not pd.isna(item):
+                        try:
+                            file_nl.write("<li> {}: {:.2f}</li>".format(name, float(item)))
+                        except Exception as e:
+                            self.logger.info(e)
+                    else:
+                        file_nl.write("<li> {}: 0.0</li>".format(name))
+            file_nl.write("</ul>")
+        else:
+            pass
 
-        
-        file.close()
+
+    def add_summary(self, data):
+
+        if not os.path.exists(self.summary_file):
+            df = pd.DataFrame(columns=['SUMMARY_0','SUMMARY_1'])
+        else:
+            df = pd.read_csv(self.summary_file)
+
+        for row, value in data.items():
+            df.at[0,row] = value
+
+
+        df.to_csv(self.summary_file, index=False)
+
+
+    def write_summary(self, file_nl):
+        f = self._open_kpno_file_first(self.summary_file)
+        if os.path.exists(f):
+            try:
+                df = pd.read_csv(f)
+                d = df.iloc[0]
+                if str(d['SUMMARY_0']) not in ['nan', 'None','',' ']:
+                    file_nl.write(str(d['SUMMARY_0']))
+                    file_nl.write("<br/>")
+                    file_nl.write("<br/>")
+                if str(d['SUMMARY_1']) not in [np.nan, None, 'nan', 'None','',' ']:
+                    file_nl.write(str(d['SUMMARY_1']))
+                    file_nl.write("<br/>")
+                file_nl.write("<br/>")
+            except Exception as e:
+                self.logger.info('writing summary: {}'.format(e))
+    
 
     def add_bad_exp(self, data):
         if not os.path.exists(self.bad_exp_list):
@@ -641,14 +668,14 @@ class NightLog(object):
 
     def write_bad_exp(self, file_nl):
         df = self._combine_compare_csv_files(self.bad_exp_list, bad=True)
-        try:
-            if len(df) > 0:
+        if len(df) > 0:
+            try:
                 file_nl.write("<h3> Bad Exposures</h3>")
                 df_html = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='badtable',max_cols=5)
-            for line in df_html:
-                file_nl.write(line)
-        except Exception as e:
-            self.logger.info('writing bad exposure: {}'.format(e))
+                for line in df_html:
+                    file_nl.write(line)
+            except Exception as e:
+                self.logger.info('writing to bad exposure list: {}'.format(e))
 
     def write_intro(self):
         file_intro=open(self.header_html,'w')
@@ -726,17 +753,11 @@ class NightLog(object):
             pass
 
         #Night Summary
-        try:
-            cfile = self._open_kpno_file_first(self.summary_file)
-            if cfile is not None:
-                file_nl.write("<h3>Night Summary</h3>")
-                with open(cfile, 'r') as file_cont:
-                    lines = file_cont.read()
-                    for line in lines:
-                        file_nl.write(line)
-                file_nl.write("<br/>")
-        except:
-            pass
+
+        file_nl.write("<h3>Night Summary</h3>")
+        self.write_summary(file_nl)
+        self.write_time_summary(file_nl)
+
 
         #Plan for the night
         file_nl.write("<h3>Plan for the night</h3>")

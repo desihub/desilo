@@ -218,15 +218,20 @@ class Report():
         self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
         self.milestone_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
-        self.summary_1 = TextAreaInput(rows=8, placeholder='End of Night Summary for first half', title='End of Night Summary',max_length=5000)
-        self.summary_2 = TextAreaInput(rows=8, placeholder='End of Night Summary for second half', max_length=5000)
+
+        self.summary_input = TextAreaInput(rows=8, placeholder='End of Night Summary', title='End of Night Summary',max_length=5000)
+        self.summary_option = RadioButtonGroup(labels=['First Half','Second Half'], active=0, width=200)
+        self.summary_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.summary_btn = Button(label='Add/Update Summary', css_classes=['add_button'], width=300)
+
         self.obs_time = TextInput(title ='ObsTime', placeholder='10', width=100)
         self.test_time = TextInput(title ='TestTime', placeholder='0', width=100)
         self.inst_loss_time = TextInput(title ='InstLoss', placeholder='0', width=100)
         self.weather_loss_time = TextInput(title ='WeathLoss', placeholder='0', width=100)
         self.tel_loss_time = TextInput(title ='TelLoss', placeholder='0', width=100)
         self.total_time = Div(text='Time Documented (hrs): ', width=100) #add all times together
-        self.summary_btn = Button(label='Add Summary', css_classes=['add_button'], width=300)
+        self.time_btn = Button(label='Add/Update Time Use', css_classes=['add_button'], width=300)
+        
 
         milestone_layout = layout([self.buffer,
                         self.title,
@@ -236,10 +241,11 @@ class Report():
                         [self.milestone_new_btn],
                         self.milestone_alert,
                         self.line,
-                        self.summary_1,
-                        self.summary_2,
-                        [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time, self.total_time, self.full_time_text],
+                        [self.summary_option,self.summary_load_btn],
+                        self.summary_input,
                         self.summary_btn,
+                        [self.obs_time, self.test_time, self.inst_loss_time, self.weather_loss_time, self.tel_loss_time, self.total_time, self.full_time_text],
+                        self.time_btn,
                         ], width=1000)
         self.milestone_tab = Panel(child=milestone_layout, title='Milestones')
 
@@ -252,11 +258,14 @@ class Report():
         self.exp_alert = Div(text=' ', css_classes=['alert-style'], width=500)
         self.dqs_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
 
-        self.exp_select = Select(title='(1) Select Exposure', options=['None'],width=150)
-        self.exp_enter = TextInput(title='(2) Enter Exposure', placeholder='12345', width=150)
+        self.exp_select = Select(title='Select Exposure', options=['None'],width=150)
+        self.exp_enter = TextInput(title='Exposure', placeholder='12345', width=150)
         self.exp_update = Button(label='Update Selection List', css_classes=['connect_button'], width=200)
         self.exp_option = RadioButtonGroup(labels=['(1) Select','(2) Enter'], active=0, width=200)
         self.os_exp_option = RadioButtonGroup(labels=['Time','Exposure'], active=0, width=200)
+
+    def select_exp(self, attr, old, new):
+        self.exp_enter.value = self.exp_select.value 
 
     def get_os_exp_layout(self):
         self.exp_layout()
@@ -287,7 +296,6 @@ class Report():
                         self.time_note,
                         self.os_exp_option,
                         [self.time_title, self.exp_time, self.now_btn, self.exp_load_btn, self.exp_delete_btn],
-                        [self.exp_option],
                         [self.exp_select, self.exp_enter],
                         [self.exp_comment],
                         [self.img_upinst2, self.img_upload_comments_os],
@@ -706,8 +714,6 @@ class Report():
                     try:
                         df = pd.read_csv(time_use_file)
                         data = df.iloc[0]
-                        self.summary_1.value = str(data['summary_1'])
-                        self.summary_2.value = str(data['summary_2'])
                         self.obs_time.value =  self._dec_to_hm(data['obs_time'])
                         self.test_time.value = self._dec_to_hm(data['test_time'])
                         self.inst_loss_time.value = self._dec_to_hm(data['inst_loss'])
@@ -1210,17 +1216,12 @@ class Report():
                         self.exp_alert.text = 'There is something wrong with your input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
                 else:
                     self.exp_alert.text = 'Fill in the Time'
+
             elif self.os_exp_option.active == 1:
-                if self.exp_option.active == 0:
-                    try:
-                        exp = int(self.exp_select.value)
-                    except Exception as e:
-                        self.exp_alert.text = "Problem with the Exposure you Selected @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'),e)
-                elif self.exp_option.active ==1:
-                    try:
-                        exp = int(self.exp_enter.value.strip())
-                    except Exception as e:
-                        self.exp_alert.text = "Problem with the Exposure you Entered @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'), e)
+                try:
+                    exp = int(self.exp_enter.value.strip())
+                except Exception as e:
+                    self.exp_alert.text = "Problem with the Exposure you Entered @ {}: {}".format(datetime.datetime.now().strftime('%H:%M'), e)
                 comment = self.exp_comment.value.strip()
                 time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
@@ -1370,15 +1371,11 @@ class Report():
         cont_list = self.contributer_list.value
         self.DESI_Log.add_contributer_list(cont_list)
 
-
-    def add_summary(self):
-        now = datetime.datetime.now().strftime("%H:%M")
+    def add_time(self):
         data = OrderedDict()
-        data['summary_1'] = self.summary_1.value
-        data['summary_2'] = self.summary_2.value
+
         time_items = OrderedDict({'obs_time':self.obs_time,'test_time':self.test_time,'inst_loss':self.inst_loss_time,
             'weather_loss':self.weather_loss_time,'tel_loss':self.tel_loss_time})
-
         total = 0
         for name, item in time_items.items():
             try:
@@ -1394,11 +1391,33 @@ class Report():
                     total += 0
 
         data['18deg'] = self.full_time
-
         data['total'] = total
         self.total_time.text = 'Time Documented (hrs): {}'.format(str(self._dec_to_hm(total)))
+        df = pd.DataFrame(data, index=[0])
+        df.to_csv(self.DESI_Log.time_use, index=False)
+
+    def add_summary(self):
+        now = datetime.datetime.now().strftime("%H:%M")
+        half = self.summary_option.active
+        data = OrderedDict()
+        data['SUMMARY_{}'.format(half)] = self.summary_input.value
+        
         self.DESI_Log.add_summary(data)
-        self.milestone_alert.text = 'Summary Information Entered at {}'.format(now)
+        self.milestone_alert.text = 'Summary Information Entered at {}: {}'.format(now, self.summary_input.value)
+        self.clear_input([self.summary_input])
+
+    def load_summary(self):
+        half = self.summary_option.active
+        f = self.DESI_Log.summary_file
+        if os.path.exists(f):
+            try:
+                df = pd.read_csv(f)
+                d = df.iloc[0]
+                self.summary_input.value = d['SUMMARY_{}'.format(half)]
+            except Exceptions as e:
+                print('Issue loading summary: {}'.format(e))
+        else:
+            self.milestone_alert.text = 'That summary does not yet exist'
 
     def upload_image(self, attr, old, new):
         self.logger.info(f'Local image file upload: {self.img_upload.filename}')
