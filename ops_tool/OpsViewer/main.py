@@ -26,7 +26,7 @@ class OpsViewer(object):
     def __init__(self):
         self.test = True
 
-        self.df = pd.read_csv('obs_schedule_corrected.csv')
+        self.df = pd.read_csv('obs_schedule_official.csv')
         self.df['Date'] = pd.to_datetime(self.df['Date'], format='%m/%d/%y')
         self.user_info = pd.read_csv('user_info.csv')
         self.today = datetime.datetime.now().strftime('%Y-%m-%d')
