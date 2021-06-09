@@ -627,9 +627,9 @@ class NightLog(object):
             df = pd.DataFrame(columns=['SUMMARY_0','SUMMARY_1'])
         else:
             df = pd.read_csv(self.summary_file)
-
         for row, value in data.items():
-            df.at[0,row] = value
+            df[row] = df[row].astype('str')
+            df.at[0,row] = str(value)
 
 
         df.to_csv(self.summary_file, index=False)
@@ -668,7 +668,7 @@ class NightLog(object):
 
     def write_bad_exp(self, file_nl):
         df = self._combine_compare_csv_files(self.bad_exp_list, bad=True)
-        if len(df) > 0:
+        if df is not None:
             try:
                 file_nl.write("<h3> Bad Exposures</h3>")
                 df_html = df.to_html(index=False, justify='center',float_format='%.2f',na_rep='-',classes='badtable',max_cols=5)
@@ -753,11 +753,9 @@ class NightLog(object):
             pass
 
         #Night Summary
-
         file_nl.write("<h3>Night Summary</h3>")
         self.write_summary(file_nl)
         self.write_time_summary(file_nl)
-
 
         #Plan for the night
         file_nl.write("<h3>Plan for the night</h3>")

@@ -40,11 +40,10 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
-
 class Report():
     def __init__(self, type):
 
-        self.test = False
+        self.test = False 
 
         self.report_type = type
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
@@ -1402,7 +1401,6 @@ class Report():
         half = self.summary_option.active
         data = OrderedDict()
         data['SUMMARY_{}'.format(half)] = self.summary_input.value
-        
         self.DESI_Log.add_summary(data)
         self.milestone_alert.text = 'Summary Information Entered at {}: {}'.format(now, self.summary_input.value)
         self.clear_input([self.summary_input])
