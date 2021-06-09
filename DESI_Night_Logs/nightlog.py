@@ -627,9 +627,9 @@ class NightLog(object):
             df = pd.DataFrame(columns=['SUMMARY_0','SUMMARY_1'])
         else:
             df = pd.read_csv(self.summary_file)
-
         for row, value in data.items():
-            df.at[0,row] = value
+            df[row] = df[row].astype('str')
+            df.at[0,row] = str(value)
 
 
         df.to_csv(self.summary_file, index=False)
