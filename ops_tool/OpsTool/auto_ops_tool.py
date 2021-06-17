@@ -11,6 +11,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import logging
+import socket
 
 import gspread
 from gspread_dataframe import get_as_dataframe
@@ -21,14 +22,20 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 
-os.environ['OPSTOOL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/desilo/ops_tool'
+os.environ['OPSTOOL_DIR'] = '/n/home/desiobserver/parkerf/desilo/ops_tool'
 
 class AutoOpsTool(object):
     def __init__(self):
-        self.test = False
+        self.test = True 
 
         logging.basicConfig(filename='auto_ops_tool.log',  level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
         self.logger = logging.getLogger(__name__)
+
+        hostname = socket.gethostname()
+        if 'desi' in hostname:
+            self.location = 'kpno'
+        else:
+            self.location = 'home'
 
         self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
         self.credentials = os.path.join(os.environ['OPSTOOL_DIR'],"google_access_account.json")
@@ -217,9 +224,9 @@ class AutoOpsTool(object):
             msg['Subject'] = subject
             msg['From'] = sender
             if self.test:
-                # msg['To'] = 'parfa30@gmail.com'
-                # msg['CC'] = 'parker.fagrelius@noirlab.edu'
-                # all_addrs.append('parker.fagrelius@noirlab.edu')
+                msg['To'] = 'parfa30@gmail.com'
+                msg['CC'] = 'parker.fagrelius@noirlab.edu'
+                all_addrs = ['parfa30@gmail.com','parker.fagrelius@noirlab.edu']
                 self.logger.debug('test mode, no emails')
             else:
                 msg['To'] = ", ".join(toaddrs)
@@ -228,11 +235,20 @@ class AutoOpsTool(object):
                 all_addrs.append('parker.fagrelius@noirlab.edu')
                 all_addrs.append('arjun.dey@noirlab.edu')
                 
-                msgText = MIMEText(message, 'html')
-                msg.attach(msgText)
-                text = msg.as_string()
+            msgText = MIMEText(message, 'html')
+            msg.attach(msgText)
+            text = msg.as_string()
 
-                smtp_server = "smtp.gmail.com"
+            if self.location == 'kpno':
+                smtp_server = 'localhost'
+                try:
+                    server = smtplib.SMTP(smtp_server)
+                    server.sendmail(sender, all_addrs, text)
+                    server.quit()
+                except Exception as e:
+                    self.logger.debug(e)
+            elif self.location == 'home':
+                smtp_server = 'smtp.gmail.com'
                 port = 587
                 password = os.environ['OPS_PW'] #input("Input password: ")
 
@@ -244,9 +260,12 @@ class AutoOpsTool(object):
                     server.ehlo() # Can be omitted
                     server.login(sender, password)
                     server.sendmail(sender, all_addrs, text)
+                     server.quit()
                 except Exception as e:
                     # Print any error messages to stdout
                     self.logger.debug(e)
+             else:
+                self.logger.debug('Location not identified')
 
         
     def run(self):
