@@ -260,11 +260,11 @@ class AutoOpsTool(object):
                     server.ehlo() # Can be omitted
                     server.login(sender, password)
                     server.sendmail(sender, all_addrs, text)
-                     server.quit()
+                    server.quit()
                 except Exception as e:
                     # Print any error messages to stdout
                     self.logger.debug(e)
-             else:
+            else:
                 self.logger.debug('Location not identified')
 
         
