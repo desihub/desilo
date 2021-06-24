@@ -27,7 +27,7 @@ class AutoOpsTool(object):
     def __init__(self):
         self.test = False
 
-        logging.basicConfig(filename='auto_ops_tool.log',  level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        logging.basicConfig(filename=os.path.join(os.environ['OPSTOOL_DIR'],'auto_ops_tool.log'),  level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
         self.logger = logging.getLogger(__name__)
 
         self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
