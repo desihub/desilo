@@ -40,6 +40,10 @@ sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
 
+
+os.environ['NL_DIR'] = '/n/home/desiobserver/nightlogs'
+os.environ['NW_DIR'] = '/exposures/desi'
+
 class Report():
     def __init__(self, type):
 
@@ -677,8 +681,9 @@ class Report():
             self.nl_file = self.DESI_Log.nightlog_html
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
+            meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
+
             if self.report_type == 'OS':
-                meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
                 if os.path.exists(meta_dict_file):
                     try:
                         meta_dict = json.load(open(meta_dict_file,'r'))
@@ -729,7 +734,11 @@ class Report():
                 
             else:
                 try:
+                    meta_dict = json.load(open(meta_dict_file,'r'))
                     self.display_current_header()
+                    self.plots_start = meta_dict['dusk_10_deg']
+                    self.plots_end = meta_dict['dawn_10_deg']
+
                 except Exception as e:
                     print('Header not displaying',e)
             self.current_nl()
@@ -751,21 +760,23 @@ class Report():
         meta['dqs_2_firstname'], meta['dqs_2_lastname'] = self.dqs_name_2.value.split(' ')[0], ' '.join(self.dqs_name_2.value.split(' ')[1:])
         meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
 
-        eph = sky_calendar()
-        meta['time_sunset'] = self.get_strftime(eph['sunset'])
-        meta['time_sunrise'] = self.get_strftime(eph['sunrise'])
-        meta['time_moonrise'] = self.get_strftime(eph['moonrise'])
-        meta['time_moonset'] = self.get_strftime(eph['moonset'])
+        eph = sky_calendar(self.night)
+        meta['time_sunset'] = eph['sunset']
+        meta['time_sunrise'] = eph['sunrise']
+        meta['time_moonrise'] = eph['moonrise']
+        meta['time_moonset'] = eph['moonset']
         meta['illumination'] = eph['illumination']
-        meta['dusk_10_deg'] = self.get_strftime(eph['dusk_ten'])
-        meta['dusk_12_deg'] = self.get_strftime(eph['dusk_nautical'])
-        meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
-        meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
-        meta['dawn_12_deg'] = self.get_strftime(eph['dawn_nautical'])
-        meta['dawn_10_deg'] = self.get_strftime(eph['dawn_ten'])
+        meta['dusk_10_deg'] = eph['dusk_ten']
+        meta['dusk_12_deg'] = eph['dusk_nautical']
+        meta['dusk_18_deg'] = eph['dusk_astronomical']
+        meta['dawn_18_deg'] = eph['dawn_astronomical']
+        meta['dawn_12_deg'] = eph['dawn_nautical']
+        meta['dawn_10_deg'] = eph['dawn_ten']
 
         self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
         self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
+        self.plots_start = meta['dusk_10_deg']
+        self.plots_end = meta['dawn_10_deg']
         self.DESI_Log.get_started_os(meta)
 
         self.connect_txt.text = 'Night Log Observer Data is Updated'
@@ -885,10 +896,8 @@ class Report():
         dt = datetime.datetime.strptime(self.night, '%Y%m%d').date()
         #start_utc = '{} {}'.format(self.night, '13:00:00')
         dt_2 = dt + datetime.timedelta(days=1)
-        print('plot start: ',self.plot_start)
-        print('plot end: ',self.plot_end)
-        start_utc = '{} {}'.format(dt.strftime("%Y%m%d"), self.plot_start)
-        end_utc = '{} {}'.format(dt_2.strftime("%Y%m%d"), self.plot_end)
+        start_utc = '{}-{}-{} {}:00'.format(self.plots_start[0:4],self.plots_start[4:6],self.plots_start[6:8], self.plots_start[-5:])
+        end_utc = '{}-{}-{} {}:00'.format(self.plots_end[0:4],self.plots_end[4:6],self.plots_end[6:8], self.plots_end[-5:])
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE date_obs > '{start_utc}' AND date_obs < '{end_utc}'", self.conn) #night = '{self.night}'", self.conn)
         #self.get_seeing()
         telem_data = pd.DataFrame(columns =

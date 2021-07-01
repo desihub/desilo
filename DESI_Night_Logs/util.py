@@ -613,32 +613,35 @@ def sky_calendar(date = None, observer = None):
     assert ephem_available,'Ephemeris is not available'
     obs_info = OrderedDict()
     if observer is None:
-        observer= kpno_observer()
+        if date is None:
+            observer = kpno_observer()
+        else:
+            date = '{}-{}-{} 19:00:00'.format(date[0:4],date[4:6],date[6:])
+            observer= kpno_observer(date=date)
     # set date to midnight, local time
     #observer.date = (datetime.datetime.now().date()+datetime.timedelta(days=1)).isoformat()
-
     sun = ephem.Sun()
     sun.compute(observer.date)
     moon = ephem.Moon()
     moon.compute(observer.date)
-    obs_info['sunset'] = observer.next_setting(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Sunset
-    obs_info['sunrise'] = observer.next_rising(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Sunrise
+    obs_info['sunset'] = observer.next_setting(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).strftime("%Y%m%dT%H:%M") #Sunset
+    obs_info['sunrise'] = observer.next_rising(sun).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).strftime("%Y%m%dT%H:%M") #Sunrise
 
 
     try:
-        obs_info['moonrise'] = observer.next_rising(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Moonrise
+        obs_info['moonrise'] = observer.next_rising(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).strftime("%Y%m%dT%H:%M") #Moonrise
     except:
         obs_info['moonrise'] = None
     try:
-        obs_info['moonset'] = observer.next_setting(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time() #Moonset
+        obs_info['moonset'] = observer.next_setting(moon).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).strftime("%Y%m%dT%H:%M") #Moonset
     except:
         obs_info['moonset'] = None
 
     # twilights
     for horizon, name in [('-6','civil'),('-10','ten'),('-12','nautical'),('-18','astronomical')]:
         observer.horizon = horizon
-        obs_info[f'dusk_{name}'] = observer.next_setting(sun, use_center=True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time()
-        obs_info[f'dawn_{name}'] =observer.next_rising(sun, use_center = True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).time()
+        obs_info[f'dusk_{name}'] = observer.next_setting(sun, use_center=True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).strftime("%Y%m%dT%H:%M")
+        obs_info[f'dawn_{name}'] =observer.next_rising(sun, use_center = True).datetime().replace(tzinfo=datetime.timezone.utc).astimezone(tz=None).strftime("%Y%m%dT%H:%M")
     # moon phase at midnight
     try:
         obs_info['illumination'] = round(moon.moon_phase, 3)
