@@ -103,7 +103,7 @@ class AutoOpsTool(object):
 
         self.today_emails = {}
         text = ''
-        for col in ['LO_1','LO_2','OS_1','OS_2','DQS_1']:
+        for col in ['LO_1','LO_2','OS_1','OS_2','DQS_1','DQS_2']:
             try:
                 if str(today[col]).strip() == str(tomorrow[col]).strip():
                     pass
