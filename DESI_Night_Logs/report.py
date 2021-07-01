@@ -4,6 +4,7 @@ import base64
 import glob
 import time, sched
 import datetime 
+from datetime import timezone
 from datetime import timedelta
 from collections import OrderedDict
 import numpy as np
@@ -40,7 +41,6 @@ from email.mime.image import MIMEImage
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
-
 
 
 class Report():
@@ -914,13 +914,14 @@ class Report():
         return list_
         
     def make_telem_plots(self):
-        dt = datetime.datetime.strptime(self.night, '%Y%m%d').date()
-        #start_utc = '{} {}'.format(self.night, '13:00:00')
-        dt_2 = dt + datetime.timedelta(days=1)
-        start_utc = '{}-{}-{} {}:00'.format(self.plots_start[0:4],self.plots_start[4:6],self.plots_start[6:8], self.plots_start[-5:])
-        end_utc = '{}-{}-{} {}:00'.format(self.plots_end[0:4],self.plots_end[4:6],self.plots_end[6:8], self.plots_end[-5:])
+        start = datetime.datetime.strptime(self.plots_start, "%Y%m%dT%H:%M")
+        start_utc = start.astimezone(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+
+        end = datetime.datetime.strptime(self.plots_end, "%Y%m%dT%H:%M")
+        end_utc = end.astimezone(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE date_obs > '{start_utc}' AND date_obs < '{end_utc}'", self.conn) #night = '{self.night}'", self.conn)
-        #self.get_seeing()
+
         telem_data = pd.DataFrame(columns =
         ['time','exp','mirror_temp','truss_temp','air_temp','temp','humidity','wind_speed','airmass','exptime','seeing','tput','skylevel'])
         if len(exp_df) > 0:
