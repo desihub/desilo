@@ -4,6 +4,7 @@ import base64
 import glob
 import time, sched
 import datetime 
+from datetime import timedelta
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
@@ -205,9 +206,14 @@ class Report():
         <li>If you'd like to modify a submitted milestone, <b>Load</b> the index (these can be found on the Current NL), make your modifications, and then press <b>Update</b>.</li>
         <li>At the end of your shift - either at the end of the night or half way through - summarize the activities of the night in the <b>End of Night Summary</b>. 
         You can Load and modify submissions.</li>
-        <li>At the end of the night, record how many hours of the night were spent observing <b>(ObsTime)</b>, lost to testing <b>(TestTime)</b>, lost to issues with the
-        instrument <b>(InstTime)</b>, lost due to weather <b>(WeathTime)</b> or lost due to issues with the telescope <b>(TelTime)</b>. The times entered should sum to the time spent 
-        "observing" during the night (i.e., if you started at 15 deg twi and ended and 12 deg twi, it should add up to that), but no less than the time between 18 deg twilights.</li>
+        <li>At the end of the night, record how the time was spent between 12 degree twilight:
+        <ul>
+        <li><b>ObsTime:</b> time in hours spent on sky not - open shutter time, but the total time spent “observing” science targets. This will include the overheads of positioning, acquisition, telescope slews, etc.</li>
+        <li><b>TestTime:</b> When Klaus or the FP team are running tests at night. Dither tests, etc. should be logged under this heading, not Obs</li>
+        <li><b>InstLoss:</b> Time which is lost to instrument problems. That is, when the acquisition fails; or observing has to stop due to a problem with DESI; or an image is lost after integrating for a while.</li>
+        <li><b>WeathLoss:</b> Time lost to weather issues, including useless exposures. If the entire night is lost to weather, please enter the time between 18 deg twilights, even if some time was used for closed dome tests (which you can enter under "TestTime"), and if you quit early.</li>
+        <li><b>TelLoss:</b> time lost to telescope / facility issues (e.g.,floor cooling problem that causes stoppage; or dome shutter breaks; or mirror cover issues; etc.). Personnel issues (e.g., no LOS available) should be logged here.</li>
+        </ul>
         </ul>
         """
         self.milestone_inst = Div(text=inst, css_classes=['inst-style'],width=1000)
@@ -579,14 +585,18 @@ class Report():
     def get_ns_layout(self):
         self.ns_subtitle = Div(text='Night Summaries', css_classes=['subt-style'])
         self.ns_inst = Div(text='Enter a date to get previously submitted NightLogs', css_classes=['inst-style'])
-        self.ns_date_input = TextInput(title='Date',placeholder='YYYYMMDD')
         self.ns_date_btn = Button(label='Get NightLog', css_classes=['add_button'])
+        self.ns_date = datetime.datetime.now().strftime('%Y%m%d') 
+        self.ns_date_input = TextInput(title='Date',value=self.ns_date)
+        self.ns_next_date_btn = Button(label='Next Night',css_classes=['add_button'])
+        self.ns_last_date_btn = Button(label='Previous Night',css_classes=['add_button'])
         self.ns_html = Div(text='',width=800)
 
         ns_layout = layout([self.buffer,
                             self.ns_subtitle,
                             self.ns_inst,
                             [self.ns_date_input, self.ns_date_btn],
+                            [self.ns_last_date_btn, self.ns_next_date_btn],
                             self.ns_html], width=1000)
         self.ns_tab = Panel(child=ns_layout, title='Night Summary Index')
 
@@ -605,6 +615,19 @@ class Report():
             self.ns_html.text = ns_html
         except:
             self.ns_html.text = 'Cannot find NightSummary for this date'
+
+    def ns_next_date(self):
+        current_date = datetime.datetime.strptime(self.ns_date_input.value,'%Y%m%d') 
+        next_night = current_date + timedelta(days=1)
+        self.ns_date_input.value = next_night.strftime('%Y%m%d')
+        self.get_nightsum()
+
+    def ns_last_date(self):
+        current_date = datetime.datetime.strptime(self.ns_date_input.value,'%Y%m%d')
+        last_night = current_date - timedelta(days=1)
+        self.ns_date_input.value = last_night.strftime('%Y%m%d')
+        self.get_nightsum()
+
 
 
     def get_time(self, time):

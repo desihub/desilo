@@ -54,6 +54,8 @@ class Other_Report(Report):
         self.ns_date_btn.on_click(self.get_nightsum)
         self.exp_delete_btn.on_click(self.progress_delete)
         self.prob_delete_btn.on_click(self.problem_delete)
+        self.ns_next_date_btn.on_click(self.ns_next_date)
+        self.ns_last_date_btn.on_click(self.ns_last_date)
 
 
 Other = Other_Report()
