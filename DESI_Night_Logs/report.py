@@ -365,8 +365,7 @@ class Report():
         self.exp_layout = layout(children=[self.buffer,self.title,
                             exp_subtitle,
                             exp_inst,
-                            [self.exp_option, self.dqs_load_btn],
-                            [self.exp_select, self.exp_enter],
+                            [self.exp_select, self.exp_enter, self.dqs_load_btn],
                             [self.quality_title, self.quality_btns],
                             self.exp_comment,
                             [self.img_upinst2, self.img_upload_comments_dqs],
@@ -692,6 +691,8 @@ class Report():
                         self.LO_1.value = meta_dict['LO_firstname_1']+' '+meta_dict['LO_lastname_1']
                         self.LO_2.value = meta_dict['LO_firstname_2']+' '+meta_dict['LO_lastname_2']
                         self.OA.value = meta_dict['OA_firstname']+' '+meta_dict['OA_lastname']
+                        self.plots_start = meta_dict['dusk_10_deg']
+                        self.plots_end = meta_dict['dawn_10_deg']
                         self.display_current_header()
                     except Exception as e:
                         self.connect_txt.text = 'Error with Meta Data File: {}'.format(e)
@@ -773,6 +774,7 @@ class Report():
 
 
     def display_current_header(self):
+
         path = self.DESI_Log._open_kpno_file_first(self.DESI_Log.header_html)
         nl_file = open(path, 'r')
         intro = ''
@@ -883,8 +885,10 @@ class Report():
         dt = datetime.datetime.strptime(self.night, '%Y%m%d').date()
         #start_utc = '{} {}'.format(self.night, '13:00:00')
         dt_2 = dt + datetime.timedelta(days=1)
-        start_utc = '{} {}'.format(dt.strftime("%Y%m%d"), '21:00:00')
-        end_utc = '{} {}'.format(dt_2.strftime("%Y%m%d"), '21:00:00')
+        print('plot start: ',self.plot_start)
+        print('plot end: ',self.plot_end)
+        start_utc = '{} {}'.format(dt.strftime("%Y%m%d"), self.plot_start)
+        end_utc = '{} {}'.format(dt_2.strftime("%Y%m%d"), self.plot_end)
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE date_obs > '{start_utc}' AND date_obs < '{end_utc}'", self.conn) #night = '{self.night}'", self.conn)
         #self.get_seeing()
         telem_data = pd.DataFrame(columns =
@@ -1306,14 +1310,12 @@ class Report():
             self.plan_alert.text = "Issue with loading that plan item: {}".format(e)
 
     def dqs_load(self):
-        if self.exp_option.active == 0:
-             exp = int(self.exp_select.value)
-        if self.exp_option.active == 1:
-            exp = int(self.exp_enter.value.strip())
+
+        exp = int(self.exp_enter.value.strip())
         try:
             b, item = self.DESI_Log.load_exp(exp)
             if b:
-                self.exp_comment.value = item['Comment']
+                self.exp_comment.value = str(item['Comment'])
                 qual = np.where(np.array(self.quality_list)==str(item['Quality']).strip())[0]
                 self.quality_btns.active = int(qual)
             else:

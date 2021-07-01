@@ -64,6 +64,7 @@ class DQS_Report(Report):
         self.partial_button.on_click(self.add_some_to_bad_list)
         self.bad_add.on_click(self.bad_exp_add)
         self.prob_delete_btn.on_click(self.problem_delete)
+        self.exp_select.on_change('value',self.select_exp)
 
 
 
