@@ -121,6 +121,8 @@ class OS_Report(Report):
         self.time_btn.on_click(self.add_time)
         self.summary_load_btn.on_click(self.load_summary)
         self.ns_date_btn.on_click(self.get_nightsum)
+        self.ns_next_date_btn.on_click(self.ns_next_date)
+        self.ns_last_date_btn.on_click(self.ns_last_date)
         
 OS = OS_Report()
 OS.run()

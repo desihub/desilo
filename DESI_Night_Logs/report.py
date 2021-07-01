@@ -4,6 +4,8 @@ import base64
 import glob
 import time, sched
 import datetime 
+from datetime import timezone
+from datetime import timedelta
 from collections import OrderedDict
 import numpy as np
 import pandas as pd
@@ -39,6 +41,7 @@ from email.mime.image import MIMEImage
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
+
 
 class Report():
     def __init__(self, type):
@@ -201,9 +204,14 @@ class Report():
         <li>If you'd like to modify a submitted milestone, <b>Load</b> the index (these can be found on the Current NL), make your modifications, and then press <b>Update</b>.</li>
         <li>At the end of your shift - either at the end of the night or half way through - summarize the activities of the night in the <b>End of Night Summary</b>. 
         You can Load and modify submissions.</li>
-        <li>At the end of the night, record how many hours of the night were spent observing <b>(ObsTime)</b>, lost to testing <b>(TestTime)</b>, lost to issues with the
-        instrument <b>(InstTime)</b>, lost due to weather <b>(WeathTime)</b> or lost due to issues with the telescope <b>(TelTime)</b>. The times entered should sum to the time spent 
-        "observing" during the night (i.e., if you started at 15 deg twi and ended and 12 deg twi, it should add up to that), but no less than the time between 18 deg twilights.</li>
+        <li>At the end of the night, record how the time was spent between 12 degree twilight:
+        <ul>
+        <li><b>ObsTime:</b> time in hours spent on sky not - open shutter time, but the total time spent “observing” science targets. This will include the overheads of positioning, acquisition, telescope slews, etc.</li>
+        <li><b>TestTime:</b> When Klaus or the FP team are running tests at night. Dither tests, etc. should be logged under this heading, not Obs</li>
+        <li><b>InstLoss:</b> Time which is lost to instrument problems. That is, when the acquisition fails; or observing has to stop due to a problem with DESI; or an image is lost after integrating for a while.</li>
+        <li><b>WeathLoss:</b> Time lost to weather issues, including useless exposures. If the entire night is lost to weather, please enter the time between 18 deg twilights, even if some time was used for closed dome tests (which you can enter under "TestTime"), and if you quit early.</li>
+        <li><b>TelLoss:</b> time lost to telescope / facility issues (e.g.,floor cooling problem that causes stoppage; or dome shutter breaks; or mirror cover issues; etc.). Personnel issues (e.g., no LOS available) should be logged here.</li>
+        </ul>
         </ul>
         """
         self.milestone_inst = Div(text=inst, css_classes=['inst-style'],width=1000)
@@ -575,14 +583,18 @@ class Report():
     def get_ns_layout(self):
         self.ns_subtitle = Div(text='Night Summaries', css_classes=['subt-style'])
         self.ns_inst = Div(text='Enter a date to get previously submitted NightLogs', css_classes=['inst-style'])
-        self.ns_date_input = TextInput(title='Date',placeholder='YYYYMMDD')
         self.ns_date_btn = Button(label='Get NightLog', css_classes=['add_button'])
+        self.ns_date = datetime.datetime.now().strftime('%Y%m%d') 
+        self.ns_date_input = TextInput(title='Date',value=self.ns_date)
+        self.ns_next_date_btn = Button(label='Next Night',css_classes=['add_button'])
+        self.ns_last_date_btn = Button(label='Previous Night',css_classes=['add_button'])
         self.ns_html = Div(text='',width=800)
 
         ns_layout = layout([self.buffer,
                             self.ns_subtitle,
                             self.ns_inst,
                             [self.ns_date_input, self.ns_date_btn],
+                            [self.ns_last_date_btn, self.ns_next_date_btn],
                             self.ns_html], width=1000)
         self.ns_tab = Panel(child=ns_layout, title='Night Summary Index')
 
@@ -601,6 +613,19 @@ class Report():
             self.ns_html.text = ns_html
         except:
             self.ns_html.text = 'Cannot find NightSummary for this date'
+
+    def ns_next_date(self):
+        current_date = datetime.datetime.strptime(self.ns_date_input.value,'%Y%m%d') 
+        next_night = current_date + timedelta(days=1)
+        self.ns_date_input.value = next_night.strftime('%Y%m%d')
+        self.get_nightsum()
+
+    def ns_last_date(self):
+        current_date = datetime.datetime.strptime(self.ns_date_input.value,'%Y%m%d')
+        last_night = current_date - timedelta(days=1)
+        self.ns_date_input.value = last_night.strftime('%Y%m%d')
+        self.get_nightsum()
+
 
 
     def get_time(self, time):
@@ -677,8 +702,9 @@ class Report():
             self.nl_file = self.DESI_Log.nightlog_html
             self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
+            meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
+
             if self.report_type == 'OS':
-                meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
                 if os.path.exists(meta_dict_file):
                     try:
                         meta_dict = json.load(open(meta_dict_file,'r'))
@@ -729,7 +755,11 @@ class Report():
                 
             else:
                 try:
+                    meta_dict = json.load(open(meta_dict_file,'r'))
                     self.display_current_header()
+                    self.plots_start = meta_dict['dusk_10_deg']
+                    self.plots_end = meta_dict['dawn_10_deg']
+
                 except Exception as e:
                     print('Header not displaying',e)
             self.current_nl()
@@ -751,21 +781,23 @@ class Report():
         meta['dqs_2_firstname'], meta['dqs_2_lastname'] = self.dqs_name_2.value.split(' ')[0], ' '.join(self.dqs_name_2.value.split(' ')[1:])
         meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
 
-        eph = sky_calendar()
-        meta['time_sunset'] = self.get_strftime(eph['sunset'])
-        meta['time_sunrise'] = self.get_strftime(eph['sunrise'])
-        meta['time_moonrise'] = self.get_strftime(eph['moonrise'])
-        meta['time_moonset'] = self.get_strftime(eph['moonset'])
+        eph = sky_calendar(self.night)
+        meta['time_sunset'] = eph['sunset']
+        meta['time_sunrise'] = eph['sunrise']
+        meta['time_moonrise'] = eph['moonrise']
+        meta['time_moonset'] = eph['moonset']
         meta['illumination'] = eph['illumination']
-        meta['dusk_10_deg'] = self.get_strftime(eph['dusk_ten'])
-        meta['dusk_12_deg'] = self.get_strftime(eph['dusk_nautical'])
-        meta['dusk_18_deg'] = self.get_strftime(eph['dusk_astronomical'])
-        meta['dawn_18_deg'] = self.get_strftime(eph['dawn_astronomical'])
-        meta['dawn_12_deg'] = self.get_strftime(eph['dawn_nautical'])
-        meta['dawn_10_deg'] = self.get_strftime(eph['dawn_ten'])
+        meta['dusk_10_deg'] = eph['dusk_ten']
+        meta['dusk_12_deg'] = eph['dusk_nautical']
+        meta['dusk_18_deg'] = eph['dusk_astronomical']
+        meta['dawn_18_deg'] = eph['dawn_astronomical']
+        meta['dawn_12_deg'] = eph['dawn_nautical']
+        meta['dawn_10_deg'] = eph['dawn_ten']
 
         self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
         self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
+        self.plots_start = meta['dusk_10_deg']
+        self.plots_end = meta['dawn_10_deg']
         self.DESI_Log.get_started_os(meta)
 
         self.connect_txt.text = 'Night Log Observer Data is Updated'
@@ -882,15 +914,14 @@ class Report():
         return list_
         
     def make_telem_plots(self):
-        dt = datetime.datetime.strptime(self.night, '%Y%m%d').date()
-        #start_utc = '{} {}'.format(self.night, '13:00:00')
-        dt_2 = dt + datetime.timedelta(days=1)
-        print('plot start: ',self.plot_start)
-        print('plot end: ',self.plot_end)
-        start_utc = '{} {}'.format(dt.strftime("%Y%m%d"), self.plot_start)
-        end_utc = '{} {}'.format(dt_2.strftime("%Y%m%d"), self.plot_end)
+        start = datetime.datetime.strptime(self.plots_start, "%Y%m%dT%H:%M")
+        start_utc = start.astimezone(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+
+        end = datetime.datetime.strptime(self.plots_end, "%Y%m%dT%H:%M")
+        end_utc = end.astimezone(tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE date_obs > '{start_utc}' AND date_obs < '{end_utc}'", self.conn) #night = '{self.night}'", self.conn)
-        #self.get_seeing()
+
         telem_data = pd.DataFrame(columns =
         ['time','exp','mirror_temp','truss_temp','air_temp','temp','humidity','wind_speed','airmass','exptime','seeing','tput','skylevel'])
         if len(exp_df) > 0:
