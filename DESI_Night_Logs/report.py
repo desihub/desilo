@@ -920,9 +920,6 @@ class Report():
         start_utc = '{}-{}-{} {}:00'.format(self.plots_start[0:4],self.plots_start[4:6],self.plots_start[6:8], self.plots_start[-5:])
         end_utc = '{}-{}-{} {}:00'.format(self.plots_end[0:4],self.plots_end[4:6],self.plots_end[6:8], self.plots_end[-5:])
         exp_df = pd.read_sql_query(f"SELECT * FROM exposure WHERE date_obs > '{start_utc}' AND date_obs < '{end_utc}'", self.conn) #night = '{self.night}'", self.conn)
-        print(start_utc)
-        print(end_utc)
-        print(exp_df.head())
         #self.get_seeing()
         telem_data = pd.DataFrame(columns =
         ['time','exp','mirror_temp','truss_temp','air_temp','temp','humidity','wind_speed','airmass','exptime','seeing','tput','skylevel'])
