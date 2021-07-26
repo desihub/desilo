@@ -195,7 +195,7 @@ class NightLog(object):
             pb_files = {'Obs':self.obs_pb,'NonObs':self.nobs_pb}
             file = pb_files[user]
         if tab == 'progress':
-            exp_files = {'Obs':self.os_exp,'NonObs':self.nobs_exp}
+            exp_files = {'Obs':self.obs_exp,'NonObs':self.nobs_exp}
             file = exp_files[user]
 
         df = pd.read_csv(file)
@@ -205,7 +205,6 @@ class NightLog(object):
         df.to_csv(file, index=False)
 
     def add_input(self, data, tab, img_name=None, img_data=None):
-        dqs_exp = False
         if tab == 'plan':
             cols =['Time', 'Objective']
             file = self.objectives
@@ -239,7 +238,7 @@ class NightLog(object):
             if isinstance(img_data, bytes):
                 self._upload_and_save_image(img_data, img_name)
         
-        df = self.write_csv(data, cols, file, dqs_exp=dqs_exp)
+        df = self.write_csv(data, cols, file)
         
 
     def write_plan(self, filen):
@@ -295,16 +294,6 @@ class NightLog(object):
                     filen.write("<li> {}</li>".format(self.write_time(row['Time'],kp_only=True)))
             filen.write("</ul>")
 
-        if df_dqs is not None:
-            filen.write("DQS checklist completed at (Local time):")
-            filen.write("<br/>")
-            filen.write("<ul>")
-            for index, row in df_dqs.iterrows():
-                if (not pd.isna(row['Comment'])) & (str(row['Comment']) not in ['',' ','nan','None']):
-                       filen.write("<li> {} - {}</li>".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
-                else:
-                    filen.write("<li> {}</li>".format(self.write_time(row['Time'],kp_only=True)))
-            filen.write("</ul>")
 
     def write_weather(self, filen):
         """Operations Scientist adds information regarding the weather.
@@ -319,7 +308,7 @@ class NightLog(object):
                 filen.write(line)
 
     def write_problem(self, filen):
-        df_obs = self._combine_compare_csv_files(self.os_pb)
+        df_obs = self._combine_compare_csv_files(self.obs_pb)
         df_nobs = self._combine_compare_csv_files(self.nobs_pb)
         dfs = [d for d in [df_obs, df_nobs] if d is not None]
         self.prob_df = None
@@ -371,7 +360,7 @@ class NightLog(object):
         if os.path.exists(self.explist_file):
             exp_df = pd.read_csv(self.explist_file)
 
-        for f in [self.os_exp, self.dqs_exp, self.other_exp]:
+        for f in [self.obs_exp, self.nobs_exp]:
             self.check_exp_times(f)
 
         obs_df = self._combine_compare_csv_files(self.obs_exp)
@@ -495,7 +484,6 @@ class NightLog(object):
             return False, e
 
     def load_exp(self, exp):
-        the_path = self.dqs_exp
 
         df = self._combine_compare_csv_files(the_path)
         try:
@@ -651,8 +639,8 @@ class NightLog(object):
             else:
                 file_intro.write("<b>Lead Observer 1</b>: {} {}<br/>".format(meta_dict['LO_firstname_1'],meta_dict['LO_lastname_1']))
                 file_intro.write("<b>Lead Observer 2</b>: {} {}<br/>".format(meta_dict['LO_firstname_2'],meta_dict['LO_lastname_2']))
-            if (meta_dict['os_2_lastname'] == meta_dict['os_1_lastname']) | (meta_dict['os_2_firstname'] == None):
-                file_intro.write("<b>Observing Scientist (OS)</b>: {} {}<br/>".format(meta_dict['os_1_firstname'],meta_dict['os_1_lastname']))
+            if (meta_dict['so_2_lastname'] == meta_dict['so_1_lastname']) | (meta_dict['so_2_firstname'] == None):
+                file_intro.write("<b>Support Observing Scientist (SO)</b>: {} {}<br/>".format(meta_dict['so_1_firstname'],meta_dict['so_1_lastname']))
             else:
                 file_intro.write("<b>Support Observing Scientist (SO-1)</b>: {} {}<br/>".format(meta_dict['so_1_firstname'],meta_dict['so_1_lastname']))
                 file_intro.write("<b>Support Observing Scientist (SO-2)</b>: {} {}<br/>".format(meta_dict['so_2_firstname'],meta_dict['so_2_lastname']))

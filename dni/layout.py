@@ -6,7 +6,7 @@ Created on July 21, 2021
 details all layout for the DNI Reports
 
 """
-
+import os
 from bokeh.io import curdoc, save, export_png  # , output_file, save
 from bokeh.models import (TextInput, ColumnDataSource, DateFormatter, RadioGroup,CheckboxButtonGroup,Paragraph, Button, TextAreaInput, Select,CheckboxGroup, RadioButtonGroup, DateFormatter,CheckboxGroup)
 from bokeh.models.widgets.markups import Div
@@ -17,14 +17,36 @@ from bokeh.plotting import figure
 import logging
 from astropy.time import TimezoneInfo
 import astropy.units.si as u
+import pandas as pd
+import datetime
 
 import nightlog as nl
 
 class Layout():
-	def __init__(self, type):
-		self.report_type = type
-		self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
+    def __init__(self, report_type):
+        print("hhhhhhh")
+        self.report_type = report_type
+        self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
+        self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
+        self.oa_names = ['None ','Karen Butler','Amy Robertson','Anthony Paat','Thaxton Smith','Dave Summers','Doug Williams','Other ']
+        self.connect_txt = Div(text=' ', css_classes=['alert-style'])
+        self.intro_txt = Div(text=' ')
+        self.comment_txt = Div(text=" ", css_classes=['inst-style'], width=1000)
+
+        self.connect_bt = Button(label="Connect to Existing Night Log", css_classes=['connect_button'])
+        self.nl_info = Div(text="Night Log Info:", css_classes=['inst-style'], width=500) 
+
+        self.your_name = TextInput(title ='Your Name', placeholder = 'John Smith')
+
+        self.date_init = Select(title="Existing Night Logs")
+        self.time_title = Paragraph(text='Time* (Kitt Peak local time)', align='center')
+        self.now_btn = Button(label='Now', css_classes=['now_button'], width=75)
+
+        self.full_time_text = Div(text='Total time between 18 deg. twilights (hrs): ', width=100) #Not on intro slide, but needed
+
+        self.nw_dir = os.environ['NW_DIR']
+        self.nl_dir = os.environ['NL_DIR']  
 
     def get_plan_layout(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
@@ -331,7 +353,7 @@ class Layout():
         self.check_btn = Button(label='Submit', css_classes=['add_button'])
         self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
         
-        self.checklist.labels = self.checklist
+        self.checklist.labels = self.checklist_options
         self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
         
         checklist_layout = layout(self.buffer,self.title,
@@ -396,4 +418,5 @@ class Layout():
                             [self.ns_date_input, self.ns_date_btn],
                             [self.ns_last_date_btn, self.ns_next_date_btn],
                             self.ns_html], width=1000)
+        self.ns_tab = Panel(child=ns_layout, title='Night Summary Index')
 

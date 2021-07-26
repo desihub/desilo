@@ -41,11 +41,15 @@ from email.mime.image import MIMEImage
 sys.path.append(os.getcwd())
 sys.path.append('./ECLAPI-8.0.12/lib')
 import nightlog as nl
-
+from layout import Layout
 
 class Report(Layout):
     def __init__(self, report_type):
+        print('h0')
+        print(report_type)
         Layout.__init__(self, report_type)
+        print('heeeeeerrrrre')
+        print(report_type)
 
         self.test = False 
 
@@ -66,7 +70,7 @@ class Report(Layout):
             self.conn = psycopg2.connect(host="db.replicator.dev-cattle.stable.spin.nersc.org", port="60042", database="desi_dev", user="desi_reader", password="reader")
         else:
             self.location = 'nersc'
-
+        print(os.environ['NL_DIR'])
         self.nw_dir = os.environ['NW_DIR']
         self.nl_dir = os.environ['NL_DIR']     
 
@@ -98,11 +102,6 @@ class Report(Layout):
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(logging.INFO)
 
-        obs_tabs = [0:{'name':'intro','time':None},1:{'name':'plan','time':self.plan_time},2:{'name':'milestone','time':self.milestone_time},3:{'name':'exp','time':self.exp_time},4:{'name':'prob','time':self.prob_time},
-                    5:{'name':'weather','time':self.weather_time},6:{'name':'check','time':self.check_time},7:{'name':'nl','time':None},8:{'name':'ns','time':None}]
-        nobs_tabs = [0:{'name':'intro','time':None},1:{'name':'intro','time':None},2:{'name':'intro','time':None}]
-        tab_info = {'Obs':obs_tabs,'NonObs':nobs_tabs}
-        self.tab_info = tab_info[self.report_type]
 
     def clear_input(self, items):
         """ After submitting something to the log, this will clear the form.
@@ -133,8 +132,14 @@ class Report(Layout):
 
     def update_nl_list(self):
         days = [f for f in os.listdir(self.nl_dir) if os.path.isdir(os.path.join(self.nl_dir,f))]
-        init_nl_list = np.sort([day for day in days if 'OperationsScientist' in os.listdir(os.path.join(self.nl_dir,day))])[::-1][0:10]
-        init_nl_list = [x for x in init_nl_list if x > '20210326']
+        days_ = []
+        for day in days:
+            try:
+                int(day)
+                days_.append(day)
+            except:
+                pass
+        init_nl_list = np.sort([day for day in days_])[::-1][0:10]
         self.date_init.options = list(init_nl_list)
         self.date_init.value = init_nl_list[0]
 
@@ -246,65 +251,62 @@ class Report(Layout):
         """Connect to Existing Night Log with Input Date
         """
         self.get_night('connect')
-        exists = self.DESI_Log.check_exists()
-
-        your_firstname, your_lastname = self.your_name.value.split(' ')[0], ' '.join(self.your_name.value.split(' ')[1:])
-        if exists:
-            self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
+        if not os.path.exists(self.DESI_Log.obs_dir):
+            for dir_ in [self.DESI_Log.obs_dir, self.DESI_Log.nobs_dir, self.DESI_Log.image_dir]:
+                os.makedirs(dir_)
+        self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
        
-            self.nl_file = self.DESI_Log.nightlog_html
-            self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
+        self.nl_file = self.DESI_Log.nightlog_html
+        self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
-            meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
+        meta_dict_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.meta_json)
 
-            if self.report_type == 'Obs':
-                if os.path.exists(meta_dict_file):
-                    try:
-                        meta_dict = json.load(open(meta_dict_file,'r'))
-                        plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}".format(self.night)
-                        self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
-                        self.os_name_1.value = meta_dict['os_1_firstname']+' '+meta_dict['os_1_lastname']
-                        self.os_name_2.value = meta_dict['os_2_firstname']+' '+meta_dict['os_2_lastname']
-                        self.dqs_name_1.value = meta_dict['dqs_1_firstname']+' '+meta_dict['dqs_1_lastname']
-                        self.dqs_name_2.value = meta_dict['dqs_2_firstname']+' '+meta_dict['dqs_2_lastname']
-                        self.LO_1.value = meta_dict['LO_firstname_1']+' '+meta_dict['LO_lastname_1']
-                        self.LO_2.value = meta_dict['LO_firstname_2']+' '+meta_dict['LO_lastname_2']
-                        self.OA.value = meta_dict['OA_firstname']+' '+meta_dict['OA_lastname']
-                        self.plots_start = meta_dict['dusk_10_deg']
-                        self.plots_end = meta_dict['dawn_10_deg']
-                        self.display_current_header()
-                    except Exception as e:
-                        self.connect_txt.text = 'Error with Meta Data File: {}'.format(e)
-                else:
-                    self.connect_txt.text = "Update Tonight's Log!"
+        if self.report_type == 'Obs':
+            if os.path.exists(meta_dict_file):
+                try:
+                    meta_dict = json.load(open(meta_dict_file,'r'))
+                    plan_txt_text="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/OpsPlan{}".format(self.night)
+                    self.plan_txt.text = '<a href={}>Tonights Plan Here</a>'.format(plan_txt_text)
+                    self.so_name_1.value = meta_dict['so_1_firstname']+' '+meta_dict['so_1_lastname']
+                    self.so_name_2.value = meta_dict['so_2_firstname']+' '+meta_dict['so_2_lastname']
+                    self.LO_1.value = meta_dict['LO_firstname_1']+' '+meta_dict['LO_lastname_1']
+                    self.LO_2.value = meta_dict['LO_firstname_2']+' '+meta_dict['LO_lastname_2']
+                    self.OA.value = meta_dict['OA_firstname']+' '+meta_dict['OA_lastname']
+                    self.plots_start = meta_dict['dusk_10_deg']
+                    self.plots_end = meta_dict['dawn_10_deg']
+                    self.display_current_header()
+                except Exception as e:
+                    self.connect_txt.text = 'Error with Meta Data File: {}'.format(e)
+            else:
+                self.connect_txt.text = "Update Tonight's Log!"
 
-                contributer_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.contributer_file)
-                if os.path.exists(contributer_file):
-                    try:
-                        cont_txt = ''
-                        f =  open(contributer_file, "r")
-                        for line in f:
-                            cont_txt += line
-                        self.contributer_list.value = cont_txt
-                    except Exception as e:
-                        self.connect_txt.text = 'Error with Contributer File: {}'.format(e)
+            contributer_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.contributer_file)
+            if os.path.exists(contributer_file):
+                try:
+                    cont_txt = ''
+                    f =  open(contributer_file, "r")
+                    for line in f:
+                        cont_txt += line
+                    self.contributer_list.value = cont_txt
+                except Exception as e:
+                    self.connect_txt.text = 'Error with Contributer File: {}'.format(e)
 
-                time_use_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.time_use)
-                if os.path.exists(time_use_file):
-                    try:
-                        df = pd.read_csv(time_use_file)
-                        data = df.iloc[0]
-                        self.obs_time.value =  self._dec_to_hm(data['obs_time'])
-                        self.test_time.value = self._dec_to_hm(data['test_time'])
-                        self.inst_loss_time.value = self._dec_to_hm(data['inst_loss'])
-                        self.weather_loss_time.value = self._dec_to_hm(data['weather_loss'])
-                        self.tel_loss_time.value = self._dec_to_hm(data['tel_loss'])
-                        self.total_time.text = 'Time Documented (hrs): {}'.format(self._dec_to_hm(data['total']))
-                        self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-                        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
-                    except Exception as e:
-                        self.milestone_alert.text = 'Issue with Time Use Data: {}'.format(e)
- 
+            time_use_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.time_use)
+            if os.path.exists(time_use_file):
+                try:
+                    df = pd.read_csv(time_use_file)
+                    data = df.iloc[0]
+                    self.obs_time.value =  self._dec_to_hm(data['obs_time'])
+                    self.test_time.value = self._dec_to_hm(data['test_time'])
+                    self.inst_loss_time.value = self._dec_to_hm(data['inst_loss'])
+                    self.weather_loss_time.value = self._dec_to_hm(data['weather_loss'])
+                    self.tel_loss_time.value = self._dec_to_hm(data['tel_loss'])
+                    self.total_time.text = 'Time Documented (hrs): {}'.format(self._dec_to_hm(data['total']))
+                    self.full_time = (datetime.datetime.strptime(meta_dict['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta_dict['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
+                    self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
+                except Exception as e:
+                    self.milestone_alert.text = 'Issue with Time Use Data: {}'.format(e)
+
                 
             else:
                 try:
@@ -315,11 +317,9 @@ class Report(Layout):
 
                 except Exception as e:
                     print('Header not displaying',e)
-            self.current_nl()
-            self.get_exposure_list()
+        self.current_nl()
+        self.get_exposure_list()
 
-        else:
-            self.connect_txt.text = 'The Night Log for this {} is not yet initialized.'.format(self.date_init.value)
 
     def add_observer_info(self):
         """ Initialize Night Log with Input Date
@@ -360,7 +360,7 @@ class Report(Layout):
 
         path = self.DESI_Log._open_kpno_file_first(self.DESI_Log.header_html)
         nl_file = open(path, 'r')
-        intro = ''
+        intro = '<h2> NightLog Info: </h2>'
         for line in nl_file:
             intro =  intro + line + '\n'
         self.intro_txt.text = intro
