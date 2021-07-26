@@ -218,14 +218,12 @@ class Report(Layout):
         dt = datetime.datetime.combine(d,time)
         return dt.strftime("%Y%m%dT%H:%M")
 
-    def get_night(self, mode='connect'):
-        if mode == 'connect':
-            try:
-                date = datetime.datetime.strptime(self.date_init.value, '%Y%m%d')
-            except:
-                date = datetime.datetime.now().date()
-        elif mode == 'init':
+    def get_night(self):
+        try:
+            date = datetime.datetime.strptime(self.date_init.value, '%Y%m%d')
+        except:
             date = datetime.datetime.now().date()
+
         self.night = date.strftime("%Y%m%d")
         self.DESI_Log = nl.NightLog(self.night, self.location, self.logger)
         self.logger.info('Obsday is {}'.format(self.night))
@@ -250,12 +248,21 @@ class Report(Layout):
     def connect_log(self):
         """Connect to Existing Night Log with Input Date
         """
-        self.get_night('connect')
+        self.get_night()
+
+        #Load appropriate layout for each observer
+        self.observer = self.obs_type.active #0=LO; 1=SO
+        if self.observer == 0:
+            self.layout = Tabs(tabs=[self.intro_tab, self.plan_tab, self.milestone_tab_0, self.exp_tab_0, self.prob_tab, self.weather_tab_0, self.check_tab,  self.nl_tab_0, self.ns_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+        elif self.observer == 1:
+            self.layout = Tabs(tabs=[self.intro_tab, self.milestone_tab_1, self.exp_tab_1, self.prob_tab, self.weather_tab_1, self.nl_tab_1, self.ns_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
+        
         if not os.path.exists(self.DESI_Log.obs_dir):
             for dir_ in [self.DESI_Log.obs_dir, self.DESI_Log.nobs_dir, self.DESI_Log.image_dir]:
                 os.makedirs(dir_)
-        self.connect_txt.text = 'Connected to Night Log for {}'.format(self.date_init.value)
+        self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
        
+        #Connec to NightLog       
         self.nl_file = self.DESI_Log.nightlog_html
         self.nl_subtitle.text = "Current DESI Night Log: {}".format(self.nl_file)
 
@@ -278,7 +285,8 @@ class Report(Layout):
                 except Exception as e:
                     self.connect_txt.text = 'Error with Meta Data File: {}'.format(e)
             else:
-                self.connect_txt.text = "Update Tonight's Log!"
+                self.init_layout.children[8] = self.update_layout
+                self.update_log_status = True
 
             contributer_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.contributer_file)
             if os.path.exists(contributer_file):
@@ -324,43 +332,48 @@ class Report(Layout):
     def add_observer_info(self):
         """ Initialize Night Log with Input Date
         """
-        #self.get_night('init')
-        meta = OrderedDict()
-        meta['LO_firstname_1'], meta['LO_lastname_1'] = self.LO_1.value.split(' ')[0], ' '.join(self.LO_1.value.split(' ')[1:])
-        meta['LO_firstname_2'], meta['LO_lastname_2'] = self.LO_2.value.split(' ')[0], ' '.join(self.LO_2.value.split(' ')[1:])
-        meta['so_1_firstname'], meta['so_1_lastname'] = self.so_name_1.value.split(' ')[0], ' '.join(self.so_name_1.value.split(' ')[1:])
-        meta['so_2_firstname'], meta['so_2_lastname'] = self.so_name_2.value.split(' ')[0], ' '.join(self.so_name_2.value.split(' ')[1:])
-        meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
+        if self.update_log_status:
+            meta = OrderedDict()
+            meta['LO_firstname_1'], meta['LO_lastname_1'] = self.LO_1.value.split(' ')[0], ' '.join(self.LO_1.value.split(' ')[1:])
+            meta['LO_firstname_2'], meta['LO_lastname_2'] = self.LO_2.value.split(' ')[0], ' '.join(self.LO_2.value.split(' ')[1:])
+            meta['so_1_firstname'], meta['so_1_lastname'] = self.so_name_1.value.split(' ')[0], ' '.join(self.so_name_1.value.split(' ')[1:])
+            meta['so_2_firstname'], meta['so_2_lastname'] = self.so_name_2.value.split(' ')[0], ' '.join(self.so_name_2.value.split(' ')[1:])
+            meta['OA_firstname'], meta['OA_lastname'] = self.OA.value.split(' ')[0], ' '.join(self.OA.value.split(' ')[1:])
 
-        eph = sky_calendar(self.night)
-        meta['time_sunset'] = eph['sunset']
-        meta['time_sunrise'] = eph['sunrise']
-        meta['time_moonrise'] = eph['moonrise']
-        meta['time_moonset'] = eph['moonset']
-        meta['illumination'] = eph['illumination']
-        meta['dusk_10_deg'] = eph['dusk_ten']
-        meta['dusk_12_deg'] = eph['dusk_nautical']
-        meta['dusk_18_deg'] = eph['dusk_astronomical']
-        meta['dawn_18_deg'] = eph['dawn_astronomical']
-        meta['dawn_12_deg'] = eph['dawn_nautical']
-        meta['dawn_10_deg'] = eph['dawn_ten']
+            eph = sky_calendar(self.night)
+            meta['time_sunset'] = eph['sunset']
+            meta['time_sunrise'] = eph['sunrise']
+            meta['time_moonrise'] = eph['moonrise']
+            meta['time_moonset'] = eph['moonset']
+            meta['illumination'] = eph['illumination']
+            meta['dusk_10_deg'] = eph['dusk_ten']
+            meta['dusk_12_deg'] = eph['dusk_nautical']
+            meta['dusk_18_deg'] = eph['dusk_astronomical']
+            meta['dawn_18_deg'] = eph['dawn_astronomical']
+            meta['dawn_12_deg'] = eph['dawn_nautical']
+            meta['dawn_10_deg'] = eph['dawn_ten']
 
-        self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
-        self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
-        self.plots_start = meta['dusk_10_deg']
-        self.plots_end = meta['dawn_10_deg']
-        self.DESI_Log.get_started_os(meta)
+            self.full_time = (datetime.datetime.strptime(meta['dawn_18_deg'], '%Y%m%dT%H:%M') - datetime.datetime.strptime(meta['dusk_18_deg'], '%Y%m%dT%H:%M')).seconds/3600
+            self.full_time_text.text = 'Total time between 18 deg. twilights (hrs): {}'.format(self._dec_to_hm(self.full_time))
+            self.plots_start = meta['dusk_10_deg']
+            self.plots_end = meta['dawn_10_deg']
+            self.DESI_Log.get_started_os(meta)
 
-        self.connect_txt.text = 'Night Log Observer Data is Updated'
-        self.DESI_Log.write_intro()
-        self.display_current_header()
+
+            self.connect_txt.text = 'Night Log Observer Data is Updated'
+            self.DESI_Log.write_intro()
+            self.display_current_header()
+            self.update_log_status = False
+            self.intro_layout.children[8] = self.init_btn
+        else:
+            self.intro_layout.children[8] = self.update_layout
 
 
     def display_current_header(self):
 
         path = self.DESI_Log._open_kpno_file_first(self.DESI_Log.header_html)
         nl_file = open(path, 'r')
-        intro = '<h2> NightLog Info: </h2>'
+        intro = '<h2> NightLog Info: {}</h2>'.format(self.night)
         for line in nl_file:
             intro =  intro + line + '\n'
         self.intro_txt.text = intro
