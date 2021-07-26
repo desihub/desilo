@@ -25,9 +25,9 @@ os.environ['NW_DIR'] = '/exposures/desi'
 
 class Obs_Report(Report):
     def __init__(self):
-        Report.__init__(self, 'Obs')
+        Report.__init__(self)
 
-        self.title = Div(text="DESI Nightly Intake - Observers", css_classes=['h1-title-style'], width=1000)
+        self.title = Div(text="DESI Nightly Intake", css_classes=['h1-title-style'], width=1000)
 
         desc = """
         To begin, connect to the observing night Night Log using the list of Existing Night Logs. Add information about the Observers and press the 
@@ -39,14 +39,10 @@ class Obs_Report(Report):
         self.instructions = Div(text=desc, css_classes=['inst-style'], width=500)
         
         self.page_logo = Div(text="<img src='ObserverReport/static/logo.png'>", width=350, height=300)
-        
-
 
     def get_layout(self):
-        
-
-        self.update_nl_list()
         self.get_intro_layout()
+        self.update_nl_list()
         self.get_plan_layout()
         self.get_milestone_layout()
         self.get_exp_layout()
@@ -82,7 +78,6 @@ class Obs_Report(Report):
         self.milestone_delete_btn.on_click(self.milestone_delete)
         self.exp_delete_btn.on_click(self.progress_delete)
         self.prob_delete_btn.on_click(self.problem_delete)
-        #self.img_btn.on_click(self.image_add)
         self.contributer_btn.on_click(self.add_contributer_list)
         self.exp_select.on_change('value',self.select_exp)
         self.summary_btn.on_click(self.summary_add)
@@ -94,7 +89,7 @@ class Obs_Report(Report):
         
 OBS = Obs_Report()
 OBS.run()
-curdoc().title = 'DESI Night Log - Observers'
+curdoc().title = 'DESI Night Log'
 curdoc().add_root(OBS.layout)
 curdoc().add_periodic_callback(OBS.current_nl, 30000)
 curdoc().add_periodic_callback(OBS.get_exposure_list, 30000)

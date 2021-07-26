@@ -44,16 +44,12 @@ import nightlog as nl
 from layout import Layout
 
 class Report(Layout):
-    def __init__(self, report_type):
-        print('h0')
-        print(report_type)
-        Layout.__init__(self, report_type)
-        print('heeeeeerrrrre')
-        print(report_type)
+    def __init__(self):
+        Layout.__init__(self)
 
         self.test = False 
 
-        self.report_type = report_type
+        self.report_type = None 
         self.kp_zone = TimezoneInfo(utc_offset=-7*u.hour)
 
         self.datefmt = DateFormatter(format="%m/%d/%Y %H:%M:%S")
@@ -250,17 +246,25 @@ class Report(Layout):
         """
         self.get_night()
 
-        #Load appropriate layout for each observer
-        self.observer = self.obs_type.active #0=LO; 1=SO
-        if self.observer == 0:
-            self.layout = Tabs(tabs=[self.intro_tab, self.plan_tab, self.milestone_tab_0, self.exp_tab_0, self.prob_tab, self.weather_tab_0, self.check_tab,  self.nl_tab_0, self.ns_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
-        elif self.observer == 1:
-            self.layout = Tabs(tabs=[self.intro_tab, self.milestone_tab_1, self.exp_tab_1, self.prob_tab, self.weather_tab_1, self.nl_tab_1, self.ns_tab], css_classes=['tabs-header'], sizing_mode="scale_both")
-        
         if not os.path.exists(self.DESI_Log.obs_dir):
             for dir_ in [self.DESI_Log.obs_dir, self.DESI_Log.nobs_dir, self.DESI_Log.image_dir]:
                 os.makedirs(dir_)
-        self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
+                self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
+
+        #Load appropriate layout for each observer
+        self.observer = self.obs_type.active #0=LO; 1=SO
+        if self.observer == 0:
+            self.layout.tabs = [self.intro_tab, self.plan_tab, self.milestone_tab_0, self.exp_tab_0, self.prob_tab, self.weather_tab_0, self.check_tab,  self.nl_tab_0, self.ns_tab]
+            self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
+            self.report_type = 'Obs'
+        elif self.observer == 1:
+            self.layout.tabs = [self.intro_tab, self.milestone_tab_1, self.exp_tab_1, self.prob_tab, self.weather_tab_1, self.nl_tab_1, self.ns_tab]
+            self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
+            self.report_type = 'Obs'
+        else:
+            self.connect_txt.text = 'Please identify if you are an observer'
+            self.report_type = 'NObs'
+        
        
         #Connec to NightLog       
         self.nl_file = self.DESI_Log.nightlog_html
@@ -285,7 +289,7 @@ class Report(Layout):
                 except Exception as e:
                     self.connect_txt.text = 'Error with Meta Data File: {}'.format(e)
             else:
-                self.init_layout.children[8] = self.update_layout
+                self.init_layout.children[10] = self.update_layout
                 self.update_log_status = True
 
             contributer_file = self.DESI_Log._open_kpno_file_first(self.DESI_Log.contributer_file)
@@ -364,9 +368,10 @@ class Report(Layout):
             self.DESI_Log.write_intro()
             self.display_current_header()
             self.update_log_status = False
-            self.intro_layout.children[8] = self.init_btn
+            self.intro_layout.children[10] = self.init_btn
         else:
-            self.intro_layout.children[8] = self.update_layout
+            self.intro_layout.children[10] = self.update_layout
+            self.update_log_status = True
 
 
     def display_current_header(self):

@@ -20,8 +20,7 @@ from bokeh.plotting import figure
 import nightlog as nl
 
 class Layout():
-    def __init__(self, report_type):
-        self.report_type = report_type
+    def __init__(self):
         self.line = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.line2 = Div(text='-----------------------------------------------------------------------------------------------------------------------------', width=1000)
         self.lo_names = ['None ','Liz Buckley-Geer','Ann Elliott','Parker Fagrelius','Satya Gontcho A Gontcho','James Lasker','Martin Landriau','Claire Poppett','Michael Schubnell','Luke Tyas','Other ']
@@ -40,17 +39,13 @@ class Layout():
         self.nl_dir = os.environ['NL_DIR']  
 
     def get_intro_layout(self):
-        self.contributer_list = TextAreaInput(placeholder='Contributer names (include all)', rows=2, cols=3, title='Names of all Contributers')
-        self.contributer_btn = Button(label='Update Contributer List', css_classes=['add_button'], width=300)
+        self.contributer_list = TextAreaInput(placeholder='Contributer names (include all)', rows=2, cols=2, title='Names of all Contributers')
+        self.contributer_btn = Button(label='Update Contributer List', css_classes=['add_button'], width=200)
 
         self.connect_hdr = Div(text="Connect to Night Log", css_classes=['subt-style'], width=800)
-        self.obs_type = RadioButtonGroup(labels=["LO", "SO"], active=None)
-        self.connect_btn = Button(label="Connect to  Night Log", css_classes=['connect_button'])
+        self.obs_type = RadioButtonGroup(labels=["Lead Observer", "Support Observer", "Non-Observer"], css_classes=['add_button'], active=None)
+        self.connect_btn = Button(label="Connect to  Night Log", css_classes=['connect_button'], width=200)
         self.date_init = Select(title="Night Logs")
-
-        self.update_log_status = False
-        self.update_layout = [[self.so_name_1, self.so_name_2], [self.LO_1, self.LO_2], self.OA, self.init_btn]
-        self.init_btn = Button(label="Update Tonight's Log", css_classes=['init_button'], width=200)
 
         self.so_name_1 = TextInput(title='Support Observing Scientist 1', placeholder='Sally Ride')
         self.so_name_2 = TextInput(title='Support Observing Scientist 2', placeholder="Mae Jemison")
@@ -58,19 +53,23 @@ class Layout():
         self.LO_2 = Select(title='Lead Observer 2', value='None', options=self.lo_names)
         self.OA = Select(title='Observing Assistant', value='Choose One', options=self.oa_names)
 
+        self.update_log_status = False
+        self.init_btn = Button(label="Update Night Log Info", css_classes=['init_button'], width=200)
+        self.update_layout = layout([[self.so_name_1, self.so_name_2], [self.LO_1, self.LO_2], self.OA, self.init_btn])
+
         self.intro_layout = layout(children=[self.buffer,
                                     self.title,
                                     [self.page_logo, self.instructions],
                                     self.connect_hdr,
-                                    [self.date_init, self.obs_type, self.connect_btn],
+                                    [self.date_init, [self.obs_type, self.connect_btn]],
                                     self.connect_txt,
                                     self.line,
-                                    self.init_btn,
-                                    self.line2,
-                                    self.contributer_list,
+                                    self.contributer_list, 
                                     self.contributer_btn,
+                                    self.line2,
+                                    self.init_btn,
                                     self.intro_txt], width=1000)
-        self.intro_tab = Panel(child=self.intro_layout, title="Initialization")
+        self.intro_tab = Panel(child=self.intro_layout, title="Connect")
 
     def get_plan_layout(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
@@ -82,12 +81,12 @@ class Layout():
         """
         self.plan_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
         self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'], width=500)
-        self.plan_order = TextInput(title='Plan Index (see Current NL):', placeholder='0', width=75)
-        self.plan_input = TextAreaInput(placeholder="description", rows=5, cols=3, title="Enter item of the night plan:",max_length=5000, width=800)
-        self.plan_btn = Button(label='Update', css_classes=['add_button'], width=75)
-        self.plan_new_btn = Button(label='Add New', css_classes=['add_button'])
-        self.plan_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
-        self.plan_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
+        self.plan_order = TextInput(title='Plan Index:', placeholder='0', width=75)
+        self.plan_input = TextAreaInput(placeholder="description", rows=2, cols=2, title="Enter item of the night plan:",max_length=5000, width=800)
+        self.plan_btn = Button(label='Update', css_classes=['add_button'], width=150)
+        self.plan_new_btn = Button(label='Add New', css_classes=['add_button'], width=150)
+        self.plan_load_btn = Button(label='Load', css_classes=['connect_button'], width=150)
+        self.plan_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=150)
         self.plan_alert = Div(text=' ', css_classes=['alert-style'])
 
         plan_layout = layout([self.buffer,
@@ -95,8 +94,9 @@ class Layout():
                             self.plan_subtitle,
                             self.plan_inst,
                             self.plan_txt,
-                            [self.plan_input, [self.plan_order, self.plan_load_btn, self.plan_btn, self.plan_delete_btn]],
-                            [self.plan_new_btn],
+                            self.plan_input,
+                            [self.plan_order, self.plan_load_btn],
+                            [self.plan_new_btn, self.plan_btn, self.plan_delete_btn],
                             self.plan_alert], width=1000)
         self.plan_tab = Panel(child=plan_layout, title="Night Plan")
 
@@ -124,17 +124,17 @@ class Layout():
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345',  width=200)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', width=200)
         self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', width=200)
-        self.milestone_btn = Button(label='Update', css_classes=['add_button'],width=75)
-        self.milestone_new_btn = Button(label='Add New Milestone', css_classes=['add_button'], width=300)
-        self.milestone_load_num = TextInput(title='Milestone Index', placeholder='0',  width=75)
-        self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
-        self.milestone_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
+        self.milestone_btn = Button(label='Update', css_classes=['add_button'],width=150)
+        self.milestone_new_btn = Button(label='Add New Milestone', css_classes=['add_button'], width=150)
+        self.milestone_load_num = TextInput(title='Index', placeholder='0',  width=75)
+        self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=150)
+        self.milestone_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=150)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
 
         self.summary_input = TextAreaInput(rows=8, placeholder='End of Night Summary', title='End of Night Summary', max_length=5000)
         self.summary_option = RadioButtonGroup(labels=['First Half','Second Half'], active=0, width=200)
         self.summary_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
-        self.summary_btn = Button(label='Add/Update Summary', css_classes=['add_button'], width=300)
+        self.summary_btn = Button(label='Add/Update Summary', css_classes=['add_button'], width=150)
 
         self.obs_time = TextInput(title ='ObsTime', placeholder='10', width=100)
         self.test_time = TextInput(title ='TestTime', placeholder='0', width=100)
@@ -142,15 +142,17 @@ class Layout():
         self.weather_loss_time = TextInput(title ='WeathLoss', placeholder='0', width=100)
         self.tel_loss_time = TextInput(title ='TelLoss', placeholder='0', width=100)
         self.total_time = Div(text='Time Documented (hrs): ', width=100) #add all times together
-        self.time_btn = Button(label='Add/Update Time Use', css_classes=['add_button'], width=300)
+        self.time_btn = Button(label='Add/Update Time Use', css_classes=['add_button'], width=150)
         
         #For Lead Observer
         milestone_layout_0 = layout([self.buffer,
                                 self.title,
                                 self.milestone_subtitle,
                                 self.milestone_inst,
-                                [[self.milestone_input, [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl]],[self.milestone_load_num, self.milestone_load_btn, self.milestone_btn, self.milestone_delete_btn]] ,
-                                [self.milestone_new_btn],
+                                self.milestone_input,
+                                [self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl],
+                                [self.milestone_load_num, self.milestone_load_btn],
+                                [self.milestone_new_btn, self.milestone_btn, self.milestone_delete_btn] ,
                                 self.milestone_alert,
                                 self.line,
                                 [self.summary_option,self.summary_load_btn],
@@ -337,7 +339,7 @@ class Layout():
                    TableColumn(field='tput', title='Throughput', width=100),
                    TableColumn(field='skylevel', title='Sky Level', width=100)] #, 
 
-        self.weather_table = DataTable(source=self.weather_source, columns=obs_columns, fit_columns=False, width=1000, height=350)
+        self.weather_table = DataTable(source=self.weather_source, columns=obs_columns, fit_columns=False, width=1000, height=300)
 
         telem_data = pd.DataFrame(columns =
         ['time','exp','mirror_temp','truss_temp','air_temp','humidity','wind_speed','airmass','exptime','seeing','tput','skylevel'])
@@ -403,7 +405,6 @@ class Layout():
         <ul>
         <li>Once an hour, complete the checklist below.</li>
         <li>In order to <b>Submit</b>, you must check each task. You do not need to include a comment.</li>
-        <li>Often, completing these tasks requires communication with the LO.</li> 
         </ul>
         """
         self.checklist_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
@@ -413,8 +414,7 @@ class Layout():
         self.check_btn = Button(label='Submit', css_classes=['add_button'])
         self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
         
-        self.checklist.labels = self.checklist_options
-        self.check_subtitle = Div(text="OS Checklist", css_classes=['subt-style'])
+        self.check_subtitle = Div(text="LO Checklist", css_classes=['subt-style'])
         
         checklist_layout = layout(self.buffer,self.title,
                                 self.check_subtitle,
