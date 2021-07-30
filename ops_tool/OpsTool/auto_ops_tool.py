@@ -37,11 +37,11 @@ class AutoOpsTool(object):
         else:
             self.location = 'home'
 
-        self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
-        self.credentials = os.path.join(os.environ['OPSTOOL_DIR'],"google_access_account.json")
-        self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
-        self.client = gspread.authorize(self.creds)
-        self.df = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'],'obs_schedule_official.csv'))
+        #self.url = "https://docs.google.com/spreadsheets/d/1vSPSRnhkG7lLRn74pKBqHwSKsVEKMLFnX1nT-ofKWQE/edit#gid=0"
+        #self.credentials = os.path.join(os.environ['OPSTOOL_DIR'],"google_access_account.json")
+        #self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
+        #self.client = gspread.authorize(self.creds)
+        self.df = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'],'obs_schedule_official_2.csv'))
         self.df['Date'] = pd.to_datetime(self.df['Date'], format='%m/%d/%y')
         self.user_info = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'],'user_info.csv'))
         self.today = datetime.datetime.now().strftime('%Y-%m-%d')
@@ -103,7 +103,7 @@ class AutoOpsTool(object):
 
         self.today_emails = {}
         text = ''
-        for col in ['LO_1','LO_2','OS_1','OS_2','DQS_1','DQS_2']:
+        for col in ['LO','SO_1','SO_2']:
             try:
                 if str(today[col]).strip() == str(tomorrow[col]).strip():
                     pass
@@ -166,6 +166,7 @@ class AutoOpsTool(object):
             self.send_email(subject, email, msg)
 
             msgfile.close()
+
         elif type == 'yesterday':
             subject = 'DESI Observing Feedback'
             msg = 'Hello {},<br>'.format(name)
@@ -174,6 +175,7 @@ class AutoOpsTool(object):
             self.send_email(subject, email, msg)
 
             msgfile.close()
+
         elif type == 'two_weeks':
             subject = 'Preparation for DESI Observing'
             msg = 'Hello {},<br><br>'.format(name)
@@ -181,10 +183,10 @@ class AutoOpsTool(object):
                 msg += '<b> Shift starting {}</b><br><br>'.format(date)
             else:
                 msg += '<b> Shift starting {}</b><br><br>'.format(self.two_weeks_start.value)
-            if self.observer == 'OS':
-                msgfile = open(os.path.join(msg_dir,'two_week_info_msg_os.html'))
-            elif self.observer == 'DQS':
-                msgfile = open(os.path.join(msg_dir,'two_week_info_msg_dqs.html'))
+            if self.observer == 'SO':
+                msgfile = open(os.path.join(msg_dir,'two_week_info_msg_so.html'))
+            elif self.observer == 'LO':
+                msgfile = open(os.path.join(msg_dir,'two_week_info_msg_lo.html'))
             msg += msgfile.read()
             self.send_email(subject, email, msg)
 
