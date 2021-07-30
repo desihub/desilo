@@ -20,6 +20,7 @@ from bokeh.models.widgets.markups import Div, PreText
 from bokeh.layouts import layout, column, row
 from bokeh.models.widgets import Panel, Tabs
 import datetime
+import socket
 
 
 from bokeh.layouts import column, layout, row, gridplot
@@ -59,6 +60,12 @@ class OpsTool(object):
         self.today = datetime.datetime.now().strftime('%Y-%m-%d')
         self.today_df = self.df[self.df.Date == self.today]
         self.today_source = ColumnDataSource(self.today_df)
+
+        hostname = socket.gethostname()
+        if 'desi' in hostname:
+            self.location = 'kpno'
+        else:
+            self.location = 'home'
 
         today_columns = [
             TableColumn(field="Date", title='Date',formatter=DateFormatter()),
@@ -361,21 +368,33 @@ class OpsTool(object):
             msg.attach(msgText)
             text = msg.as_string()
 
-            smtp_server = "smtp.gmail.com"
-            port = 587
-            password = input("Input password: ")
+            if self.location == 'kpno':
+                smtp_server = 'localhost'
+                try:
+                    server = smtplib.SMTP(smtp_server)
+                    server.sendmail(sender, all_addrs, text)
+                    server.quit()
+                except Exception as e:
+                    self.logger.debug(e)
+            elif self.location == 'home':
+                smtp_server = 'smtp.gmail.com'
+                port = 587
+                password = os.environ['OPS_PW'] #input("Input password: ")
 
-            context = ssl.create_default_context()
-            try:
-                server = smtplib.SMTP(smtp_server,port)
-                server.ehlo() # Can be omitted
-                server.starttls(context=context) # Secure the connection
-                server.ehlo() # Can be omitted
-                server.login(sender, password)
-                server.sendmail(sender, all_addrs, text)
-            except Exception as e:
-                # Print any error messages to stdout
-                print(e)
+                context = ssl.create_default_context()
+                try:
+                    server = smtplib.SMTP(smtp_server,port)
+                    server.ehlo() # Can be omitted
+                    server.starttls(context=context) # Secure the connection
+                    server.ehlo() # Can be omitted
+                    server.login(sender, password)
+                    server.sendmail(sender, all_addrs, text)
+                    server.quit()
+                except Exception as e:
+                    # Print any error messages to stdout
+                    self.logger.debug(e)
+            else:
+                self.logger.debug('Location not identified')
 
 
     def layout(self):
