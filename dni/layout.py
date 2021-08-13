@@ -94,8 +94,7 @@ class Layout():
                             self.plan_subtitle,
                             self.plan_inst,
                             self.plan_txt,
-                            self.plan_input,
-                            [self.plan_order, self.plan_load_btn],
+                            [self.plan_input,[self.plan_order, self.plan_load_btn]],
                             [self.plan_new_btn, self.plan_btn, self.plan_delete_btn],
                             self.plan_alert], width=1000)
         self.plan_tab = Panel(child=plan_layout, title="Night Plan")
@@ -150,8 +149,7 @@ class Layout():
                                 self.milestone_subtitle,
                                 self.milestone_inst,
                                 self.milestone_input,
-                                [self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl],
-                                [self.milestone_load_num, self.milestone_load_btn],
+                                [[self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl],[self.milestone_load_num, self.milestone_load_btn]],
                                 [self.milestone_new_btn, self.milestone_btn, self.milestone_delete_btn] ,
                                 self.milestone_alert,
                                 self.line,
@@ -164,9 +162,9 @@ class Layout():
         milestone_layout_1 = layout([self.buffer,
                                 self.title,
                                 self.milestone_subtitle,
-                                self.milestone_inst,
-                                [[self.milestone_input, [self.milestone_exp_start,self.milestone_exp_end, self.milestone_exp_excl]],[self.milestone_load_num, self.milestone_load_btn, self.milestone_btn, self.milestone_delete_btn]] ,
-                                [self.milestone_new_btn],
+                                self.milestone_input,
+                                [[self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl],[self.milestone_load_num, self.milestone_load_btn]],
+                                [self.milestone_new_btn, self.milestone_btn, self.milestone_delete_btn],
                                 self.milestone_alert,
                                 self.line,
                                 [self.summary_option,self.summary_load_btn],
@@ -473,7 +471,7 @@ class Layout():
     def get_ns_layout(self):
         self.ns_subtitle = Div(text='Night Summaries', css_classes=['subt-style'])
         self.ns_inst = Div(text='Enter a date to get previously submitted NightLogs', css_classes=['inst-style'])
-        self.ns_date_btn = Button(label='Get NightLog', css_classes=['add_button'])
+        self.ns_date_btn = Button(label='Get NightLog', css_classes=['init_button'])
         self.ns_date = datetime.datetime.now().strftime('%Y%m%d') 
         self.ns_date_input = TextInput(title='Date', value=self.ns_date)
         self.ns_next_date_btn = Button(label='Next Night', css_classes=['add_button'])

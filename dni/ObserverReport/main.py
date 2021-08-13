@@ -56,7 +56,6 @@ class Obs_Report(Report):
 
     def run(self):
         self.get_layout()
-        self.time_tabs = [None, None, None, self.exp_time, self.prob_time, None, None, None]
 
         self.now_btn.on_click(self.time_is_now)
         self.init_btn.on_click(self.add_observer_info)

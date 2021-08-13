@@ -222,7 +222,7 @@ class NightLog(object):
         if tab == 'checklist':
             cols = ['user','Time','Comment']
             cl_files = self.obs_cl
-            file = cl_files[data[0]]
+            file = self.obs_cl
         if tab == 'nobs_exp':
             cols = ['Time','Comment','Exp_Start','Name','img_name']
             file = self.nobs_exp

@@ -255,12 +255,19 @@ class Report(Layout):
         self.observer = self.obs_type.active #0=LO; 1=SO
         if self.observer == 0:
             self.layout.tabs = [self.intro_tab, self.plan_tab, self.milestone_tab_0, self.exp_tab_0, self.prob_tab, self.weather_tab_0, self.check_tab,  self.nl_tab_0, self.ns_tab]
+            self.time_tabs = [None, None, None, self.exp_time, self.prob_time, None, None, None]
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
-            self.report_type = 'Obs'
+            self.report_type = 'LO'
         elif self.observer == 1:
             self.layout.tabs = [self.intro_tab, self.milestone_tab_1, self.exp_tab_1, self.prob_tab, self.weather_tab_1, self.nl_tab_1, self.ns_tab]
+            self.time_tabs = [None, None, self.exp_time, self.prob_time, None, None, None]
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
-            self.report_type = 'Obs'
+            self.report_type = 'SO'
+        elif self.observer == 2:
+            self.layout.tabs = [self.intro_tab, self.exp_tab_0, self.prob_tab, self.weather_tab_1, self.nl_tab_1, self.ns_tab]
+            self.time_tabs = [None, self.exp_time, self.prob_time, None, None, None]
+            self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
+            self.report_type = 'NObs'
         else:
             self.connect_txt.text = 'Please identify if you are an observer'
             self.report_type = 'NObs'
@@ -638,7 +645,7 @@ class Report(Layout):
     def prob_add(self):
         """Adds problem to nightlog
         """
-        name = self.your_name.value
+        name = self.report_type
         try:
             if self.prob_time.value in [None, 'None'," ",""]:
                 note = 'Enter a time'
@@ -682,16 +689,16 @@ class Report(Layout):
             comment = self.exp_comment.value.strip()
             time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
-        report_types = {'Obs':'obs_exp','NonObs':'nobs_exp'}
-        try:
-            img_name, img_data, preview = self.image_uploaded('comment')
-            now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%Y%m%dT%H:%M")
-            data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
-            self.DESI_Log.add_input(data, report_types[self.report_type],img_name=img_name, img_data=img_data)
-            self.exp_alert.text = 'Last Input was made @ {}: {}'.format(datetime.datetime.now().strftime("%H:%M"),self.exp_comment.value)
-            self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
-        except Exception as e:
-            self.exp_alert.text = 'Error with your Input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
+        report_types = {'LO':'obs_exp','SO':'obs_exp','NObs':'nobs_exp'}
+        #try:
+        img_name, img_data, preview = self.image_uploaded('comment')
+        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%Y%m%dT%H:%M")
+        data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
+        self.DESI_Log.add_input(data, report_types[self.report_type],img_name=img_name, img_data=img_data)
+        self.exp_alert.text = 'Last Input was made @ {}: {}'.format(datetime.datetime.now().strftime("%H:%M"),self.exp_comment.value)
+        self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
+        #except Exception as e:
+        #    self.exp_alert.text = 'Error with your Input @ {}: {}'.format(datetime.datetime.now().strftime('%H:%M'), e)
 
     def check_add(self):
         """add checklist time to Night Log
