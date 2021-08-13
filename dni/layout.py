@@ -39,7 +39,7 @@ class Layout():
         self.nl_dir = os.environ['NL_DIR']  
 
     def get_intro_layout(self):
-        self.contributer_list = TextAreaInput(placeholder='Contributer names (include all)', rows=2, cols=2, title='Names of all Contributers')
+        self.contributer_list = TextAreaInput(placeholder='Contributer names (include all)', rows=2, cols=1, title='Names of all Contributers')
         self.contributer_btn = Button(label='Update Contributer List', css_classes=['add_button'], width=200)
 
         self.connect_hdr = Div(text="Connect to Night Log", css_classes=['subt-style'], width=800)
@@ -83,10 +83,10 @@ class Layout():
         self.plan_txt = Div(text='<a href="https://desi.lbl.gov/trac/wiki/DESIOperations/ObservingPlans/">Tonights Plan Here</a>', css_classes=['inst-style'], width=500)
         self.plan_order = TextInput(title='Plan Index:', placeholder='0', width=75)
         self.plan_input = TextAreaInput(placeholder="description", rows=2, cols=2, title="Enter item of the night plan:",max_length=5000, width=800)
-        self.plan_btn = Button(label='Update', css_classes=['add_button'], width=150)
+        self.plan_btn = Button(label='Update', css_classes=['update_button'], width=150)
         self.plan_new_btn = Button(label='Add New', css_classes=['add_button'], width=150)
-        self.plan_load_btn = Button(label='Load', css_classes=['connect_button'], width=150)
-        self.plan_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=150)
+        self.plan_load_btn = Button(label='Load', css_classes=['load_button'], width=150)
+        self.plan_delete_btn = Button(label='Delete', css_classes=['delete_button'], width=150)
         self.plan_alert = Div(text=' ', css_classes=['alert-style'])
 
         plan_layout = layout([self.buffer,
@@ -124,16 +124,16 @@ class Layout():
         self.milestone_exp_start = TextInput(title ='Exposure Start', placeholder='12345',  width=200)
         self.milestone_exp_end = TextInput(title='Exposure End', placeholder='12345', width=200)
         self.milestone_exp_excl = TextInput(title='Excluded Exposures', placeholder='12346', width=200)
-        self.milestone_btn = Button(label='Update', css_classes=['add_button'],width=150)
-        self.milestone_new_btn = Button(label='Add New Milestone', css_classes=['add_button'], width=150)
+        self.milestone_btn = Button(label='Update', css_classes=['update_button'],width=150)
+        self.milestone_new_btn = Button(label='Add New', css_classes=['add_button'], width=150)
         self.milestone_load_num = TextInput(title='Index', placeholder='0',  width=75)
-        self.milestone_load_btn = Button(label='Load', css_classes=['connect_button'], width=150)
-        self.milestone_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=150)
+        self.milestone_load_btn = Button(label='Load', css_classes=['load_button'], width=150)
+        self.milestone_delete_btn = Button(label='Delete', css_classes=['delete_button'], width=150)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
 
         self.summary_input = TextAreaInput(rows=8, placeholder='End of Night Summary', title='End of Night Summary', max_length=5000)
         self.summary_option = RadioButtonGroup(labels=['First Half','Second Half'], active=0, width=200)
-        self.summary_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
+        self.summary_load_btn = Button(label='Load', css_classes=['load_button'], width=75)
         self.summary_btn = Button(label='Add/Update Summary', css_classes=['add_button'], width=150)
 
         self.obs_time = TextInput(title ='ObsTime', placeholder='10', width=100)
@@ -200,8 +200,8 @@ class Layout():
         self.exp_comment = TextAreaInput(title='Comment/Remark', placeholder='Humidity high for calibration lamps',rows=6, cols=5, width=800, max_length=10000)
         self.exp_time = TextInput(placeholder='20:07', width=100) #title ='Time in Kitt Peak local time*', 
         self.exp_btn = Button(label='Add/Update', css_classes=['add_button'], width=200)
-        self.exp_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
-        self.exp_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
+        self.exp_load_btn = Button(label='Load', css_classes=['load_button'], width=75)
+        self.exp_delete_btn = Button(label='Delete', css_classes=['delete_button'], width=75)
         self.exp_alert = Div(text=' ', css_classes=['alert-style'], width=500)
 
         self.exp_select = Select(title='List of Exposures', options=['None'],width=150)
@@ -221,7 +221,7 @@ class Layout():
 
         self.bad_alert = Div(text='', css_classes=['alert-style'], width=500)
         self.all_button = Button(label='Full exposure will be added to "bad exp list"', width=500, css_classes=['add_button'])
-        self.partial_button = Button(label='Exposure is only partially bad (only certain cameras)', width=500, css_classes=['connect_button'])
+        self.partial_button = Button(label='Exposure is only partially bad (only certain cameras)', width=500, css_classes=['add_button'])
 
         hdrs = [Div(text='Spectrograph {}: '.format(i), width=150) for i in range(10)]
         self.bad_cams_0 = CheckboxButtonGroup(labels=['All','B','R','Z'], active=[], orientation='horizontal', width=300)
@@ -297,8 +297,8 @@ class Layout():
         self.prob_alarm = TextInput(title='Alarm ID', placeholder='12', width=100)
         self.prob_action = TextAreaInput(title='Resolution/Action', placeholder='description', rows=10, cols=5, width=400, max_length=10000)
         self.prob_btn = Button(label='Add/Update', css_classes=['add_button'])
-        self.prob_load_btn = Button(label='Load', css_classes=['connect_button'], width=75)
-        self.prob_delete_btn = Button(label='Delete', css_classes=['connect_button'], width=75)
+        self.prob_load_btn = Button(label='Load', css_classes=['load_button'], width=75)
+        self.prob_delete_btn = Button(label='Delete', css_classes=['delete_button'], width=75)
         self.prob_alert = Div(text=' ', css_classes=['alert-style'])
 
         prob_layout = layout([self.buffer,self.title,
@@ -411,7 +411,7 @@ class Layout():
 
         self.check_time = TextInput(placeholder='20:07')
         self.check_alert = Div(text=" ", css_classes=['alert-style'])
-        self.check_btn = Button(label='Submit', css_classes=['add_button'])
+        self.check_btn = Button(label='Submit', css_classes=['connect_button'])
         self.check_comment = TextAreaInput(title='Comment', placeholder='comment if necessary', rows=3, cols=3)
         
         self.check_subtitle = Div(text="LO Checklist", css_classes=['subt-style'])
@@ -427,7 +427,6 @@ class Layout():
 
     def get_nl_layout(self):
         self.nl_subtitle = Div(text="Current DESI Night Log: {}".format(self.nl_file), css_classes=['subt-style'])
-        self.nl_btn = Button(label='Get Current DESI Night Log', css_classes=['connect_button'])
         self.nl_text = Div(text=" ", width=800)
         self.nl_alert = Div(text='You must be connected to a Night Log', css_classes=['alert-style'], width=500)
         self.nl_submit_btn = Button(label='Submit NightLog & Publish NightSummary (Only Press Once - this takes a few minutes)', width=800, css_classes=['add_button'])
@@ -478,7 +477,7 @@ class Layout():
         self.ns_date = datetime.datetime.now().strftime('%Y%m%d') 
         self.ns_date_input = TextInput(title='Date', value=self.ns_date)
         self.ns_next_date_btn = Button(label='Next Night', css_classes=['add_button'])
-        self.ns_last_date_btn = Button(label='Previous Night', css_classes=['add_button'])
+        self.ns_last_date_btn = Button(label='Previous Night', css_classes=['load_button'])
         self.ns_html = Div(text='',width=800)
 
         ns_layout = layout([self.buffer,

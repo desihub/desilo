@@ -685,6 +685,7 @@ class Report(Layout):
         report_types = {'Obs':'obs_exp','NonObs':'nobs_exp'}
         try:
             img_name, img_data, preview = self.image_uploaded('comment')
+            now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%Y%m%dT%H:%M")
             data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
             self.DESI_Log.add_input(data, report_types[self.report_type],img_name=img_name, img_data=img_data)
             self.exp_alert.text = 'Last Input was made @ {}: {}'.format(datetime.datetime.now().strftime("%H:%M"),self.exp_comment.value)

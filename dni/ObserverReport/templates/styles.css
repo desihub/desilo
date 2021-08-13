@@ -26,10 +26,30 @@
     color: black;
     width: 300px;
     font-size:12pt;
+    background-color: darkorange;
+    border-color: black;
+}
+.delete_button button.bk.bk-btn.bk-btn-default {
+    color: black;
+    width: 300px;
+    font-size:12pt;
     background-color: indianred;
     border-color: black;
 }
-
+.load_button button.bk.bk-btn.bk-btn-default {
+    color: black;
+    width: 300px;
+    font-size:12pt;
+    background-color: gold;
+    border-color: black;
+}
+.update_button button.bk.bk-btn.bk-btn-default {
+    color: black;
+    width: 300px;
+    font-size:12pt;
+    background-color: darksalmon;
+    border-color: black;
+}
 .bk-root .h1-title-style {
 	color: black;
 	width: 1000px;
