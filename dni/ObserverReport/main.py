@@ -43,6 +43,7 @@ class Obs_Report(Report):
     def get_layout(self):
         self.get_intro_layout()
         self.update_nl_list()
+        self.get_nonobs_layout()
         self.get_plan_layout()
         self.get_milestone_layout()
         self.get_exp_layout()
@@ -85,6 +86,11 @@ class Obs_Report(Report):
         self.ns_date_btn.on_click(self.get_nightsum)
         self.ns_next_date_btn.on_click(self.ns_next_date)
         self.ns_last_date_btn.on_click(self.ns_last_date)
+        self.nonobs_btn_exp.on_click(self.nonobs_entry_exp)
+        self.nonobs_btn_prob.on_click(self.nonobs_entry_prob)
+        self.all_button.on_click(self.add_all_to_bad_list)
+        self.partial_button.on_click(self.add_some_to_bad_list)
+        self.bad_add.on_click(self.bad_exp_add)
         
 OBS = Obs_Report()
 OBS.run()

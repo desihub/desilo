@@ -210,7 +210,7 @@ class NightLog(object):
             cols = ['Time','desc','temp','wind','humidity','seeing','tput','skylevel']
             file = self.weather
         if tab == 'problem':
-            cols = ['user','Time', 'Problem', 'alarm_id', 'action', 'name','img_name']
+            cols = ['Name','Time', 'Problem', 'alarm_id', 'action', 'img_name']
             file = self.obs_pb
             data.append(img_name)
         if tab == 'checklist':
@@ -321,8 +321,8 @@ class NightLog(object):
                 if not pd.isna(row['action']):
                     if str(row['action']) not in ['nan','None', " ", ""]:
                         filen.write('; Action: {}'.format(row['action']))
-                if row['user'] == 'Other':
-                    filen.write(' ({})'.format(row['name']))
+                if str(row['Name']) not in [np.nan, 'nan','None','',' ']:
+                    filen.write(' ({})'.format(str(row['Name'])))
                 if str(row['img_name']) not in [None,np.nan,'nan','',' ']:
                     self._write_image_tag(filen, row['img_name'])
                 filen.write('<br/>')
@@ -349,7 +349,7 @@ class NightLog(object):
         if os.path.exists(self.explist_file):
             exp_df = pd.read_csv(self.explist_file)
 
-        self.check_exp_times(f)
+        self.check_exp_times(self.obs_exp)
 
         obs_df = self._combine_compare_csv_files(self.obs_exp)
 
@@ -382,14 +382,13 @@ class NightLog(object):
                     except:
                         file.write("<b>{} Exp. {}</b>".format(self.write_time(os_['Time']), str(os_['Exp_Start'])))
                 else:
-                    file.write("<b>{}</b> {}<br/>".format(self.write_time(os_['Time']), os_['Comment']))
-                if str(os_['quality']) not in ['None','',' ']:
-                    file.write("<b><em>Data Quality:</em></b> {}, {} ({})<br/>".format(str(os_['Quality']),str(os_['Comment']),str(os_['Name'])))
+                    file.write("<b>{}</b>".format(self.write_time(os_['Time'])))
+                if str(os_['Quality']) not in [np.nan,'nan','None','',' ']:
+                    file.write("<b><em>- {} -</em></b> {} ({})<br/>".format(str(os_['Quality']),str(os_['Comment']),str(os_['Name'])))
                 else:
                     file.write(" {} ({})<br/>".format(str(os_['Comment']),str(os_['Name'])))
                 if str(os_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
                     self._write_image_tag(file, os_['img_name'])
-
 
             if len(df_['prob']) > 0:
                 prob_ = df_['prob'].iloc[0]
@@ -405,8 +404,8 @@ class NightLog(object):
                 if not pd.isna(prob_['action']):
                     if str(prob_['action']) not in ['nan','None', " ", ""]:
                         file.write('; Action: {}'.format(prob_['action']))
-                if prob_['user'] == 'Other':
-                    file.write(' ({})'.format(prob_['name']))
+                if str(prob_['Name']) not in ['None','nan',np.nan,'',' ']:
+                    file.write(' ({})'.format(prob_['Name']))
                 if str(prob_['img_name']) not in [None,np.nan,'nan','',' ']:
                     self._write_image_tag(file, prob_['img_name'])
                 file.write('<br/>')

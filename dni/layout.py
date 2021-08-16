@@ -70,6 +70,17 @@ class Layout():
                                     self.intro_txt], width=1000)
         self.intro_tab = Panel(child=self.intro_layout, title="Connect")
 
+    def get_nonobs_layout(self):
+        inst = """If you want to make an entry into the NightLog, please enter your name"""
+        self.nonobs_inst = Div(text=inst, css_classes=['inst-style'], width=1000)
+        self.nonobs_input_exp = TextInput(title='Your Name', placeholder='Vera Rubin', width=150)
+        self.nonobs_btn_exp = Button(label='Submit', css_classes=['init_button'], width=150)
+        self.nonobs_input_prob = TextInput(title='Your Name', placeholder='Vera Rubin', width=150)
+        self.nonobs_btn_prob = Button(label='Submit', css_classes=['init_button'], width=150)
+
+        self.nonobs_layout_exp = layout([self.nonobs_inst, self.nonobs_input_exp, self.nonobs_btn_exp], width=1000)
+        self.nonobs_layout_prob = layout([self.nonobs_inst, self.nonobs_input_prob, self.nonobs_btn_prob], width=1000)
+
     def get_plan_layout(self):
         self.plan_subtitle = Div(text="Night Plan", css_classes=['subt-style'])
         inst = """<ul>
@@ -275,6 +286,7 @@ class Layout():
                                             [self.exp_btn],
                                             self.exp_alert], width=1000)
         self.exp_tab_1 = Panel(child=self.exp_layout_1, title="Exposures")
+        self.exp_tab_2 = Panel(child=self.nonobs_layout_exp, title="Exposures")
 
     def get_prob_layout(self):
         self.prob_subtitle = Div(text="Problems", css_classes=['subt-style'])
@@ -310,6 +322,7 @@ class Layout():
                             self.prob_alert], width=1000)
 
         self.prob_tab = Panel(child=prob_layout, title="Problems")
+        self.prob_tab_1 = Panel(child=self.nonobs_layout_prob, title="Problems")
 
     def get_weather_layout(self):
     
