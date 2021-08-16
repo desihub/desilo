@@ -264,6 +264,7 @@ class Report(Layout):
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
             self.report_type = 'SO'
         elif self.observer == 2:
+            print('here')
             self.layout.tabs = [self.intro_tab, self.exp_tab_0, self.prob_tab, self.weather_tab_1, self.nl_tab_1, self.ns_tab]
             self.time_tabs = [None, self.exp_time, self.prob_time, None, None, None]
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
@@ -646,21 +647,22 @@ class Report(Layout):
         """Adds problem to nightlog
         """
         name = self.report_type
-        try:
-            if self.prob_time.value in [None, 'None'," ",""]:
-                note = 'Enter a time'
-            else:
-                img_name, img_data, preview = self.image_uploaded('problem')
-                data = [self.report_type, self.get_time(self.prob_time.value.strip()), self.prob_input.value.strip(), self.prob_alarm.value.strip(),
-                self.prob_action.value.strip(), name]
-                self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
+        note = ' '
+        #try:
+        if self.prob_time.value in [None, 'None'," ",""]:
+            note = 'Enter a time'
+        else:
+            img_name, img_data, preview = self.image_uploaded('problem')
+            data = [self.report_type, self.get_time(self.prob_time.value.strip()), self.prob_input.value.strip(), self.prob_alarm.value.strip(),
+            self.prob_action.value.strip(), name]
+            self.DESI_Log.add_input(data, 'problem',img_name=img_name, img_data=img_data)
 
-                self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
+            self.prob_alert.text = "Last Problem Input: '{}' at {}".format(self.prob_input.value.strip(), self.prob_time.value.strip())
 
-            self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
+        self.clear_input([self.prob_time, self.prob_input, self.prob_alarm, self.prob_action])
 
-        except Exception as e:
-            self.prob_alert.text = "Problem with your Input: {} - {}".format(note, e)
+        #except Exception as e:
+        #    self.prob_alert.text = "Problem with your Input: {} - {}".format(note, e)
 
     def exp_add(self):
         if self.os_exp_option.active == 0:
@@ -692,8 +694,8 @@ class Report(Layout):
         report_types = {'LO':'obs_exp','SO':'obs_exp','NObs':'nobs_exp'}
         #try:
         img_name, img_data, preview = self.image_uploaded('comment')
-        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%Y%m%dT%H:%M")
-        data = [self.get_time(now), exp_val, quality, self.exp_comment.value.strip()]
+        now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
+        data = [self.get_time(now), exp, quality, self.exp_comment.value.strip()]
         self.DESI_Log.add_input(data, report_types[self.report_type],img_name=img_name, img_data=img_data)
         self.exp_alert.text = 'Last Input was made @ {}: {}'.format(datetime.datetime.now().strftime("%H:%M"),self.exp_comment.value)
         self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])

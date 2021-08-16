@@ -64,8 +64,7 @@ class Layout():
                                     [self.date_init, [self.obs_type, self.connect_btn]],
                                     self.connect_txt,
                                     self.line,
-                                    self.contributer_list, 
-                                    self.contributer_btn,
+                                    [self.contributer_list, self.contributer_btn],
                                     self.line2,
                                     self.init_btn,
                                     self.intro_txt], width=1000)
@@ -85,7 +84,7 @@ class Layout():
         self.plan_input = TextAreaInput(placeholder="description", rows=2, cols=2, title="Enter item of the night plan:",max_length=5000, width=800)
         self.plan_btn = Button(label='Update', css_classes=['update_button'], width=150)
         self.plan_new_btn = Button(label='Add New', css_classes=['add_button'], width=150)
-        self.plan_load_btn = Button(label='Load', css_classes=['load_button'], width=150)
+        self.plan_load_btn = Button(label='Load', css_classes=['load_button'], width=75)
         self.plan_delete_btn = Button(label='Delete', css_classes=['delete_button'], width=150)
         self.plan_alert = Div(text=' ', css_classes=['alert-style'])
 
@@ -126,7 +125,7 @@ class Layout():
         self.milestone_btn = Button(label='Update', css_classes=['update_button'],width=150)
         self.milestone_new_btn = Button(label='Add New', css_classes=['add_button'], width=150)
         self.milestone_load_num = TextInput(title='Index', placeholder='0',  width=75)
-        self.milestone_load_btn = Button(label='Load', css_classes=['load_button'], width=150)
+        self.milestone_load_btn = Button(label='Load', css_classes=['load_button'], width=75)
         self.milestone_delete_btn = Button(label='Delete', css_classes=['delete_button'], width=150)
         self.milestone_alert = Div(text=' ', css_classes=['alert-style'])
 
@@ -148,8 +147,7 @@ class Layout():
                                 self.title,
                                 self.milestone_subtitle,
                                 self.milestone_inst,
-                                self.milestone_input,
-                                [[self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl],[self.milestone_load_num, self.milestone_load_btn]],
+                                [[self.milestone_input,[self.milestone_exp_start, self.milestone_exp_end, self.milestone_exp_excl]],[self.milestone_load_num, self.milestone_load_btn]],
                                 [self.milestone_new_btn, self.milestone_btn, self.milestone_delete_btn] ,
                                 self.milestone_alert,
                                 self.line,

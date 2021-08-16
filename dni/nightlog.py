@@ -46,7 +46,6 @@ class NightLog(object):
         self.nightlog_html = os.path.join(self.root_dir,'nightlog_{}.html'.format(self.location))
 
         self.obs_pb = os.path.join(self.obs_dir,'problems_{}.csv'.format(self.location))
-        self.nobs_pb = os.path.join(self.nobs_dir,'problems_{}.csv'.format(self.location))
 
         self.objectives = os.path.join(self.obs_dir,'objectives_{}.csv'.format(self.location))
         self.milestone = os.path.join(self.obs_dir,'milestones_{}.csv'.format(self.location))
@@ -192,8 +191,7 @@ class NightLog(object):
         if tab == 'milestone':
             file = self.milestone
         if tab == 'problem':
-            pb_files = {'Obs':self.obs_pb,'NonObs':self.nobs_pb}
-            file = pb_files[user]
+            file = self.obs_pb
         if tab == 'progress':
             exp_files = {'Obs':self.obs_exp,'NonObs':self.nobs_exp}
             file = exp_files[user]
@@ -216,8 +214,7 @@ class NightLog(object):
             file = self.weather
         if tab == 'problem':
             cols = ['user','Time', 'Problem', 'alarm_id', 'action', 'name','img_name']
-            pb_files = {'Obs':self.obs_pb,'NonObs':self.nobs_pb}
-            file = pb_files[data[0]]
+            file = self.obs_pb
             data.append(img_name)
         if tab == 'checklist':
             cols = ['user','Time','Comment']
@@ -287,7 +284,7 @@ class NightLog(object):
             filen.write("OS checklist completed at (Local time):")
             filen.write("<br/>")
             filen.write("<ul>")
-            for index, row in df_os.iterrows():
+            for index, row in df_obs.iterrows():
                 if (not pd.isna(row['Comment'])) & (str(row['Comment']) not in ['',' ','nan','None']):
                        filen.write("<li> {} - {}</li>".format(self.write_time(row['Time'], kp_only=True), row['Comment']))
                 else:
@@ -309,8 +306,7 @@ class NightLog(object):
 
     def write_problem(self, filen):
         df_obs = self._combine_compare_csv_files(self.obs_pb)
-        df_nobs = self._combine_compare_csv_files(self.nobs_pb)
-        dfs = [d for d in [df_obs, df_nobs] if d is not None]
+        dfs = [d for d in [df_obs] if d is not None]
         self.prob_df = None
         if len(dfs) > 0:
             if len(dfs) > 1:
@@ -498,10 +494,7 @@ class NightLog(object):
 
     def load_timestamp(self, time, user, exp_type):
 
-        if user == 'Obs':
-            files = {'exposure':self.obs_exp, 'problem':self.obs_pb}
-        elif user == 'NonObs':
-            files = {'exposure':self.nobs_exp, 'problem':self.nobs_pb}
+        files = {'exposure':self.obs_exp, 'problem':self.obs_pb}
 
         the_path = files[exp_type]
 
