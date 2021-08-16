@@ -40,7 +40,6 @@ class NightLog(object):
         self.root_dir = os.path.join(os.environ['NL_DIR'],self.obsday)
         self.image_dir = os.path.join(self.root_dir,'images')
         self.obs_dir = os.path.join(self.root_dir,"Observers")
-        self.nobs_dir = os.path.join(self.root_dir,"NonObservers")
 
         self.header_html = os.path.join(self.root_dir,'header_{}.html'.format(self.location))
         self.nightlog_html = os.path.join(self.root_dir,'nightlog_{}.html'.format(self.location))
@@ -52,7 +51,6 @@ class NightLog(object):
         self.obs_cl = os.path.join(self.obs_dir,'checklist_{}.csv'.format(self.location))
 
         self.obs_exp = os.path.join(self.obs_dir,'exposures_{}.csv'.format(self.location))
-        self.nobs_exp = os.path.join(self.nobs_dir,'exposures_{}.csv'.format(self.location))
 
         self.weather = os.path.join(self.obs_dir,'weather_{}.csv'.format(self.location))
         self.bad_exp_list = os.path.join(self.obs_dir,'bad_exp_list_{}.csv'.format(self.location))
@@ -78,7 +76,7 @@ class NightLog(object):
     def initializing(self):
         """ Creates the folders where all the files used to create the Night Log will be containted.
         """
-        for dir_ in [self.obs_dir, self.nobs_dir, self.image_dir]:
+        for dir_ in [self.obs_dir, self.image_dir]:
             if not os.path.exists(dir_):
                 os.makedirs(dir_)
 
@@ -193,8 +191,7 @@ class NightLog(object):
         if tab == 'problem':
             file = self.obs_pb
         if tab == 'progress':
-            exp_files = {'Obs':self.obs_exp,'NonObs':self.nobs_exp}
-            file = exp_files[user]
+            file = self.obs_exp
 
         df = pd.read_csv(file)
         idx = df[df.Time == time].index[0]
@@ -220,12 +217,8 @@ class NightLog(object):
             cols = ['user','Time','Comment']
             cl_files = self.obs_cl
             file = self.obs_cl
-        if tab == 'nobs_exp':
-            cols = ['Time','Comment','Exp_Start','Name','img_name']
-            file = self.nobs_exp
-            data.append(img_name)
-        if tab == 'obs_exp':
-            cols = ['Time','Exp_Start','Quality','Comment','img_name']
+        if tab == 'exp':
+            cols = ['Time','Exp_Start','Quality','Comment','Name','img_name']
             file = self.obs_exp
             data.append(img_name)
 
@@ -281,7 +274,7 @@ class NightLog(object):
     def write_checklist(self, filen):
         df_obs = self._combine_compare_csv_files(self.obs_cl)
         if df_obs is not None:
-            filen.write("OS checklist completed at (Local time):")
+            filen.write("Checklist completed at (Local time):")
             filen.write("<br/>")
             filen.write("<ul>")
             for index, row in df_obs.iterrows():
@@ -356,13 +349,11 @@ class NightLog(object):
         if os.path.exists(self.explist_file):
             exp_df = pd.read_csv(self.explist_file)
 
-        for f in [self.obs_exp, self.nobs_exp]:
-            self.check_exp_times(f)
+        self.check_exp_times(f)
 
         obs_df = self._combine_compare_csv_files(self.obs_exp)
-        nobs_df = self._combine_compare_csv_files(self.nobs_exp)
 
-        df_full = {'obs':obs_df,'nobs':nobs_df,'prob':self.prob_df}
+        df_full = {'obs':obs_df, 'prob':self.prob_df}
 
         times = []
         for df in df_full.values():
@@ -387,32 +378,18 @@ class NightLog(object):
                 if str(os_['Exp_Start']) not in [np.nan, None, 'nan', 'None','',' ']:
                     got_exp = str(os_['Exp_Start'])
                     try:
-                        file.write("<b>{} Exp. {}</b>  {}<br/>".format(self.write_time(os_['Time']), int(os_['Exp_Start']), os_['Comment']))
+                        file.write("<b>{} Exp. {}</b>".format(self.write_time(os_['Time']), int(os_['Exp_Start'])))
                     except:
-                        file.write("<b>{} Exp. {}</b>  {}<br/>".format(self.write_time(os_['Time']), str(os_['Exp_Start']), os_['Comment']))
+                        file.write("<b>{} Exp. {}</b>".format(self.write_time(os_['Time']), str(os_['Exp_Start'])))
                 else:
                     file.write("<b>{}</b> {}<br/>".format(self.write_time(os_['Time']), os_['Comment']))
-
-                    if str(os_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
-                        self._write_image_tag(file, os_['img_name'])
-
-            if len(df_['nobs']) > 0:
-                dqs_ = df_['nobs'].iloc[0]
-                if str(dqs_['Comment']) == 'nan':
-                    comment = ''
+                if str(os_['quality']) not in ['None','',' ']:
+                    file.write("<b><em>Data Quality:</em></b> {}, {} ({})<br/>".format(str(os_['Quality']),str(os_['Comment']),str(os_['Name'])))
                 else:
-                    comment = str(dqs_['Comment'])
-                if got_exp is not None:
-                    file.write(f"<b><em>Data Quality:</em></b> {dqs_['Quality']}; {comment}<br/>")
-                else:
-                    got_exp = str(dqs_['Exp_Start'])
-                    try:
-                        file.write("<b>{} Exp. {}</b> <b><em>Data Quality:</em></b> {}, {}<br/>".format(self.write_time(dqs_['Time']), int(dqs_['Exp_Start']), dqs_['Quality'],comment))
-                    except:
-                        file.write("<b>{} Exp. {}</b> <b><em>Data Quality:</em></b> {}, {}<br/>".format(self.write_time(dqs_['Time']), str(dqs_['Exp_Start']), dqs_['Quality'],comment))
+                    file.write(" {} ({})<br/>".format(str(os_['Comment']),str(os_['Name'])))
+                if str(os_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
+                    self._write_image_tag(file, os_['img_name'])
 
-                if str(dqs_['img_name']) not in [np.nan, None, 'nan', 'None','',' ']:
-                    self._write_image_tag(file, dqs_['img_name'])
 
             if len(df_['prob']) > 0:
                 prob_ = df_['prob'].iloc[0]
@@ -717,7 +694,7 @@ class NightLog(object):
         file_nl.write("<br/>")
 
         #Checklists
-        file_nl.write("<h3>Checklists</h3>")
+        file_nl.write("<h3>Checklist</h3>")
         self.write_checklist(file_nl)
         file_nl.write("<br/>")
 

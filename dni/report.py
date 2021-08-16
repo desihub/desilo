@@ -264,7 +264,6 @@ class Report(Layout):
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
             self.report_type = 'SO'
         elif self.observer == 2:
-            print('here')
             self.layout.tabs = [self.intro_tab, self.exp_tab_0, self.prob_tab, self.weather_tab_1, self.nl_tab_1, self.ns_tab]
             self.time_tabs = [None, self.exp_time, self.prob_time, None, None, None]
             self.connect_txt.text = 'Connected to Night Log for {}'.format(self.night)
@@ -376,9 +375,9 @@ class Report(Layout):
             self.DESI_Log.write_intro()
             self.display_current_header()
             self.update_log_status = False
-            self.intro_layout.children[10] = self.init_btn
+            self.intro_layout.children[9] = self.init_btn
         else:
-            self.intro_layout.children[10] = self.update_layout
+            self.intro_layout.children[9] = self.update_layout
             self.update_log_status = True
 
 
@@ -691,12 +690,20 @@ class Report(Layout):
             comment = self.exp_comment.value.strip()
             time = self.get_time(datetime.datetime.now().strftime("%H:%M"))
 
-        report_types = {'LO':'obs_exp','SO':'obs_exp','NObs':'nobs_exp'}
+        
+        if self.report_type == 'SO':
+            quality = self.quality_list[self.quality_btns.active]
+        else:
+            quality = None 
+        if self.report_type == 'NObs':
+            your_name = self.your_name.value
+        elif self.report_type in ['LO','SO']:
+            your_name = self.report_type
         #try:
         img_name, img_data, preview = self.image_uploaded('comment')
         now = datetime.datetime.now().astimezone(tz=self.kp_zone).strftime("%H:%M")
-        data = [self.get_time(now), exp, quality, self.exp_comment.value.strip()]
-        self.DESI_Log.add_input(data, report_types[self.report_type],img_name=img_name, img_data=img_data)
+        data = [self.get_time(now), exp, quality, your_name, self.exp_comment.value.strip()]
+        self.DESI_Log.add_input(data, 'exp', img_name=img_name, img_data=img_data)
         self.exp_alert.text = 'Last Input was made @ {}: {}'.format(datetime.datetime.now().strftime("%H:%M"),self.exp_comment.value)
         self.clear_input([self.exp_time, self.exp_enter, self.exp_select, self.exp_comment])
         #except Exception as e:
