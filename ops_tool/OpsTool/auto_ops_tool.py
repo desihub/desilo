@@ -19,11 +19,11 @@ import numpy as np
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-os.environ['OPSTOOL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/desilo/ops_tool/'
+os.environ['OPSTOOL_DIR'] = '/n/home/desiobserver/parkerf/desilo/ops_tool'
 
 class AutoOpsTool(object):
     def __init__(self):
-        self.test = True 
+        self.test = False 
 
         logging.basicConfig(filename=os.path.join(os.environ['OPSTOOL_DIR'], 'auto_ops_tool.log'),
                             level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -43,7 +43,7 @@ class AutoOpsTool(object):
         self.today_df = self.df[self.df.Date == self.today]
         self.logger.info('Running Ops Tool for {}'.format(self.today))
 
-        self.summary = '<b>Ops Update for {}<\b><br><br>'.format(self.today)
+        self.summary = '<b>Ops Update for {}</b><br><br>'.format(self.today)
 
     def get_email(self, name):
         """Retrieves email address of observer from user_info.csv. 
@@ -67,31 +67,31 @@ class AutoOpsTool(object):
             tomorrow = self.df.iloc[idx[0]+1]
             today = self.today_df.iloc[0]
         except Exception as e:
-            self.logger.debug(e)
+            self.logger.info(e)
 
         try:
             two_weeks = self.df.iloc[idx[0]+14]
         except Exception as e:
-            self.logger.debug("issue with 2 weeks: %s",e)
+            self.logger.info("issue with 2 weeks: %s",e)
             self.summary += "issue with 2 weeks: %s<br>" % e
             two_weeks = None
         try:
             two_weeks_minus_one = self.df.iloc[idx[0]+13]
         except Exception as e:
-            self.logger.debug("issue with 2 weeks: %s",e)
+            self.logger.info("issue with 2 weeks: %s",e)
             self.summary += "issue with 2 weeks: %s<br>" % e
             two_weeks_minus_one = None
         
         try:
             one_month = self.df.iloc[idx[0]+30]
         except Exception as e:
-            self.logger.debug('issue with 1 month: %s',e)
+            self.logger.info('issue with 1 month: %s',e)
             self.summary += 'issue with 1 month: %s<br>' % e
             one_month = None
         try:
             one_month_minus_one =self.df.iloc[idx[0]+29]
         except Exception as e:
-            self.logger.debug('issue with 1 month: %s',e)
+            self.logger.info('issue with 1 month: %s',e)
             self.summary += 'issue with 1 month: %s<br>' % e
             one_month_minus_one = None 
 
@@ -106,7 +106,7 @@ class AutoOpsTool(object):
                         self.today_emails[tomorrow[col]] = [self.get_email(tomorrow[col]), 'tomorrow', col, None]
                         self.timing = 'tomorrow'
             except Exception as e:
-                self.logger.debug("Issue with reading tomorrow's shift: %s",e)
+                self.logger.info("Issue with reading tomorrow's shift: %s",e)
                 self.summary += "Issue with reading tomorrow's shift: %s<br>" % e
 
             try:
@@ -116,7 +116,7 @@ class AutoOpsTool(object):
                     if str(two_weeks[col]) not in ['nan', '', ' ', 'None']:
                         self.today_emails[two_weeks[col]] = [self.get_email(two_weeks[col]), 'two_weeks', col, two_weeks['Date'].strftime('%Y-%m-%d')]
             except Exception as e:
-                self.logger.debug("Issue with reading shift 2 weeks from now: %s",e)
+                self.logger.info("Issue with reading shift 2 weeks from now: %s",e)
                 self.summary += "Issue with reading shift 2 weeks from now: %s<br>" % e
 
             try:
@@ -126,7 +126,7 @@ class AutoOpsTool(object):
                     if str(one_month[col]) not in ['nan','',' ','None']:
                         self.today_emails[one_month[col]] = [self.get_email(one_month[col]), 'one_month', col, one_month['Date'].strftime('%Y-%m-%d')]
             except Exception as e:
-                self.logger.debug("Issue with reading shift 1 month from now: %s",e)
+                self.logger.info("Issue with reading shift 1 month from now: %s",e)
                 self.summary += "Issue with reading shift 1 month from now: %s<br>" % e
 
             try:
@@ -136,14 +136,14 @@ class AutoOpsTool(object):
                     if str(today[col]) not in [np.nan, '', ' ','nan','None']:
                         self.today_emails[yesterday[col]] = [self.get_email(yesterday[col]), 'yesterday', col, None]
             except Exception as e:
-                self.logger.debug("Issue with reading yesterday's shift: %s",e)
+                self.logger.info("Issue with reading yesterday's shift: %s",e)
                 self.summary += "Issue with reading yesterday's shift: %s<br>" % e
 
     def email_all(self):
         """Call email_content() for each of the people gathered in the daily report
         """
         self.logger.info('Sending emails to the following people: %s', self.today_emails)
-        self.summary += 'Sending emails to the following people: %s<br>' % self.today_emails
+        self.summary += 'Sending emails to the following people: %s<br><br>' % self.today_emails
         for name, values in self.today_emails.items():
             obs_type = values[2].split('_')[0]
             self.email_content(name, values[0], values[1], values[3], obs_type)
@@ -205,7 +205,7 @@ class AutoOpsTool(object):
             msgfile.close()
 
         else:
-            self.logger.debug('Incorrect email_type sent')
+            self.logger.info('Incorrect email_type sent')
 
     def send_email(self, subject, obs_email, message):
         """Sends email to an observer from desioperations1@gmail.com using gmail smtp server
@@ -217,8 +217,8 @@ class AutoOpsTool(object):
             toaddrs = obs_email.split(';')
             toaddrs = [addr.strip() for addr in toaddrs]
             all_addrs = [x for x in toaddrs]
-            self.logger.debug('Sending email to ', toaddrs)
-            self.summary += 'Sending email to ', toaddrs
+            self.logger.info('Sending email to %s' % str(toaddrs))
+            self.summary += 'Sending email to %s<br>' % str(toaddrs)
 
             msg = MIMEMultipart('html')
             msg['Subject'] = subject
@@ -227,7 +227,7 @@ class AutoOpsTool(object):
                 msg['To'] = 'parfa30@gmail.com'
                 msg['CC'] = 'parker.fagrelius@noirlab.edu'
                 all_addrs = ['parfa30@gmail.com', 'parker.fagrelius@noirlab.edu']
-                self.logger.debug('test mode, no emails')
+                self.logger.info('test mode, no emails')
             else:
                 msg['To'] = ", ".join(toaddrs)
                 recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu']
@@ -246,8 +246,8 @@ class AutoOpsTool(object):
                     server.sendmail(sender, all_addrs, text)
                     server.quit()
                 except Exception as e:
-                    self.logger.debug(e)
-                    self.summary += 'Issue with emailing: %s\n' % e
+                    self.logger.info(e)
+                    self.summary += 'Issue with emailing: %s<br>' % e
 
             elif self.location == 'home':
                 smtp_server = 'smtp.gmail.com'
@@ -262,10 +262,10 @@ class AutoOpsTool(object):
                     server.sendmail(sender, all_addrs, text)
                     server.quit()
                 except Exception as e:
-                    self.logger.debug(e)
+                    self.logger.info(e)
                     self.summary += 'Issue with emailing: %s<br>' % e
             else:
-                self.logger.debug('Location not identified')
+                self.logger.info('Location not identified')
 
     def email_summary(self):
         subject = 'DESI Ops Tool Summary - {}'.format(self.today)
@@ -286,8 +286,9 @@ class AutoOpsTool(object):
                 server = smtplib.SMTP(smtp_server)
                 server.sendmail(sender, all_addrs, text)
                 server.quit()
+                self.logger.info('Sent email summary to Parker')
             except Exception as e:
-                self.logger.debug(e)
+                self.logger.info(e)
 
         elif self.location == 'home':
             smtp_server = 'smtp.gmail.com'
@@ -302,9 +303,9 @@ class AutoOpsTool(object):
                 server.sendmail(sender, all_addrs, text)
                 server.quit()
             except Exception as e:
-                self.logger.debug(e)
+                self.logger.info(e)
         else:
-            self.logger.debug('Location not identified')
+            self.logger.info('Location not identified')
         
     def run(self):
         self.daily_report()
