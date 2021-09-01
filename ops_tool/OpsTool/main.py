@@ -42,7 +42,7 @@ os.environ['OPSTOOL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/desilo/o
 
 class OpsTool(object):
     def __init__(self):
-        self.test = True
+        self.test = False 
 
         logging.basicConfig(filename=os.path.join(os.environ['OPSTOOL_DIR'], 'auto_ops_tool.log'), 
             level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
@@ -206,6 +206,10 @@ class OpsTool(object):
         name = self.one_month_name.value
         email = self.one_month_email.value
         t = 'one_month'
+        if str(self.one_month_start.value) not in ['nan','None','',' ']:
+            date = str(self.one_month_start.value)
+        else:
+            date = None
         self.email_content(name, email, t, None)
 
     def email_two_weeks(self):
@@ -216,7 +220,11 @@ class OpsTool(object):
         elif self.two_weeks_select.active == 1:
             self.observer = 'LO'
         t = 'two_weeks'
-        self.email_content(name, email, t, None)
+        if str(self.two_weeks_start.value) not in ['nan','None','',' ']:
+            date = str(self.two_weeks_start.value)
+        else:
+            date = None
+        self.email_content(name, email, t, date, obs_type=self.observer)
 
 
     def email_night_before(self):
@@ -291,10 +299,14 @@ class OpsTool(object):
                 msg += '<b> Shift starting {}</b><br><br>'.format(date)
             else:
                 msg += '<b> Shift starting {}</b><br><br>'.format(self.two_weeks_start.value)
+
+            print('here')
+            print(obs_type)
             if obs_type == 'SO':
                 msgfile = open(os.path.join(msg_dir,'two_week_info_msg_so.html'))
             elif obs_type == 'LO':
                 msgfile = open(os.path.join(msg_dir,'two_week_info_msg_lo.html'))
+
             msg += msgfile.read()
             self.send_email(subject, email, msg)
             msgfile.close()
@@ -324,7 +336,9 @@ class OpsTool(object):
             pass
         else:
             toaddrs = user_email.split(';')
+            print(toaddrs)
             toaddrs = [addr.strip() for addr in toaddrs]
+            print(toaddrs)
             all_addrs = [x for x in toaddrs]
 
 
