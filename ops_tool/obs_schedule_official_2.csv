@@ -47,10 +47,10 @@ Date,Comment,LO,SO_1,SO_2,OA,EM
 9/6/21,Summer Shutdown,None,None,None,None,None
 9/7/21,Summer Shutdown,None,None,None,None,None
 9/8/21,Shutdown,None,None,None,None,None
-9/9/21,Re-commissioning,Satya Gontcho A Gontcho,,,Doug Williams (if needed),"Paul Demmer, Dan Oswald"
-9/10/21,Re-commissioning,Satya Gontcho A Gontcho,,,Doug Williams (if needed),Paul Demmer
-9/11/21,Re-commissioning,Satya Gontcho A Gontcho,,,Doug Williams (if needed),Steven Lane
-9/12/21,Re-commissioning,Satya Gontcho A Gontcho,,,Amy Robertson,Steven Lane
+9/9/21,Re-commissioning,Satya Gontcho A Gontcho,None,None,Doug Williams (if needed),"Paul Demmer, Dan Oswald"
+9/10/21,Re-commissioning,Satya Gontcho A Gontcho,None,None,Doug Williams (if needed),Paul Demmer
+9/11/21,Re-commissioning,Satya Gontcho A Gontcho,None,None,Doug Williams (if needed),Steven Lane
+9/12/21,Re-commissioning,Satya Gontcho A Gontcho,None,None,Amy Robertson,Steven Lane
 9/13/21,Re-commissioning,Satya Gontcho A Gontcho,Arjun Dey,John Della Costa,Amy Robertson,Chris Brownewell
 9/14/21,Re-commissioning,James Lasker,Arjun Dey,John Della Costa,Amy Robertson,Chris Brownewell
 9/15/21,Re-commissioning,James Lasker,Christopher Manser,John Della Costa,Amy Robertson,"Paul Demmer, Chris Brownewell, Dan Oswald"
@@ -65,10 +65,10 @@ Date,Comment,LO,SO_1,SO_2,OA,EM
 9/24/21,,Martin Landriau,Sikandar Hanif,Umut Demirbozan,Anthony Paat,Paul Demmer
 9/25/21,,Martin Landriau,Sikandar Hanif,Umut Demirbozan,Anthony Paat,Steven Lane
 9/26/21,,Martin Landriau,Sikandar Hanif,Umut Demirbozan,Dave Summers,Steven Lane
-9/27/21,,Martin Landriau,Mark Gonzalez,Seshadri Nadathur,Dave Summers,"Steven Lane, Bill McCollam, Chris Brownewell"
-9/28/21,,Martin Landriau,Mark Gonzalez,Seshadri Nadathur,Dave Summers,"Bill McCollam, Chris Brownewell"
-9/29/21,,Luke Tyas,Mark Gonzalez,Seshadri Nadathur,Dave Summers,"Paul Demmer, Chris Brownewell, Dan Oswald"
-9/30/21,,Luke Tyas,Mark Gonzalez,Seshadri Nadathur,Anthony Paat,"Paul Demmer, Dan Oswald"
+9/27/21,,Martin Landriau,Nikhil Padmanabhan,Seshadri Nadathur,Dave Summers,"Steven Lane, Bill McCollam, Chris Brownewell"
+9/28/21,,Martin Landriau,Nikhil Padmanabhan,Seshadri Nadathur,Dave Summers,"Bill McCollam, Chris Brownewell"
+9/29/21,,Luke Tyas,Nikhil Padmanabhan,Seshadri Nadathur,Dave Summers,"Paul Demmer, Chris Brownewell, Dan Oswald"
+9/30/21,,Luke Tyas,Nikhil Padmanabhan,Seshadri Nadathur,Anthony Paat,"Paul Demmer, Dan Oswald"
 10/1/21,,Luke Tyas,Dylan Green,Andrew Cooper,Anthony Paat,"Paul Demmer, Dan Oswald"
 10/2/21,,Luke Tyas,Dylan Green,Andrew Cooper,Anthony Paat,Bill McCollam
 10/3/21,,Luke Tyas,Dylan Green,Andrew Cooper,Anthony Paat,Bill McCollam
