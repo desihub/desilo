@@ -17,8 +17,7 @@ RUN \
         lsb-release             \
         tzdata                  \
         vim                     \
-        wget		       \
-pip	
+        wget		       
 
 # Timezone to Berkeley
 
@@ -37,9 +36,10 @@ RUN \
     /opt/anaconda3/bin/conda install --yes                      \
 	    --channel conda-forge   \
             bokeh               \
-            pandas  
+            pandas              \
+            pip 
 
-RUN pip install gspread gspread_dataframe oauth2client            
+RUN /opt/anaconda3/bin/pip install --no-cache-dir -U gspread gspread_dataframe oauth2client            
 
 ENV PATH=/opt/anaconda3/bin:$PATH
 WORKDIR /srv
