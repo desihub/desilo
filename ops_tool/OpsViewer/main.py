@@ -80,9 +80,9 @@ class OpsViewer(object):
                     div.text = ''
                     div.css_classes = ['plain-style']
                 else:
-                    x = self.check_first_day(name,p)
+                    x = self.check_first_day(name,obs_)
                     div.text = x
-                    div.css_classes = [styles[p]]
+                    div.css_classes = [styles[obs_]]
 
                     #Unique class for remote LOs
                     if (obs_ in ['LO']) & (self.remote):
