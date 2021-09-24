@@ -19,6 +19,10 @@ import numpy as np
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
+import gspread
+from gspread_dataframe import get_as_dataframe
+from oauth2client.service_account import ServiceAccountCredentials
+
 os.environ['OPSTOOL_DIR'] = '/n/home/desiobserver/parkerf/desilo/ops_tool'
 
 class AutoOpsTool(object):
@@ -35,7 +39,15 @@ class AutoOpsTool(object):
         else:
             self.location = 'home'
 
-        self.df = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'],'obs_schedule_official_2.csv'))
+        self.url = "https://docs.google.com/spreadsheets/d/1nzShIvgfqqeibVcGpHzm7dSpjJ78vDtWz-3N0wV9hu0/edit#gid=0"
+        self.credentials = "./credentials.json"
+        self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
+        self.client = gspread.authorize(self.creds)
+        self.sheet = self.client.open_by_url(self.url).sheet1
+        self.df = get_as_dataframe(self.sheet, header=0)
+        self.df = self.df[['Date', 'Comment', 'LO', 'SO_1', 'SO_2', 'OA', 'EM']]
+
+        #self.df = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'],'obs_schedule_official_2.csv'))
         self.df['Date'] = pd.to_datetime(self.df['Date'], format='%m/%d/%y')
         self.user_info = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'],'user_info.csv'))
 
