@@ -40,12 +40,19 @@ class OpsViewer(object):
         self.comment = None
         self.this_df = None #Line in df for today
 
+        self.get_all_shifts = True
+        self.observers_list = []
+        self.shift_list = []
+        self.start_list = []
+        self.end_list = []
+
     def get_names(self):
         """
         * Pulls names for the selected date
         * Prints any comments for the day
         * Calls check_first_day for each observer to get length of shifts
         """
+
         self.this_df = self.df[self.df.Date == self.day]
         self.this_df = self.this_df.iloc[0]
         comm = str(self.this_df.Comment)
@@ -53,8 +60,8 @@ class OpsViewer(object):
             comm = ''
         self.comment = comm
 
-        divs = {'LO':self.lo, 'SO_1':self.so_1, 'SO_2':self.so_2, 'OA':self.oa, 'EM':self.em}
-        styles = {'LO':'lo-style', 'SO_1':'os-style', 'SO_2':'os-style', 'OA':'oa-style', 'EM':'em-style'}
+        divs = {'LO':self.lo, 'SO_1':self.so_1, 'SO_2':self.so_2, 'SVY':self.svy, 'OA':self.oa, 'EM':self.em}
+        styles = {'LO':'lo-style', 'SO_1':'os-style', 'SO_2':'os-style', 'SVY':'svy-style','OA':'oa-style', 'EM':'em-style'}
         for obs_, div in divs.items():
             try:
                 self.df[obs_] = self.df[obs_].str.strip()
@@ -108,11 +115,16 @@ class OpsViewer(object):
             xx = pd.DataFrame({'BeginDate':self.df.groupby('value_grp').Date.first(), 
                                 'EndDate':self.df.groupby('value_grp').Date.last(),
                                 'Consecutive':self.df.groupby('value_grp').size()},).reset_index(drop=True)
-
             xx.set_index('EndDate', inplace=True, drop=False)
 
             xxx = xx.sort_index().truncate(before='{}'.format(self.day))
             xxx = xxx.iloc[0]
+            if ops_type in ['LO','SO_1','SO_2']:
+                self.observers_list.append(name)
+                self.shift_list.append(ops_type)
+                self.start_list.append(xxx[['BeginDate']].values[0].date().strftime('%m/%d/%Y'))
+                self.end_list.append(xxx[['EndDate']].values[0].date().strftime('%m/%d/%Y'))
+                
             xxx['BT_ts'] = pd.Timestamp(xxx.BeginDate)
             xxx['today_ts'] = pd.Timestamp(self.day)
             days = abs((xxx.BT_ts - xxx.today_ts).days) + 1
@@ -126,9 +138,25 @@ class OpsViewer(object):
         """
         Shows schedule for entered day
         """
-        self.day = self.enter_date.value
-        self.date_title.text = 'DESI Operations Schedule for {}'.format(self.day)
-        self.get_names()
+        if self.get_all_shifts:
+            current = pd.to_datetime('2021-09-13', format='%Y-%m-%d')
+            for day in range(140):
+                next_day = current + pd.Timedelta(days=day)
+                self.day = next_day.strftime('%Y-%m-%d')
+                self.get_names()
+            all_shifts = pd.DataFrame(columns=['Observer','Shift','Start','End'])
+            all_shifts['Observer'] = np.array(self.observers_list)
+            all_shifts['Shift'] = np.array(self.shift_list)
+            all_shifts['Start'] = np.array(self.start_list)
+            all_shifts['End'] = np.array(self.end_list)
+            all_shifts.drop_duplicates(keep='first',inplace=True)
+            all_shifts.to_csv('all_shifts.csv',index=False)
+
+        else:
+            self.day = self.enter_date.value
+            self.date_title.text = 'DESI Operations Schedule for {}'.format(self.day)
+            self.get_names()
+
 
     def prev_day(self):
         """
@@ -167,6 +195,8 @@ class OpsViewer(object):
         self.oa_head = Div(text="OA: ", css_classes=['oa-style'], width=75)
         self.em = Div(text='Electronic Mainetenance', css_classes=['em-style'], width=400)
         self.em_head = Div(text='EM: ', css_classes=['em-style'], width=75)
+        self.svy = Div(text='Survey Planning', css_classes=['svy-style'], width=400)
+        self.svy_head = Div(text='SVY: ', css_classes=['svy-style'], width=75)
         self.buffer = Div(text='')
         self.date_before = Button(label='Previous Date', css_classes=['next_button'], width=200)
         self.date_after = Button(label='Next Date', css_classes=['next_button'], width=200)
@@ -177,6 +207,7 @@ class OpsViewer(object):
                               self.obs_comment,
                               [self.lo_head, self.lo],
                               [self.so_head, self.so_1, self.so_2],
+                              [self.svy_head, self.svy],
                               [self.oa_head, self.oa],
                               [self.em_head, self.em],
                               self.buffer,
@@ -192,6 +223,7 @@ class OpsViewer(object):
                          TableColumn(field='LO', title='LO', width=150),
                          TableColumn(field='SO_1', title='SO 1', width=150),
                          TableColumn(field='SO_2', title='SO 2', width=150),
+                         TableColumn(field='SVY', title='SVY', width=150),
                          TableColumn(field='OA', title='OA', width=150),
                          TableColumn(field='EM', title='EM', width=150)]
 
@@ -207,7 +239,7 @@ class OpsViewer(object):
         """
         self.sheet = self.client.open_by_url(self.url).sheet1
         self.df = get_as_dataframe(self.sheet, header=0)
-        self.df = self.df[['Date', 'Comment', 'LO', 'SO_1', 'SO_2', 'OA', 'EM']]
+        self.df = self.df[['Date', 'Comment', 'LO', 'SO_1', 'SO_2', 'SVY','OA', 'EM']]
         
         #self.df = pd.read_csv('obs_schedule_official_2.csv')
         self.df['Date'] = pd.to_datetime(self.df['Date'], format='%m/%d/%y')
