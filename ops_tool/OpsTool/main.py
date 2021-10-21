@@ -26,7 +26,7 @@ import socket
 from bokeh.layouts import column, layout, row, gridplot
 from bokeh.models.widgets import Panel
 from bokeh.models import CustomJS, ColumnDataSource, Select, Slider, CheckboxGroup, RadioButtonGroup
-from bokeh.models import ColumnDataSource, DataTable, DateFormatter, TableColumn
+from bokeh.models import ColumnDataSource, DataTable, DateFormatter, StringFormatter, BooleanFormatter, TableColumn
 from bokeh.models import CheckboxButtonGroup
 
 import gspread
@@ -42,26 +42,45 @@ os.environ['OPSTOOL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/desilo/o
 
 class OpsTool(object):
     def __init__(self):
-        self.test = False 
+        self.test = False
+        self.get_all_emails = False
 
         logging.basicConfig(filename=os.path.join(os.environ['OPSTOOL_DIR'], 'auto_ops_tool.log'), 
             level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
         self.logger = logging.getLogger(__name__)
 
-        self.url = "https://docs.google.com/spreadsheets/d/1nzShIvgfqqeibVcGpHzm7dSpjJ78vDtWz-3N0wV9hu0/edit#gid=0"
+        #self.url = "https://docs.google.com/spreadsheets/d/1nzShIvgfqqeibVcGpHzm7dSpjJ78vDtWz-3N0wV9hu0/edit#gid=0"
+        self.feedback_url = "https://docs.google.com/spreadsheets/d/1rivcM5d5U2_WcVTfNcLFQRkZSE8I55VuEdS3ui2e_VU/edit?resourcekey#gid=1162490958"
+        self.preops_url = 'https://docs.google.com/spreadsheets/d/1HkoRySeJmrU_K39L_jsFLLhXl2mCbzG9OPgacRRN1xU/edit?resourcekey#gid=1462663923'
         self.credentials = "./credentials.json"
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
         self.client = gspread.authorize(self.creds)
-        self.sheet = self.client.open_by_url(self.url).sheet1
-        self.df = get_as_dataframe(self.sheet, header=0)
-        self.df = self.df[['Date', 'Comment', 'LO', 'SO_1', 'SO_2', 'OA', 'EM']]
+        #self.sheet = self.client.open_by_url(self.url).sheet1
+        #self.df = get_as_dataframe(self.sheet, header=0)
+        #self.df = self.df[['Date', 'Comment', 'LO', 'SO_1', 'SO_2', 'OA', 'EM']]
 
-        #self.df = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'], 'obs_schedule_official_2.csv'))
+        self.feedback_sheet = self.client.open_by_url(self.feedback_url).sheet1
+        self.feedback_df = get_as_dataframe(self.feedback_sheet, header=0)
+
+        self.preops_sheet = self.client.open_by_url(self.preops_url).sheet1
+        self.preops_df = get_as_dataframe(self.preops_sheet, header=0)
+        for col in ['Timestamp','Your Name','Start date of your shift']:
+            self.preops_df[col] = self.preops_df[col].astype(str)
+
+        self.title = Div(text='Observing Operations Dashboard', css_classes=['h1-title-style'])
+
+        self.df = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'], 'obs_schedule_official_2.csv'))
         self.df['Date'] = pd.to_datetime(self.df['Date'], format='%m/%d/%y')
         self.user_info = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'], 'user_info.csv'))
         self.today = datetime.datetime.now().strftime('%Y-%m-%d')
         self.today_df = self.df[self.df.Date == self.today]
-        self.today_source = ColumnDataSource(self.today_df)
+
+        self.per_shift_filen = os.path.join(os.environ['OPSTOOL_DIR'], 'per_shift.csv') 
+        self.per_shift_df = pd.read_csv(self.per_shift_filen)
+        self.per_observer_filen = os.path.join(os.environ['OPSTOOL_DIR'], 'per_observer.csv')
+        self.per_observer_df = pd.read_csv(self.per_observer_filen)
+        for col in self.per_observer_df.columns:
+            self.per_observer_df[col] = self.per_observer_df[col].astype(str)
 
         hostname = socket.gethostname()
         if 'desi' in hostname:
@@ -69,13 +88,6 @@ class OpsTool(object):
         else:
             self.location = 'home'
 
-        today_columns = [
-            TableColumn(field="Date", title='Date',formatter=DateFormatter()),
-            TableColumn(field="LO", title='Lead Observer 1'),
-            TableColumn(field='SO_1', title='Support Observing Scientist 1'),
-            TableColumn(field='SO_2', title='Support Observing Scientist 2')]
-
-        self.data_table = DataTable(source=self.today_source, columns=today_columns, width=1000, height=50)
 
         all_names = []
         for name in np.unique(self.df.SO_1):
@@ -84,14 +96,59 @@ class OpsTool(object):
             all_names.append(name.strip())
         all_names = np.unique(all_names)
 
+        #Do just once at the beginning of the semester
+        # df = pd.DataFrame(columns=['Observer','Observed','VPN_Requested','VPN_Sent','VPN_Replied','VPN_Activated'])
+        # df['Observer'] = all_names
+        # self.per_observer_df = pd.concat([self.per_observer_df,df])
+        # self.per_observer_df.to_csv(self.per_observer_filen,index=False)
+
+
+        email_list = []
         print('These Names Dont have Emails:')
         for name in all_names:
             emails = self.user_info[self.user_info['name'] == name]['email']
             try:
                 email = emails.values[0]
-
+                email_list.append(email)
             except:
                 print(name)
+        if self.get_all_emails:
+            print(email_list)
+
+    def gave_feedback(self, shift_df):
+        """Expect columns to be Observer, Shift Type, Start, End
+        """
+        returns = []
+        for i, row in shift_df.iterrows():
+            obs = row['Observer']
+            these_rows = self.feedback_df[self.feedback_df['Observer Name'] == obs]
+            try:
+                last_row = these_rows.iloc[[-1]]
+                if row['Start'] == last_row['Observing Start'].values[0]:
+                    returns.append(last_row['Timestamp'].values[0])
+                else:
+                    returns.append('{}'.format(last_row['Timestamp'].values[0]))
+            except:
+                returns.append('None')
+        return returns
+
+    def filled_preops_form(self, shift_df):
+        """Expect columns to be Observer, Shift Type, Start, End
+        """
+        returns = []
+        for i, row in shift_df.iterrows():
+            obs = row['Observer']
+            these_rows = self.preops_df[self.preops_df['Your Name'] == obs.strip()]
+            try:
+                last_row = these_rows.iloc[[-1]]
+                if row['Start'] == last_row['Start date of your shift'].values[0]:
+                    returns.append(last_row['Timestamp'].values[0])
+                else:
+                    returns.append('{}'.format(last_row['Timestamp'].values[0]))
+            except:
+                returns.append('None')
+        return returns
+
 
     def get_email(self, name):
         try:
@@ -399,87 +456,198 @@ class OpsTool(object):
                 self.logger.debug('Location not identified')
 
 
-    def get_layout(self):
+    def table_source(self):
+        table_df = pd.merge(self.per_observer_df, self.per_shift_df, on=['Observer'],how='outer')
+
+        for col in ['Observed','Start','End','VPN_Requested','VPN_Sent','VPN_Replied','VPN_Activated']:
+            table_df[col] = table_df[col].astype(str)
+
+        table_df['Start_index'] = pd.to_datetime(table_df.Start, format='%m/%d/%Y')
+        table_df['End_index'] = pd.to_datetime(table_df.End, format='%m/%d/%Y')
+        today = datetime.datetime.now().strftime('%m/%d/%Y')
+
+        
+        current_df = table_df[(table_df.Start_index<=today)&(table_df.End_index>=today)]
+
+        los = table_df[table_df.Shift == 'LO']
+        so1 = table_df[table_df.Shift == 'SO_1']
+        so2 = table_df[table_df.Shift == 'SO_2']
+        prev_idx = []
+        prev_df = table_df.sort_values(by='End_index') #et_index('End_index',drop=False).sort_index()
+        for obs in ['LO','SO_1','SO_2']:
+            prev_idx.append(prev_df[(prev_df.End_index<today)&(prev_df.Shift == obs)].index.values[-1])
+        previous_df = prev_df.loc[prev_idx]
+
+        next_idx = []
+        next_d = table_df.sort_values(by='Start_index')
+        for obs in ['LO','SO_1','SO_2']:
+            next_idx.append(next_d[(next_d.Start_index>today)&(next_d.Shift == obs)].index.values[0])
+        next_df = next_d.loc[next_idx]
+
+
+        for df in [current_df, previous_df, next_df]:
+            df['feedback'] = self.gave_feedback(df)
+            df['pre_obs_form'] = self.filled_preops_form(df)
+
+        self.current_source = ColumnDataSource(current_df)
+        self.previous_source = ColumnDataSource(previous_df)
+        self.next_source = ColumnDataSource(next_df)
+
+
+    def get_main_layout(self):
+            #TableColumn(field='post_obs',title='Post Obs Email', formatter=StringFormatter()),
+            #TableColumn(field='one_month',title='One Month Email', formatter=StringFormatter()),
+            #TableColumn(field='two_week',title='Two Weeks Email', formatter=StringFormatter()),
+            #TableColumn(field='night_before',title='Night Before Email', formatter=StringFormatter()),
+
+        table_columns = [
+            TableColumn(field="Observer", title='Observer', width=200),
+            TableColumn(field='Observed', title='Observed', width=10),
+            TableColumn(field='Shift',title='Shift',formatter=StringFormatter(), width=50),
+            TableColumn(field='Start',title='Start', formatter=StringFormatter(),width=200),
+            TableColumn(field='End',title='End', formatter=StringFormatter(),width=200),
+            TableColumn(field='pre_obs_form',title='Pre-Obs Form', formatter=StringFormatter(),width=100),
+            TableColumn(field='feedback',title='Post-Obs Feedback', formatter=StringFormatter(),width=100),
+            TableColumn(field='VPN_Requested',title='VPN Requested', formatter=StringFormatter(),width=100),
+            TableColumn(field='VPN_Sent',title='VPN Email Sent', formatter=StringFormatter(),width=100),
+            TableColumn(field='VPN_Replied',title='VPN Replied', formatter=StringFormatter(),width=100),
+            TableColumn(field='VPN_Activated',title='VPN Activated', formatter=StringFormatter(),width=100),]
+
+
+        self.current_table = DataTable(source=self.current_source, columns=table_columns, editable=True, width=1800, height=100, css_classes=['badtable'])
+        self.previous_table = DataTable(source=self.previous_source, columns=table_columns, editable=True, width=1800, height=100, css_classes=['badtable'])
+        self.next_table = DataTable(source=self.next_source, columns=table_columns, editable=True, width=1800, height=100, css_classes=['badtable'])
+        current_title = Div(text='Current Shift', css_classes=['h1-title-style'])
+        previous_title = Div(text='Previous Shift', css_classes=['h1-title-style'])
+        next_title = Div(text='Next Shift', css_classes=['h1-title-style'])
+
         self.report = PreText(text=' ', css_classes=['box-style'])
         info = Div(text=' ')
-        title = Div(text='Operations Planning Tool', css_classes=['h1-title-style'])
-        today_title = Div(text="Today's Observers: ")
+        
+        desc = Div(text='Check out the Observing Schedule: https://obsschedule.desi.lbl.gov/OpsViewer ')
+        today_title = Div(text="PreObs Form: https://docs.google.com/spreadsheets/d/1HkoRySeJmrU_K39L_jsFLLhXl2mCbzG9OPgacRRN1xU/edit?resourcekey#gid=1462663923<br/>Feedback Form: https://docs.google.com/spreadsheets/d/1rivcM5d5U2_WcVTfNcLFQRkZSE8I55VuEdS3ui2e_VU/edit?resourcekey#gid=1162490958 ")
         night_report_title = Div(text='Daily Report: ', css_classes=['title-style'])
 
         self.line1 = Div(text='------------------------------------------------------------------')
         self.enter_date = TextInput(title='Date', placeholder='YYYY-MM-DD', width=200)
         self.date_btn = Button(label='Change date', width=200, css_classes=['change_button'])
+        self.last_save = Div(text='Last Saved: {}')
+        
+        #                  self.data_table,     
+        main_layout = layout([self.title,today_title,
+                  desc,
+                  current_title,
+                  self.current_table,
+                  previous_title,
+                  self.previous_table,
+                  next_title,
+                  self.next_table,
+                  self.last_save,
+                  night_report_title,
+                  self.report,
+                  ])
+        self.main_tab = Panel(child=main_layout, title='Main')
+
+    def get_sched_layout(self):
+        self.sched_source = ColumnDataSource(self.df)
+        sched_columns = [
+                   TableColumn(field='Date', title='Time', width=50,formatter=DateFormatter()),
+                   TableColumn(field='Comment', title='Comment', width=150),
+                   TableColumn(field='LO', title='Lead Obs. 1', width=75),
+                   TableColumn(field='SO_1', title='Supp. Obs. 1', width=75),
+                   TableColumn(field='SO_2', title='Supp. Obs. 2', width=75)] #, 
+
+        self.sched_table = DataTable(source=self.sched_source, columns=sched_columns, width=1000, height=500)
+        sched_layout = layout([self.title, self.sched_table])
+        self.sched_tab = Panel(child=sched_layout, title='Schedule')
+
+
+
+    def get_email_layout(self):
+        desc = """You can use this page to send emails to individual observers or use the "Semester Start Email" to 
+        send an email to each person in the new semester. Note that that auto_ops_tool.py is being run every day
+        with a cron job at desiobserver@desi-4. It essentially does what the "Send emails to all in report" button
+        does.
+        """
+        self.email_tab_desc = Div(text = desc)
         self.email_all_btn = Button(label='Send emails to all in report',width=200, css_classes=['change_button'])
-        self.update_df_btn = Button(label='Update DataFrame', width=200, css_classes=['next_button'])
 
         self.semester_start_btn = Button(label="Semester Start Email (emails all)", width=200, css_classes=['next_button'])
 
         self.one_month_email = TextInput(title='Email: ', placeholder='Serena Williams', width=200)
-        self.one_month_title = Div(text='One Month: ', css_classes=['title-style'])
+        self.one_month_title = Div(text='One Month: ', css_classes=['h1-title-style'])
         self.one_month_name = TextInput(title='Name: ', placeholder='Serena Williams', width=200)
         self.one_month_btn = Button(label="Email One Month Info", width=200, css_classes=['next_button'])
         self.one_month_start = TextInput(title='Date Start: ', placeholder='Month DD, YYYY',width=200)
 
         self.two_weeks_email = TextInput(title='Email: ', placeholder='Lindsay Vonn', width=200)
-        self.two_weeks_title = Div(text='Two Weeks: ', css_classes=['title-style'])
+        self.two_weeks_title = Div(text='Two Weeks: ', css_classes=['h1-title-style'])
         self.two_weeks_name = TextInput(title='Name: ', placeholder='Lindsay Vonn', width=200)
         self.two_weeks_btn = Button(label="Email Two Weeks Info", width=200, css_classes=['next_button'])
         self.two_weeks_start = TextInput(title='Date Start: ', placeholder='Month DD, YYYY', width=200)
         self.two_weeks_select = RadioButtonGroup(labels=['SO','LO'], active=0)
 
         self.night_before_email = TextInput(title='Email: ', placeholder='Mia Hamm', width=200)
-        self.night_before_title = Div(text='Night/Weekend Before : ', css_classes=['title-style'])
+        self.night_before_title = Div(text='Night/Weekend Before : ', css_classes=['h1-title-style'])
         self.night_before_name = TextInput(title='Name: ', placeholder='Mia Hamm', width=200)
         self.night_before_btn = Button(label="Email Night Before Info", width=200, css_classes=['next_button'])
         self.weekend_select = RadioButtonGroup(labels=['Tomorrow','Weekend'], active=0)
 
         self.follow_up_email = TextInput(title='Email: ', placeholder='Danica Patrick', width=200)
         self.follow_up_name = TextInput(title='Name: ', placeholder='Danica Patrick', width=200)
-        self.follow_up_title = Div(text='Follow Up: ', css_classes=['title-style'])
+        self.follow_up_title = Div(text='Follow Up: ', css_classes=['h1-title-style'])
         self.follow_up_btn = Button(label="Email Follow Up", width=200, css_classes=['next_button'])
-             
-        main_layout = layout([title,today_title,
-                  self.data_table,
-                  [self.enter_date, self.date_btn],
-                  night_report_title,
-                  self.report,
+
+        email_layout = layout([self.title,
+                  self.email_tab_desc, 
                   self.email_all_btn,
                   self.semester_start_btn,
-                  self.line1,
-                  [[self.one_month_title, self.one_month_name,self.one_month_email, self.one_month_start, self.one_month_btn],
+                  [self.one_month_title, self.one_month_name,self.one_month_email, self.one_month_start, self.one_month_btn],
                   [self.two_weeks_title,self.two_weeks_name,self.two_weeks_email, self.two_weeks_select,self.two_weeks_start,self.two_weeks_btn],
                   [self.night_before_title, self.night_before_name, self.weekend_select, self.night_before_email, self.night_before_btn],
-                  [self.follow_up_title,self.follow_up_name,self.follow_up_email, self.follow_up_btn]]])
-        main_tab = Panel(child=main_layout, title='Main')
+                  [self.follow_up_title,self.follow_up_name,self.follow_up_email, self.follow_up_btn]])
+        self.email_tab = Panel(child=email_layout, title='Email')
 
-        self.sched_source = ColumnDataSource(self.df)
-        sched_columns = [TableColumn(field='Day', title='Day', width=10),
-                   TableColumn(field='Date', title='Time', width=50,formatter=DateFormatter()),
-                   TableColumn(field='Comments', title='Comment', width=150),
-                   TableColumn(field='LO', title='Lead Obs. 1', width=75),
-                   TableColumn(field='SO_1', title='Supp. Obs. 1', width=75),
-                   TableColumn(field='SO_2', title='Supp. Obs. 2', width=75)] #, 
+    def update_observer_df(self):
+        per_obs_cols = ['Observed','VPN_Requested','VPN_Sent','VPN_Replied','VPN_Activated']
+        for tbl in [self.current_table, self.previous_table, self.next_table]:
+            new_df = tbl.source.to_df()
+            xx = self.per_observer_df[self.per_observer_df.Observer.isin(new_df.Observer)]
 
-        self.sched_table = DataTable(source=self.sched_source, columns=sched_columns, width=1000, height=500)
-        sched_layout = layout([title, self.sched_table])
-        sched_tab = Panel(child=sched_layout, title='Schedule')
+            for i, row in xx.iterrows():
+                obs = row['Observer']
+                x = new_df[new_df.Observer == obs].iloc[0]
+                for col in per_obs_cols:
+                    try:
+                        self.per_observer_df.at[i, col] = str(x[col])
+                    except:
+                        print('here, didnt work')
+                        pass
 
-        self.layout = Tabs(tabs=[main_tab, sched_tab])
-
+        self.per_observer_df.to_csv(self.per_observer_filen, index=False)
+        now = datetime.datetime.now()
+        self.last_save.text = 'Last Saved: {}'.format(str(now))
         
     def run(self):
-        self.get_layout()
+        self.table_source()
+        self.get_main_layout()
+        self.get_sched_layout()
+        self.get_email_layout()
+        self.layout = Tabs(tabs=[self.main_tab, self.email_tab, self.sched_tab])
+        #self.current_table.source.on_change('data',self.update_observer_df)
         self.daily_report()
         self.date_btn.on_click(self.new_day)
-        self.update_df_btn.on_click(self.sched_load)
+        #self.update_df_btn.on_click(self.sched_load)
         self.semester_start_btn.on_click(self.email_semester_start)
         self.one_month_btn.on_click(self.email_one_month)
         self.two_weeks_btn.on_click(self.email_two_weeks)
         self.night_before_btn.on_click(self.email_night_before)
         self.follow_up_btn.on_click(self.email_follow_up)
         self.email_all_btn.on_click(self.email_all)
+        self.update_observer_df()
 
 Ops = OpsTool()
 Ops.run()
 curdoc().title = 'Operations Scheduling Tool'
 curdoc().add_root(Ops.layout)
+curdoc().add_periodic_callback(Ops.update_observer_df, 60000) #twice a day
