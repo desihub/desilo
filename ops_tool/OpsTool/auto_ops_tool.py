@@ -26,7 +26,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 os.environ['OPSTOOL_DIR'] = '/n/home/desiobserver/parkerf/desilo/ops_tool'
 
 class AutoOpsTool(object):
-    def __init__(self):
+    def __init__(self, day=None):
         self.test = False 
 
         logging.basicConfig(filename=os.path.join(os.environ['OPSTOOL_DIR'], 'auto_ops_tool.log'),
@@ -39,8 +39,9 @@ class AutoOpsTool(object):
         else:
             self.location = 'home'
 
+        self.day = day
         self.url = "https://docs.google.com/spreadsheets/d/1nzShIvgfqqeibVcGpHzm7dSpjJ78vDtWz-3N0wV9hu0/edit#gid=0"
-        self.credentials = "./credentials.json"
+        self.credentials = os.path.join(os.environ['OPSTOOL_DIR'],"credentials.json")
         self.creds = ServiceAccountCredentials.from_json_keyfile_name(self.credentials)
         self.client = gspread.authorize(self.creds)
         self.sheet = self.client.open_by_url(self.url).sheet1
@@ -51,7 +52,11 @@ class AutoOpsTool(object):
         self.df['Date'] = pd.to_datetime(self.df['Date'], format='%m/%d/%y')
         self.user_info = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'],'user_info.csv'))
 
-        self.today = datetime.datetime.now().strftime('%Y-%m-%d')
+        if self.day == None:
+            self.today = datetime.datetime.now().strftime('%Y-%m-%d')
+        else:
+            self.today = self.day
+        print(self.today)
         self.today_df = self.df[self.df.Date == self.today]
         self.logger.info('Running Ops Tool for {}'.format(self.today))
 
@@ -222,7 +227,7 @@ class AutoOpsTool(object):
     def send_email(self, subject, obs_email, message):
         """Sends email to an observer from desioperations1@gmail.com using gmail smtp server
         """
-        sender = "desioperations1@gmail.com" 
+        sender = "parker.fagrelius@noirlab.edu" 
         if obs_email in [None, 'None']:
             pass
         else:
@@ -242,10 +247,11 @@ class AutoOpsTool(object):
                 self.logger.info('test mode, no emails')
             else:
                 msg['To'] = ", ".join(toaddrs)
-                recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu']
+                recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu','clpoppett@lbl.gov']
                 msg['CC'] = ", ".join(recipients)
                 all_addrs.append('parker.fagrelius@noirlab.edu')
                 all_addrs.append('arjun.dey@noirlab.edu')
+                all_addrs.append('clpoppett@lbl.gov')
                 
             msgText = MIMEText(message, 'html')
             msg.attach(msgText)
@@ -325,5 +331,13 @@ class AutoOpsTool(object):
         self.email_summary()
 
 if __name__ == "__main__":
-    AOT = AutoOpsTool()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--date', type=str, help='YYYY-MM-DD')
+    args = parser.parse_args()
+
+    if args.date:
+        AOT = AutoOpsTool(args.date)
+    else:
+        AOT = AutoOpsTool()
     AOT.run()
