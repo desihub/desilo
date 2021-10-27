@@ -42,14 +42,15 @@ os.environ['OPSTOOL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/desilo/o
 
 class OpsTool(object):
     def __init__(self):
-        self.test = False
-        self.get_all_emails = False
+        self.test = True
+        self.get_all_emails = False #Change this if you want the code to print out all email addresses.
+        self.semester = '2022A' #None means all combined. Options are 2021B, 2022A
 
         logging.basicConfig(filename=os.path.join(os.environ['OPSTOOL_DIR'], 'auto_ops_tool.log'), 
             level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
         self.logger = logging.getLogger(__name__)
 
-        #self.url = "https://docs.google.com/spreadsheets/d/1nzShIvgfqqeibVcGpHzm7dSpjJ78vDtWz-3N0wV9hu0/edit#gid=0"
+        self.url = "https://docs.google.com/spreadsheets/d/1nzShIvgfqqeibVcGpHzm7dSpjJ78vDtWz-3N0wV9hu0/edit#gid=0"
         self.feedback_url = "https://docs.google.com/spreadsheets/d/1rivcM5d5U2_WcVTfNcLFQRkZSE8I55VuEdS3ui2e_VU/edit?resourcekey#gid=1162490958"
         self.preops_url = 'https://docs.google.com/spreadsheets/d/1HkoRySeJmrU_K39L_jsFLLhXl2mCbzG9OPgacRRN1xU/edit?resourcekey#gid=1462663923'
         self.credentials = "./credentials.json"
@@ -69,8 +70,15 @@ class OpsTool(object):
 
         self.title = Div(text='Observing Operations Dashboard', css_classes=['h1-title-style'])
 
-        self.df = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'], 'obs_schedule_official_2.csv'))
+        if self.semester == None:
+            pass
+        else:
+            try:
+                self.df = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'], 'obs_schedule_{}.csv'.format(self.semester)))
+            except Exception as e:
+                print(e)
         self.df['Date'] = pd.to_datetime(self.df['Date'], format='%m/%d/%y')
+
         self.user_info = pd.read_csv(os.path.join(os.environ['OPSTOOL_DIR'], 'user_info.csv'))
         self.today = datetime.datetime.now().strftime('%Y-%m-%d')
         self.today_df = self.df[self.df.Date == self.today]
@@ -95,13 +103,7 @@ class OpsTool(object):
         for name in np.unique(self.df.SO_2):
             all_names.append(name.strip())
         all_names = np.unique(all_names)
-
-        #Do just once at the beginning of the semester
-        # df = pd.DataFrame(columns=['Observer','Observed','VPN_Requested','VPN_Sent','VPN_Replied','VPN_Activated'])
-        # df['Observer'] = all_names
-        # self.per_observer_df = pd.concat([self.per_observer_df,df])
-        # self.per_observer_df.to_csv(self.per_observer_filen,index=False)
-
+        self.all_names = all_names
 
         email_list = []
         print('These Names Dont have Emails:')
@@ -112,6 +114,8 @@ class OpsTool(object):
                 email_list.append(email)
             except:
                 print(name)
+
+
         if self.get_all_emails:
             print(email_list)
 
@@ -254,17 +258,25 @@ class OpsTool(object):
         self.report.text = text
 
     def email_semester_start(self):
+        #Do just once at the beginning of the semester
+        df = pd.DataFrame(columns=['Observer','Observed','VPN_Requested','VPN_Sent','VPN_Replied','VPN_Activated'])
+        df['Observer'] = self.all_names
+
+        self.per_observer_df = pd.concat([self.per_observer_df,df])
+
+        self.per_observer_df.drop_duplicates('Observer',keep='first',inplace=True)
+        self.per_observer_df.to_csv(self.per_observer_filen,index=False)
+
         t = 'semester'
-        for obs in ['SO_1','SO_2']: #,
-            observers = np.unique(self.df[obs])
-            for name in [observers[0]]:
+        for obs in ['SO_1','SO_2']:
+            for name in np.unique(df['Observer']):
                 email = self.get_email(name)
                 idx = np.where(self.df[obs] == name)
-
-                first = min(idx[0])
-                print(name, email, idx, first)
-                start_date = self.df.iloc[first]['Date']
-                self.email_content(name, email, t, start_date)
+                if len(idx[0])>0:
+                    first = min(idx[0])
+                    start_date = self.df.iloc[first]['Date'].date()
+                    print(name, start_date)
+                    self.email_content(name, email, t, start_date)
         
 
     def email_one_month(self):
@@ -326,7 +338,7 @@ class OpsTool(object):
         msg_dir = os.path.join(os.environ['OPSTOOL_DIR'],'OpsTool','static')
         if email_type == 'semester':
             subject = 'DESI Observing Semester 2021B'
-            msg = 'Hello {},<br>'.format(name)
+            msg = 'Hello {},<br><br>'.format(name)
             if date is not None:
                 msg += '<b> Shift starting {}</b><br><br>'.format(date)
             else:
@@ -396,7 +408,7 @@ class OpsTool(object):
     def send_email(self, subject, user_email, message):
         """Sends email to an observer from desioperations1@gmail.com using gmail smtp server
         """
-        sender = "desioperations1@gmail.com" 
+        sender = "parker.fagrelius@noirlab.edu" 
         if user_email in [None, 'None']:
             pass
         else:
@@ -419,10 +431,10 @@ class OpsTool(object):
                 self.logger.debug('test mode, no emails')
             else:
                 msg['To'] = ", ".join(toaddrs)
-                recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu']
+                recipients = ['parker.fagrelius@noirlab.edu','clpoppett@lbl.gov']
                 msg['CC'] = ", ".join(recipients)
                 all_addrs.append('parker.fagrelius@noirlab.edu')
-                all_addrs.append('arjun.dey@noirlab.edu')
+                all_addrs.append('clpoppett@lbl.gov')
 
             msgText = MIMEText(message, 'html')
             msg.attach(msgText)
@@ -438,6 +450,7 @@ class OpsTool(object):
                     self.logger.debug(e)
 
             elif self.location == 'home':
+                print('here')
                 smtp_server = 'smtp.gmail.com'
                 port = 587
                 password = os.environ['OPS_PW'] #input("Input password: ")
@@ -451,6 +464,7 @@ class OpsTool(object):
                     server.quit()
                 except Exception as e:
                     # Print any error messages to stdout
+                    print(e)
                     self.logger.debug(e)
             else:
                 self.logger.debug('Location not identified')
