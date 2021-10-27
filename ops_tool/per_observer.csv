@@ -1,0 +1,112 @@
+Observer,Observed,VPN_Requested,VPN_Sent,VPN_Replied,VPN_Activated
+Aaron Meisner,yes,nan,nan,nan,True
+Abigail Bault,no,9/13/21,10/2/21,10/3/21,False
+Alastair Edge,Yes,nan,nan,nan,True
+Allyson Brodzeller,no,9/13/21,10/5/21,nan,False
+Andrei Cuceu,no,nan,nan,nan,False
+Andrew Cooper,yes,TRUE,TRUE,TRUE,True
+Angela Berti,yes,10/4/21,10/12/21,10/13/21,False
+Ann Elliott,Yes,nan,nan,nan,True
+Antonella Palmese,yes,nan,nan,nan,False
+Antonio Vazquez,no,9/13/21,10/21/21,10/22/21,True
+Arjun Dey,Yes,nan,nan,nan,True
+Becky Canning,Yes,9/13/21,10/21/21,10/22/21,True
+Ben Wang,no,nan,nan,nan,nan
+Benedict Bahr-Kalus,no,nan,nan,nan,nan
+Boris Gaensicke,yes,nan,nan,nan,False
+Calum Gordon,yes,nan,nan,nan,nan
+Chiara Circosta,no,nan,nan,nan,nan
+Chris Blake,no,nan,nan,nan,nan
+Christoph Saulder,no,nan,nan,nan,nan
+Christopher Manser,Yes,nan,nan,nan,False
+Claire Lamman,yes,nan,nan,nan,False
+Corentin Ravoux,no,nan,nan,nan,nan
+Daniel Eisenstein,yes,nan,nan,nan,True
+Daniel Gruen,yes,9/13/21,10/11/21,10/14/21,False
+David Sierra Porta,no,nan,nan,nan,nan
+Dustin Lang,yes,nan,nan,nan,True
+Dylan Green,yes,TRUE,TRUE,TRUE,False
+Hanyu Zhang,yes,nan,nan,nan,False
+Haojie Xu,no,nan,nan,nan,nan
+Héctor Gil Marín,no,nan,nan,nan,nan
+Jaime E. Forero-Romero,no,nan,nan,nan,nan
+Jeffrey A. Newman,yes,nan,nan,nan,True
+Jesse Golden-Marx,no,10/25/21,10/26/21,10/26/21,True
+Jessica Chellino,no,nan,nan,nan,nan
+Jiamin Hou,no,nan,nan,nan,nan
+John Della Costa,yes,nan,nan,nan,True
+John Suárez-Pérez,no,nan,nan,nan,nan
+Julia Ferrer Ereza,Yes,9/13/21,10/5/21,10/7/21,False
+Kelly Douglass,yes,nan,nan,nan,nan
+Kun Xu,no,nan,nan,nan,nan
+Lehman Garrison,no,nan,nan,nan,nan
+Marcelle Soares-Santos,yes,9/13/21,10/19/21,10/20/21,False
+Mike Wang,no,9/13/21,10/1/21,10/2/21,False
+Min He,no,nan,nan,nan,nan
+Naim Göksel Karaçaylı,no,nan,nan,nan,nan
+Namitha Kizhuprakkat Ramachandran,yes,9/28/21,9/30/21,10/3/21,False
+Nikhil Padmanabhan,yes,TRUE,TRUE,TRUE,False
+None,nan,nan,nan,nan,nan
+Pauline Zarrouk,Yes,9/13/21,nan,nan,nan
+Qi'an Deng,no,nan,nan,nan,nan
+Samuel Brieden,no,nan,nan,nan,nan
+Segev BenZvi,yes,nan,nan,nan,True
+Sera Rauhut,no,nan,nan,nan,nan
+Seshadri Nadathur,yes,TRUE,TRUE,TRUE,False
+Sikandar Hanif,yes,TRUE,TRUE,TRUE,False
+Solène Chabanier,no,nan,nan,nan,nan
+Svyatoslav Trusov,no,nan,nan,nan,nan
+Ting Li,yes,nan,nan,nan,nan
+Ting Tan,yes,9/13/21,10/19/21,10/20/21,False
+Umut Demirbozan,yes,TRUE,TRUE,TRUE,False
+Valentina García Alvarado,no,nan,nan,nan,nan
+Vanina Ruhlmann-Kleider,yes,nan,nan,nan,nan
+Victoria Fawcett,no,nan,nan,nan,nan
+Xiaokai Chen,no,nan,nan,nan,nan
+Zachery Brown,yes,nan,nan,nan,nan
+Zechang Sun,no,nan,nan,nan,nan
+Zhejie Ding,no,nan,nan,nan,nan
+Zheng Cai,no,nan,nan,nan,nan
+Zhiwei Shao,no,nan,nan,nan,nan
+Ziyang Chen,no,nan,nan,nan,nan
+Alex Woodfinden,nan,nan,nan,nan,nan
+Alfredo Zenteno,nan,nan,nan,nan,nan
+Andreu Font-Ribera,nan,nan,nan,nan,nan
+Anna Porredon,nan,nan,nan,nan,nan
+Antoine Rocher,nan,nan,nan,nan,nan
+Arnaud de Mattia,nan,nan,nan,nan,nan
+Benjamin Weiner,nan,nan,nan,nan,nan
+Bokyoung Kim,nan,nan,nan,nan,nan
+ChangHoon Hahn,nan,nan,nan,nan,nan
+Cristiano Sabiu,nan,nan,nan,nan,nan
+Cullan Howlett,nan,nan,nan,nan,nan
+César Ramírez Pérez,nan,nan,nan,nan,nan
+Davide Bianchi,nan,nan,nan,nan,nan
+Edmond Chaussidon,nan,nan,nan,nan,nan
+Enrique Paillas,nan,nan,nan,nan,nan
+Felipe Andrade Oliveira,nan,nan,nan,nan,nan
+Felipe Beltran,nan,nan,nan,nan,nan
+Frank Valdes,nan,nan,nan,nan,nan
+Greg Aldering,nan,nan,nan,nan,nan
+Hiram Herrera,nan,nan,nan,nan,nan
+Hongyu Gao,nan,nan,nan,nan,nan
+Jiaqi Zou,nan,nan,nan,nan,nan
+John Moustakas,nan,nan,nan,nan,nan
+Kevin Fanning,nan,nan,nan,nan,nan
+Laurent Le Guillou,nan,nan,nan,nan,nan
+Mariana Vargas Magana,nan,nan,nan,nan,nan
+Matthew Fong,nan,nan,nan,nan,nan
+Michael Walther,nan,nan,nan,nan,nan
+Otávio Alves,nan,nan,nan,nan,nan
+Ragadeepika Pucha,nan,nan,nan,nan,nan
+Shanquan Gui,nan,nan,nan,nan,nan
+Stephanie Escoffier,nan,nan,nan,nan,nan
+Tanveer Karim,nan,nan,nan,nan,nan
+Ting-Wen Lan,nan,nan,nan,nan,nan
+Tristan Fraser,nan,nan,nan,nan,nan
+Vaisakh Rajeev,nan,nan,nan,nan,nan
+Wynne Turner,nan,nan,nan,nan,nan
+Xiaohui Fan,nan,nan,nan,nan,nan
+Yaru Wang,nan,nan,nan,nan,nan
+Yu Liu,nan,nan,nan,nan,nan
+Zachary Slepian,nan,nan,nan,nan,nan
