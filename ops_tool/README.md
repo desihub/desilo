@@ -17,7 +17,12 @@ There are two main tools in this folder. They are both used for communicating wi
     * `cd ~/obsops/desilo/ops_tool1
     * `bokeh serve OpsTool/ --allow-websocket-origin=desi-4.kpno.noao.edu:5006`
     * access in browser at http://desi-4.kpno.noao.edu:5006/OpsTool
-
+  * There are several arguments (all optional) you can add to the bokeh serve. To your call, add `--args` followed by the following
+    *  -l, --local: Use locally saved schedule rather than online version.
+    * -t, --test: Test Mode
+    * --print_emails: Prints out a list of emails of all observers
+    * -s,--semester: Identify particular semester.
+    
 ## **OpsViewer**
 * This is run at NERSC on Rancher2. 
 * **main.py**: Bokeh GUI code
