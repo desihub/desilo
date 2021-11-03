@@ -26,6 +26,7 @@ There are two main tools in this folder. They are both used for communicating wi
 ## Other Files: these are all used by one of the tools above.
 * **Dockerfile**: used by OpsViewer on the spin services site
 * **google_access_account.json**: used to access the google sheets used in the tools
+  * Note: you will also need a credentials.json file to access the google sheets. This cannot be saved on github.  
 * **obs_schedule_`*`.csv**: hard copies of the schedules downloaded from google. These are used mostly at the beginning of a semester. They should be updated periodically if changes are made to the google sheets
 * **user_info.csv**: contains the names, email addresses, and institutions of all observers
 * **per_observer.csv**: file used to track VPN status of observers and whether they have filled out the pre and post observing questionaires
