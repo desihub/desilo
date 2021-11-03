@@ -8,16 +8,16 @@ Andrew Cooper,yes,TRUE,TRUE,TRUE,True
 Angela Berti,yes,10/4/21,10/12/21,10/13/21,False
 Ann Elliott,Yes,nan,nan,nan,True
 Antonella Palmese,yes,nan,nan,nan,False
-Antonio Vazquez,no,9/13/21,10/21/21,10/22/21,True
+Antonio Vazquez,yes,9/13/21,10/21/21,10/22/21,False
 Arjun Dey,Yes,nan,nan,nan,True
-Becky Canning,Yes,9/13/21,10/21/21,10/22/21,True
+Becky Canning,Yes,9/13/21,10/21/21,10/22/21,False
 Ben Wang,no,nan,nan,nan,nan
 Benedict Bahr-Kalus,no,nan,nan,nan,nan
 Boris Gaensicke,yes,nan,nan,nan,False
 Calum Gordon,yes,nan,nan,nan,nan
 Chiara Circosta,no,nan,nan,nan,nan
 Chris Blake,no,nan,nan,nan,nan
-Christoph Saulder,no,nan,nan,nan,nan
+Christoph Saulder,yes,10/28/21,10/28/21,10/29/21,True
 Christopher Manser,Yes,nan,nan,nan,False
 Claire Lamman,yes,nan,nan,nan,False
 Corentin Ravoux,no,nan,nan,nan,nan
@@ -31,7 +31,7 @@ Haojie Xu,no,nan,nan,nan,nan
 Héctor Gil Marín,no,nan,nan,nan,nan
 Jaime E. Forero-Romero,no,nan,nan,nan,nan
 Jeffrey A. Newman,yes,nan,nan,nan,True
-Jesse Golden-Marx,no,10/25/21,10/26/21,10/26/21,True
+Jesse Golden-Marx,yes,10/25/21,10/26/21,10/26/21,False
 Jessica Chellino,no,nan,nan,nan,nan
 Jiamin Hou,no,nan,nan,nan,nan
 John Della Costa,yes,nan,nan,nan,True
@@ -43,7 +43,7 @@ Lehman Garrison,no,nan,nan,nan,nan
 Marcelle Soares-Santos,yes,9/13/21,10/19/21,10/20/21,False
 Mike Wang,no,9/13/21,10/1/21,10/2/21,False
 Min He,no,nan,nan,nan,nan
-Naim Göksel Karaçaylı,no,nan,nan,nan,nan
+Naim Göksel Karaçaylı,no,nan,10/31/21,11/1/21,True
 Namitha Kizhuprakkat Ramachandran,yes,9/28/21,9/30/21,10/3/21,False
 Nikhil Padmanabhan,yes,TRUE,TRUE,TRUE,False
 None,nan,nan,nan,nan,nan
@@ -61,9 +61,9 @@ Ting Tan,yes,9/13/21,10/19/21,10/20/21,False
 Umut Demirbozan,yes,TRUE,TRUE,TRUE,False
 Valentina García Alvarado,no,nan,nan,nan,nan
 Vanina Ruhlmann-Kleider,yes,nan,nan,nan,nan
-Victoria Fawcett,no,nan,nan,nan,nan
+Victoria Fawcett,yes,nan,10/28/21,11/1/21,True
 Xiaokai Chen,no,nan,nan,nan,nan
-Zachery Brown,yes,nan,nan,nan,nan
+Zachery Brown,yes,nan,10/30/21,11/2/21,True
 Zechang Sun,no,nan,nan,nan,nan
 Zhejie Ding,no,nan,nan,nan,nan
 Zheng Cai,no,nan,nan,nan,nan
