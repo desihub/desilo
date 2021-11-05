@@ -165,12 +165,10 @@ class OpsTool(object):
             these_rows = self.feedback_df[self.feedback_df['Observer Name'] == obs]
             if len(these_rows) > 0:
                 last_row = these_rows.iloc[-1]
-                try:
-                    returns.append(last_row['Timestamp'])
-                except:
-                    print("Error on feedback")
+                returns.append(last_row['Timestamp'])
             else:
                 returns.append('None')
+        return returns
 
     def filled_preops_form(self, shift_df):
         """
