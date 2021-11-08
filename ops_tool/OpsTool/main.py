@@ -442,7 +442,7 @@ class OpsTool(object):
     def send_email(self, subject, user_email, message):
         """Sends email to an observer from <sender> using gmail smtp server
         """
-        sender = "parker.fagrelius@noirlab.edu" 
+        sender = 'clpoppett@lbl.gov' 
         if user_email in [None, 'None']:
             pass
         else:
@@ -452,8 +452,8 @@ class OpsTool(object):
             msg['From'] = sender
             if self.test:
                 msg['To'] = 'parfa30@gmail.com'
-                msg['CC'] = 'parker.fagrelius@noirlab.edu'
-                all_addrs = ['parfa30@gmail.com', 'parker.fagrelius@noirlab.edu']
+                msg['CC'] = 'clpoppett@lbl.gov'
+                all_addrs = ['parfa30@gmail.com', 'clpoppett@lbl.gov']
                 self.logger.debug('test mode, no emails')
             else:
                 toaddrs = [addr.strip() for addr in user_email.split(';')]

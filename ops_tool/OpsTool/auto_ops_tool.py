@@ -227,7 +227,7 @@ class AutoOpsTool(object):
     def send_email(self, subject, obs_email, message):
         """Sends email to an observer from desioperations1@gmail.com using gmail smtp server
         """
-        sender = "parker.fagrelius@noirlab.edu" 
+        sender = 'clpoppett@lbl.gov' 
         if obs_email in [None, 'None']:
             pass
         else:
@@ -242,15 +242,14 @@ class AutoOpsTool(object):
             msg['From'] = sender
             if self.test:
                 msg['To'] = 'parfa30@gmail.com'
-                msg['CC'] = 'parker.fagrelius@noirlab.edu'
-                all_addrs = ['parfa30@gmail.com', 'parker.fagrelius@noirlab.edu']
+                msg['CC'] = 'clpoppett@lbl.gov'
+                all_addrs = ['parfa30@gmail.com', 'clpoppett@lbl.gov']
                 self.logger.info('test mode, no emails')
             else:
                 msg['To'] = ", ".join(toaddrs)
-                recipients = ['parker.fagrelius@noirlab.edu','arjun.dey@noirlab.edu','clpoppett@lbl.gov']
+                recipients = ['parker.fagrelius@noirlab.edu','clpoppett@lbl.gov']
                 msg['CC'] = ", ".join(recipients)
                 all_addrs.append('parker.fagrelius@noirlab.edu')
-                all_addrs.append('arjun.dey@noirlab.edu')
                 all_addrs.append('clpoppett@lbl.gov')
                 
             msgText = MIMEText(message, 'html')
