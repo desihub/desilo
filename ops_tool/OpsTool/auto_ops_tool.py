@@ -290,8 +290,8 @@ class AutoOpsTool(object):
         msg = MIMEMultipart('html')
         msg['Subject'] = subject
         msg['From'] = sender
-        msg['To'] = 'parker.fagrelius@noirlab.edu'
-        all_addrs = ['parker.fagrelius@noirlab.edu']
+        msg['To'] = 'clpoppett@lbl.gov, parker.fagrelius@noirlab.edu'
+        all_addrs = ['parker.fagrelius@noirlab.edu','clpoppett@lbl.gov']
 
         msgText = MIMEText(self.summary, 'html')
         msg.attach(msgText)
