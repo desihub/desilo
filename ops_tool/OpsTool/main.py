@@ -476,7 +476,7 @@ class OpsTool(object):
                     self.logger.debug(e)
 
             elif self.location == 'home':
-                print('here')
+                sender = 'desioperations1@gmail.com'
                 smtp_server = 'smtp.gmail.com'
                 port = 587
                 password = os.environ['OPS_PW'] #input("Input password: ")
