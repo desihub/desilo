@@ -23,7 +23,7 @@ import gspread
 from gspread_dataframe import get_as_dataframe
 from oauth2client.service_account import ServiceAccountCredentials
 
-os.environ['OPSTOOL_DIR'] = '/n/home/desiobserver/parkerf/desilo/ops_tool'
+os.environ['OPSTOOL_DIR'] = '/n/home/desiobserver/obsops/desilo/ops_tool/'
 
 class AutoOpsTool(object):
     def __init__(self, day=None):
@@ -241,15 +241,13 @@ class AutoOpsTool(object):
             msg['Subject'] = subject
             msg['From'] = sender
             if self.test:
-                msg['To'] = 'parfa30@gmail.com'
-                msg['CC'] = 'clpoppett@lbl.gov'
-                all_addrs = ['parfa30@gmail.com', 'clpoppett@lbl.gov']
+                msg['To'] = 'clpoppett@lbl.gov'
+                all_addrs = ['clpoppett@lbl.gov']
                 self.logger.info('test mode, no emails')
             else:
                 msg['To'] = ", ".join(toaddrs)
-                recipients = ['parker.fagrelius@noirlab.edu','clpoppett@lbl.gov']
+                recipients = ['clpoppett@lbl.gov']
                 msg['CC'] = ", ".join(recipients)
-                all_addrs.append('parker.fagrelius@noirlab.edu')
                 all_addrs.append('clpoppett@lbl.gov')
                 
             msgText = MIMEText(message, 'html')
@@ -290,8 +288,8 @@ class AutoOpsTool(object):
         msg = MIMEMultipart('html')
         msg['Subject'] = subject
         msg['From'] = sender
-        msg['To'] = 'clpoppett@lbl.gov, parker.fagrelius@noirlab.edu'
-        all_addrs = ['parker.fagrelius@noirlab.edu','clpoppett@lbl.gov']
+        msg['To'] = 'clpoppett@lbl.gov'
+        all_addrs = ['clpoppett@lbl.gov']
 
         msgText = MIMEText(self.summary, 'html')
         msg.attach(msgText)

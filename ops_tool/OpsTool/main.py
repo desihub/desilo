@@ -451,17 +451,15 @@ class OpsTool(object):
             msg['Subject'] = subject
             msg['From'] = sender
             if self.test:
-                msg['To'] = 'parfa30@gmail.com'
-                msg['CC'] = 'clpoppett@lbl.gov'
-                all_addrs = ['parfa30@gmail.com', 'clpoppett@lbl.gov']
+                msg['To'] = 'clpoppett@lbl.gov'
+                all_addrs = ['clpoppett@lbl.gov']
                 self.logger.debug('test mode, no emails')
             else:
                 toaddrs = [addr.strip() for addr in user_email.split(';')]
                 all_addrs = [x for x in toaddrs]
                 msg['To'] = ", ".join(toaddrs)
-                recipients = ['parker.fagrelius@noirlab.edu', 'clpoppett@lbl.gov']
+                recipients = ['clpoppett@lbl.gov']
                 msg['CC'] = ", ".join(recipients)
-                all_addrs.append('parker.fagrelius@noirlab.edu')
                 all_addrs.append('clpoppett@lbl.gov')
 
             msgText = MIMEText(message, 'html')
