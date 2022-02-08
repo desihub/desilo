@@ -37,7 +37,7 @@ import smtplib, ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-os.environ['OPSTOOL_DIR'] = '/Users/pfagrelius/Research/DESI/Operations/desilo/ops_tool'
+os.environ['OPSTOOL_DIR'] = '/n/home/desiobserver/obsops/desilo/ops_tool'
 
 class OpsTool(object):
     def __init__(self, test=False, print_emails=False, semester=None, local=True):
