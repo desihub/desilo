@@ -1,7 +1,7 @@
 inst,short,East
-AMU RPG - Institut National de Physique Nucléaire et de Physique des Particules,INPN,TRUE
-AMU RPG - Laboratoire d'Astrophysique de Marseille,LAM,TRUE
-AMU RPG - Observatoire des Sciences de l'Univers - Institut Pythéas,Institut Pytheas,TRUE
+AMU RPG - Institut National de Physique Nucléaire et de Physique des Particules,AMU-RPG,TRUE
+AMU RPG - Laboratoire d'Astrophysique de Marseille,AMU-RPG,TRUE
+AMU RPG - Observatoire des Sciences de l'Univers - Institut Pythéas,AMU-RPG,TRUE
 Argonne National Lab,Argonne,FALSE
 Australian National University,ANU,TRUE
 "Barcelona-Madrid RPG - Centro de Investigaciones Energéticas, Medioambientales y Tecnológicas",Barcelona-CIEMT,TRUE
@@ -10,10 +10,10 @@ Barcelona-Madrid RPG - Institut de Ciències de L'Espai - IEEC/CSIC,IEEC/CSIC,TR
 Barcelona-Madrid RPG - Universidad Autónoma de Madrid,UAM,TRUE
 Boston University,Boston,FALSE
 Brookhaven National Lab,Brookhaven,FALSE
-CPG-NAOC RPG - Beijing Astronomical Observatory,BAO,TRUE
-"CPG-NAOC RPG - National Astronomical Observatories, Chinese Academy of Sciences",NAO-CAS,TRUE
-CPG-NAOC RPG - Peking University,Peking,TRUE
-CPG-NAOC RPG - Tsinghua University,Tsinghua,TRUE
+CPG-NAOC RPG - Beijing Astronomical Observatory,CPG-NAOC RPG,TRUE
+"CPG-NAOC RPG - National Astronomical Observatories, Chinese Academy of Sciences",CPG-NAOC RPG,TRUE
+CPG-NAOC RPG - Peking University,CPG-NAOC RPG,TRUE
+CPG-NAOC RPG - Tsinghua University,CPG-NAOC RPG,TRUE
 "California State University, East Bay",CalState East Bay,FALSE
 Carnegie Institution for Science,Carnegie,FALSE
 Carnegie Mellon University,CMU,Flase
@@ -24,9 +24,9 @@ Durham University,Durham,TRUE
 Eidgenössische Technische Hochschule Zürich,ETHZ,FALSE
 Fermilab - University of Chicago - Yerkes,Fermilab,TRUE
 Flatiron Institute,Flatiron,FALSE
-"GMT RPG - Campus de Excelencia Internacional CIE/UAM + CSIC, Universidad Autónoma de Madrid",CIE/UAM + CSIC,TRUE
-GMT RPG - Instituto de Astrofísica de Andalucía,Andalucia,TRUE
-GMT RPG - Instituto de Astrofísica de Canarias,Canarias,TRUE
+"GMT RPG - Campus de Excelencia Internacional CIE/UAM + CSIC, Universidad Autónoma de Madrid",UAM,TRUE
+GMT RPG - Instituto de Astrofísica de Andalucía,CSIC,TRUE
+GMT RPG - Instituto de Astrofísica de Canarias,IAC,TRUE
 Hamilton College,Hamilton,FALSE
 Harvard University,Harvard,FALSE
 "Imperial College, London",ICL,TRUE
@@ -39,12 +39,11 @@ Laboratório Interinstitucional de e-Astronomia - LIneA,LIneA,TRUE
 Lawrence Berkeley National Lab,LBNL,Flase
 Lawrence Livermore National Lab,LLNL,FALSE
 Max-Planck-Institut für Extraterrestrische Physik,MPI-EP,TRUE
-México RPG - Centro de Investigación y de Estudios Avanzados del Instituto Politécnico Nacional,CIEAIPN,FALSE
-México RPG - Instituto Nacional de Investigaciones Nucleares,ININ,FALSE
-México RPG - Universidad Nacional Autónoma de México,UNAM,FALSE
-México RPG - Universidad de Guanajuato,Guanajuato,FALSE
+México RPG - Centro de Investigación y de Estudios Avanzados del Instituto Politécnico Nacional,México RPG,FALSE
+México RPG - Instituto Nacional de Investigaciones Nucleares,México RPG,FALSE
+México RPG - Universidad Nacional Autónoma de México,México RPG,FALSE
+México RPG - Universidad de Guanajuato,México RPG,FALSE
 National Science Foundations's National Optical-Infrared Astronomy Research Laboratory,NOIRLab,FALSE
-National Tsing Hua University,National Tsinghua,TRUE
 New York University,NYU,FALSE
 No Trac Account,,FALSE
 Ohio State University,OSU,FALSE
@@ -103,3 +102,4 @@ Yale University,Yale,FALSE
 Yonsei University,Yonsei,TRUE
 Yunnan University,Yunnan,TRUE
 École Polytechnique Fédérale de Lausanne,EPFL,TRUE
+Sejong University,SJU,TRUE
